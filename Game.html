@@ -430,8 +430,9 @@
         let lastKnownLocation = null;
         let aiMemory = [];
 
-        const MASK_W = 8192;
-        const MASK_H = 4096;
+        // ❗ تکسچر ۴ برابر شد: از 8192×4096 به 16384×8192
+        const MASK_W = 16384;
+        const MASK_H = 8192;
         let maskData = null;
         let maskReady = false;
         let oceanMaskTexture = null;
@@ -667,6 +668,8 @@
                     oceanMaskTexture.minFilter = THREE.LinearMipmapLinearFilter;
                     oceanMaskTexture.magFilter = THREE.LinearFilter;
                     oceanMaskTexture.generateMipmaps = true;
+                    oceanMaskTexture.wrapS = THREE.RepeatWrapping;
+                    oceanMaskTexture.wrapT = THREE.ClampToEdgeWrapping;
                     resolve(ctx);
                 };
                 img.src = 'https://unpkg.com/three-globe/example/img/earth-water.png';
@@ -815,8 +818,10 @@
                 return BIOME.forest;
             }
             
-            for (let y = 0; y < MASK_H; y++) {
-                for (let x = 0; x < MASK_W; x++) {
+            // گام به گام برای سرعت بهتر با تکسچر بزرگ
+            const step = 1;
+            for (let y = 0; y < MASK_H; y += step) {
+                for (let x = 0; x < MASK_W; x += step) {
                     const idx = (y * MASK_W + x) * 4;
                     const b = (maskData[idx] + maskData[idx+1] + maskData[idx+2]) / 3;
                     
@@ -1589,7 +1594,7 @@ ${perceptionContext}`;
                     })
                 ));
 
-                // ====== دریا با شیدر جدید و واقعی‌تر ======
+                // ====== دریا با شیدر زنده و امواج لب ساحل ======
                 const oceanMat = new THREE.ShaderMaterial({
                     uniforms: { 
                         time: { value: 0 }, 
@@ -1609,41 +1614,61 @@ ${perceptionContext}`;
                         varying vec3 vWorldPos;
                         varying float vWaveHeight;
                         varying float vCoastDist;
+                        varying float vShoreMask;
                         
                         void main() {
                             vUv = uv;
                             vec3 p = position;
                             
-                            // موج‌های چندلایه
+                            // ===== موج‌های دور از ساحل =====
                             float wave1 = sin(p.x * 8.0 + time * 1.2) * cos(p.z * 6.0 + time * 0.9);
                             float wave2 = sin(p.x * 15.0 - time * 1.5) * 0.5;
                             float wave3 = sin(p.y * 12.0 + time * 1.1) * cos(p.x * 10.0 + time * 0.7) * 0.4;
                             float wave4 = sin((p.x + p.y + p.z) * 20.0 - time * 2.0) * 0.3;
                             
-                            float waveHeight = (wave1 * 0.0012 + wave2 * 0.0008 + wave3 * 0.0006 + wave4 * 0.0004);
-                            vWaveHeight = waveHeight;
+                            float oceanWave = (wave1 * 0.0012 + wave2 * 0.0008 + wave3 * 0.0006 + wave4 * 0.0004);
                             
-                            p += normal * waveHeight;
-                            
-                            float dx = cos(p.x * 8.0 + time * 1.2) * 8.0 * 0.0012 + cos(p.x * 15.0 - time * 1.5) * 15.0 * 0.0008;
-                            float dz = cos(p.z * 6.0 + time * 0.9) * 6.0 * 0.0012;
-                            vec3 tangentX = normalize(vec3(1.0, dx, 0.0));
-                            vec3 tangentZ = normalize(vec3(0.0, dz, 1.0));
-                            vec3 waveNormal = normalize(cross(tangentZ, tangentX));
-                            
-                            vNormal = normalize(mix(normal, waveNormal, 0.5));
-                            
-                            // فاصله از ساحل
+                            // ===== فاصله از ساحل =====
+                            vec2 texelSize = vec2(1.0/16384.0, 1.0/8192.0);
                             float coastNear = 0.0;
-                            vec2 texelSize = vec2(1.0/8192.0, 1.0/4096.0);
-                            for (int i = -3; i <= 3; i++) {
-                                for (int j = -3; j <= 3; j++) {
-                                    vec2 offset = vec2(float(i), float(j)) * texelSize * 2.0;
+                            for (int i = -5; i <= 5; i++) {
+                                for (int j = -5; j <= 5; j++) {
+                                    vec2 offset = vec2(float(i), float(j)) * texelSize * 3.0;
                                     float maskVal = texture2D(oceanMask, vUv + offset).r;
                                     coastNear += (1.0 - maskVal);
                                 }
                             }
                             vCoastDist = coastNear;
+                            
+                            // ===== موج‌های لب ساحل =====
+                            float shoreFactor = clamp(coastNear / 40.0, 0.0, 1.0);
+                            vShoreMask = shoreFactor;
+                            
+                            float shoreWave1 = sin(vUv.y * 900.0 + time * 3.0) * shoreFactor;
+                            float shoreWave2 = sin(vUv.y * 1400.0 - time * 4.0) * shoreFactor * 0.6;
+                            float shoreWave3 = sin((vUv.x + vUv.y) * 800.0 + time * 3.5) * shoreFactor * 0.5;
+                            
+                            float breakingHeight = (shoreWave1 + shoreWave2 + shoreWave3) * 0.003 * shoreFactor;
+                            
+                            float breakerBand = exp(-pow((coastNear - 15.0) / 8.0, 2.0));
+                            float breakingWave = sin(vUv.x * 600.0 + time * 5.0) * sin(vUv.y * 500.0 - time * 4.0) * breakerBand * 0.005;
+                            
+                            float totalWave = oceanWave + breakingHeight + breakingWave;
+                            vWaveHeight = totalWave;
+                            
+                            p += normal * totalWave;
+                            
+                            float dx = cos(p.x * 8.0 + time * 1.2) * 8.0 * 0.0012 + cos(p.x * 15.0 - time * 1.5) * 15.0 * 0.0008;
+                            float dz = cos(p.z * 6.0 + time * 0.9) * 6.0 * 0.0012;
+                            
+                            float shoreSlopeX = cos(vUv.x * 600.0 + time * 5.0) * shoreFactor * 0.5;
+                            float shoreSlopeY = cos(vUv.y * 900.0 + time * 3.0) * shoreFactor * 0.8;
+                            
+                            vec3 tangentX = normalize(vec3(1.0, dx + shoreSlopeX * 0.001, 0.0));
+                            vec3 tangentZ = normalize(vec3(0.0, dz + shoreSlopeY * 0.001, 1.0));
+                            vec3 waveNormal = normalize(cross(tangentZ, tangentX));
+                            
+                            vNormal = normalize(mix(normal, waveNormal, 0.6));
                             
                             vec4 worldPos = modelMatrix * vec4(p, 1.0);
                             vWorldPos = worldPos.xyz;
@@ -1666,6 +1691,7 @@ ${perceptionContext}`;
                         varying vec3 vWorldPos;
                         varying float vWaveHeight;
                         varying float vCoastDist;
+                        varying float vShoreMask;
                         
                         void main() {
                             if (texture2D(oceanMask, vUv).r < 0.5) discard;
@@ -1673,13 +1699,8 @@ ${perceptionContext}`;
                             vec3 N = normalize(vNormal);
                             vec3 V = normalize(cameraPosition - vWorldPos);
                             
-                            // موج‌های ریز
-                            float microWave1 = sin(vUv.x * 400.0 + time * 3.0) * sin(vUv.y * 380.0 + time * 2.7);
-                            float microWave2 = sin((vUv.x + vUv.y) * 500.0 - time * 4.0);
-                            float microWave = (microWave1 * 0.5 + microWave2 * 0.5) * 0.5 + 0.5;
-                            
-                            // عمق آب (فاصله از ساحل)
-                            float depthFactor = clamp(vCoastDist / 30.0, 0.0, 1.0);
+                            // ===== عمق آب =====
+                            float depthFactor = clamp(vCoastDist / 40.0, 0.0, 1.0);
                             
                             vec3 waterColor;
                             if (depthFactor < 0.3) {
@@ -1688,52 +1709,89 @@ ${perceptionContext}`;
                                 waterColor = mix(midColor, shallowColor, (depthFactor - 0.3) / 0.7);
                             }
                             
-                            // Caustics (نور زیر آب)
-                            float caustic1 = sin(vUv.x * 60.0 + time * 1.5) * sin(vUv.y * 55.0 + time * 1.8);
-                            float caustic2 = sin(vUv.x * 90.0 - time * 2.0) * sin(vUv.y * 85.0 + time * 1.3);
+                            // ===== موج‌های ریز سطحی =====
+                            float microWave1 = sin(vUv.x * 600.0 + time * 4.0) * sin(vUv.y * 550.0 + time * 3.5);
+                            float microWave2 = sin((vUv.x + vUv.y) * 700.0 - time * 5.0);
+                            float microWave = (microWave1 * 0.5 + microWave2 * 0.5) * 0.5 + 0.5;
+                            
+                            // ===== Caustics =====
+                            float caustic1 = sin(vUv.x * 80.0 + time * 1.8) * sin(vUv.y * 75.0 + time * 2.0);
+                            float caustic2 = sin(vUv.x * 120.0 - time * 2.5) * sin(vUv.y * 110.0 + time * 1.6);
                             float caustics = (caustic1 * caustic2) * 0.5 + 0.5;
                             caustics = pow(caustics, 2.0) * 0.3;
                             
-                            // موج سطح
-                            float wavePattern = (sin(vUv.x * 200.0 + time * 2.5) + 
-                                                 sin(vUv.y * 180.0 - time * 2.0) + 
-                                                 sin((vUv.x + vUv.y) * 220.0 + time * 1.5)) / 3.0;
+                            // ===== موج سطح =====
+                            float wavePattern = (sin(vUv.x * 250.0 + time * 3.0) + 
+                                                 sin(vUv.y * 220.0 - time * 2.5) + 
+                                                 sin((vUv.x + vUv.y) * 280.0 + time * 2.0)) / 3.0;
                             wavePattern = wavePattern * 0.5 + 0.5;
                             
                             waterColor += vec3(caustics) * 0.15;
-                            waterColor += vec3(microWave * 0.08);
-                            waterColor += vec3(wavePattern * 0.05);
+                            waterColor += vec3(microWave * 0.10);
+                            waterColor += vec3(wavePattern * 0.06);
                             
-                            // Fresnel reflection
+                            // ===== امواج لب ساحل =====
+                            if (vShoreMask > 0.05) {
+                                float shoreWavePattern1 = sin(vUv.y * 800.0 + time * 4.0) * 0.5 + 0.5;
+                                float shoreWavePattern2 = sin(vUv.y * 1200.0 - time * 5.0) * 0.5 + 0.5;
+                                float shoreWavePattern3 = sin(vUv.x * 700.0 + time * 3.5) * 0.5 + 0.5;
+                                
+                                float shoreTurbulence = (shoreWavePattern1 + shoreWavePattern2 + shoreWavePattern3) / 3.0;
+                                
+                                vec3 shoreWaterColor = vec3(0.55, 0.85, 0.95);
+                                waterColor = mix(waterColor, shoreWaterColor, shoreTurbulence * vShoreMask * 0.4);
+                                
+                                float breakerBrightness = smoothstep(0.7, 1.0, shoreTurbulence) * vShoreMask;
+                                waterColor += vec3(breakerBrightness * 0.2);
+                            }
+                            
+                            // ===== Fresnel =====
                             float fresnel = pow(1.0 - max(dot(N, V), 0.0), 3.0);
-                            waterColor = mix(waterColor, skyColor, fresnel * 0.45);
+                            waterColor = mix(waterColor, skyColor, fresnel * 0.4);
                             
-                            // Specular highlight
+                            // ===== Specular =====
                             vec3 H = normalize(sunDirection + V);
                             float specular = pow(max(dot(N, H), 0.0), 120.0);
-                            vec3 specColor = vec3(1.0, 0.98, 0.9) * specular * 1.5;
+                            vec3 specColor = vec3(1.0, 0.98, 0.9) * specular * 1.8;
                             
                             float microSpec = pow(max(dot(N, H), 0.0), 60.0) * microWave;
-                            specColor += vec3(1.0, 1.0, 0.95) * microSpec * 0.6;
+                            specColor += vec3(1.0, 1.0, 0.95) * microSpec * 0.7;
                             
                             waterColor += specColor;
                             
-                            // فوم نزدیک ساحل
+                            // ===== فوم لب ساحل =====
                             if (vCoastDist > 0.0) {
-                                float foamDist = clamp(vCoastDist / 20.0, 0.0, 1.0);
+                                float foamDist = clamp(vCoastDist / 25.0, 0.0, 1.0);
                                 
-                                float foamNoise = sin(vUv.x * 800.0 + time * 4.0) * 
-                                                  sin(vUv.y * 750.0 - time * 3.5) * 
-                                                  sin((vUv.x - vUv.y) * 600.0 + time * 5.0);
-                                foamNoise = foamNoise * 0.5 + 0.5;
+                                float foamNoise1 = sin(vUv.x * 1200.0 + time * 6.0) * 
+                                                   sin(vUv.y * 1100.0 - time * 5.5) * 
+                                                   sin((vUv.x - vUv.y) * 900.0 + time * 7.0);
+                                float foamNoise2 = sin(vUv.x * 800.0 - time * 4.0) * 
+                                                   sin(vUv.y * 750.0 + time * 4.5);
+                                float foamNoise = (foamNoise1 * 0.6 + foamNoise2 * 0.4) * 0.5 + 0.5;
                                 
                                 float foam = (1.0 - foamDist) * foamNoise;
-                                foam = pow(foam, 2.0) * 0.9;
+                                foam = pow(foam, 1.8) * 0.95;
                                 
-                                float foamEdge = smoothstep(0.0, 0.15, vCoastDist) * (1.0 - smoothstep(0.15, 0.5, vCoastDist));
-                                foam = max(foam, foamEdge * 0.7);
+                                float foamEdge = smoothstep(0.0, 0.2, vCoastDist) * (1.0 - smoothstep(0.2, 0.6, vCoastDist));
+                                foam = max(foam, foamEdge * 0.8);
+                                
+                                float breakerFoam = exp(-pow((vCoastDist - 12.0) / 6.0, 2.0));
+                                float breakerPulse = pow(sin(vUv.y * 500.0 + time * 5.0) * 0.5 + 0.5, 3.0);
+                                foam = max(foam, breakerFoam * breakerPulse * 0.9);
+                                
+                                float dynamicFoam = sin(vUv.y * 1500.0 + time * 8.0) * 0.5 + 0.5;
+                                dynamicFoam *= vShoreMask * foamDist;
+                                foam = max(foam, dynamicFoam * 0.6);
                                 
                                 waterColor = mix(waterColor, foamColor, foam);
+                            }
+                            
+                            // ===== جزر و مد =====
+                            float tidePulse = sin(time * 0.8) * 0.5 + 0.5;
+                            if (vShoreMask > 0.3) {
+                                float tideEffect = tidePulse * 0.15;
+                                waterColor += vec3(tideEffect * 0.1);
                             }
                             
                             waterColor = mix(waterColor, waterColor * 1.15, 0.2);
@@ -1746,7 +1804,6 @@ ${perceptionContext}`;
                     side: THREE.DoubleSide
                 });
                 
-                // هندسه‌ی پرجزئیات‌تر برای موج‌های روان‌تر
                 oceanMesh = new THREE.Mesh(new THREE.SphereGeometry(earthRadius+0.001, 256, 256), oceanMat);
                 earthGroup.add(oceanMesh);
 
@@ -1952,7 +2009,8 @@ ${perceptionContext}`;
             requestAnimationFrame(animate);
             time += 0.01;
             
-            if (oceanMesh) oceanMesh.material.uniforms.time.value = time;
+            // دریا سریع‌تر حرکت کنه تا زنده‌تر به نظر بیاد
+            if (oceanMesh) oceanMesh.material.uniforms.time.value = time * 1.5;
             
             const camDist = camera.position.length();
             if (controls.enabled) {

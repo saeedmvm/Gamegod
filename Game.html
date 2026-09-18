@@ -444,7 +444,6 @@
         let rotateState = { active: false, direction: null };
         let rotateSpeed = 0.025;
 
-        // ❗ ذخیره تنظیمات پیش‌فرض دوربین
         const DEFAULT_CAM = {
             minDistance: 1.515,
             maxDistance: 15,
@@ -872,6 +871,7 @@
             return mapCanvas;
         }
 
+        // ❗ تابع createTree اصلاح‌شده — درخت‌ها دیگه کج نمی‌شن
         function createTree(lat, lon) {
             const group = new THREE.Group();
             const s = 0.7 + Math.random() * 0.7;
@@ -911,7 +911,9 @@
             const up = group.position.clone().normalize();
             const q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,1,0), up);
             group.quaternion.copy(q);
-            group.rotateZ(Math.random() * Math.PI * 2);
+            // ❗ اصلاح: به‌جای rotateZ از rotateY استفاده می‌کنیم
+            // rotateY دور محور عمودی کره می‌چرخونه → درخت کج نمی‌شه
+            group.rotateY(Math.random() * Math.PI * 2);
             return group;
         }
 
@@ -1459,7 +1461,6 @@ ${perceptionContext}`;
                 controls.enabled = true;
                 controls.target.copy(DEFAULT_CAM.target);
                 camera.up.set(0, 1, 0);
-                // ❗ بازگردانی محدودیت‌های دوربین
                 controls.minDistance = DEFAULT_CAM.minDistance;
                 controls.maxDistance = DEFAULT_CAM.maxDistance;
                 const dir = camera.position.clone().normalize();
@@ -1755,7 +1756,6 @@ ${perceptionContext}`;
                 if (dir === 'down') fpPitch -= rotateSpeed;
                 if (dir === 'left') fpYaw += rotateSpeed;
                 if (dir === 'right') fpYaw -= rotateSpeed;
-                // در این حالت‌ها zوم معنی نداره
             }
         }
 
@@ -1810,7 +1810,10 @@ ${perceptionContext}`;
             
             if (oceanMesh) oceanMesh.material.uniforms.time.value = time;
             
-            trees.forEach((t, i) => { t.rotation.z = Math.sin(time*0.5+i*0.1)*0.015; });
+            // ❗ چرخش ملایم درخت‌ها حول محور محلی خودشون (بدون کج شدن)
+            trees.forEach((t, i) => { 
+                t.rotation.y = Math.sin(time*0.5+i*0.1)*0.015; 
+            });
             
             const camDist = camera.position.length();
             if (controls.enabled) {
@@ -1859,7 +1862,6 @@ ${perceptionContext}`;
                 if (d.highlight.visible) d.highlight.material.opacity = 0.5+Math.sin(time*5)*0.3;
             });
 
-            // ❗ پرواز به آدمک — بدون تغییر minDistance
             if (isFlyingToHuman && flyTarget && cameraMode === 'globe') {
                 const hp = flyTarget.position.clone();
                 const up = hp.clone().normalize();
@@ -1871,7 +1873,6 @@ ${perceptionContext}`;
                     isFlyingToHuman = false; 
                     flyTarget = null; 
                     controls.enabled = true;
-                    // ❗ اجازه‌ی زوم نزدیک‌تر بعد از رسیدن به آدمک
                     controls.minDistance = 0.01;
                     controls.maxDistance = 15;
                 }
@@ -1937,7 +1938,6 @@ ${perceptionContext}`;
             callAI(text);
         };
 
-        // ❗ selectHuman — محدودیت دوربین رو تغییر نمیده
         window.selectHuman = (i) => {
             if (selectedHuman !== null && humans[selectedHuman]) {
                 humans[selectedHuman].userData.highlight.visible = false;
@@ -1947,7 +1947,6 @@ ${perceptionContext}`;
                 isFlyingToHuman = false; 
                 flyTarget = null; 
                 controls.enabled = (cameraMode === 'globe');
-                // ❗ بازگردانی محدودیت‌ها
                 controls.minDistance = DEFAULT_CAM.minDistance;
                 controls.maxDistance = DEFAULT_CAM.maxDistance;
                 fpTargetHuman = null;
@@ -1980,7 +1979,6 @@ ${perceptionContext}`;
             });
         };
         
-        // ❗ resetSelection — بازگردانی کامل همه چیز
         window.resetSelection = () => {
             if (selectedHuman !== null && humans[selectedHuman]) {
                 humans[selectedHuman].userData.highlight.visible = false;
@@ -1989,7 +1987,6 @@ ${perceptionContext}`;
             isFlyingToHuman = false; 
             flyTarget = null; 
             
-            // بازگردانی محدودیت‌های دوربین
             controls.minDistance = DEFAULT_CAM.minDistance;
             controls.maxDistance = DEFAULT_CAM.maxDistance;
             controls.enabled = (cameraMode === 'globe');
@@ -2000,7 +1997,6 @@ ${perceptionContext}`;
                 fpTargetHuman = aiHuman;
             }
             
-            // اگه دوربین خیلی نزدیک بود، یه کم عقب ببر
             if (cameraMode === 'globe' && controls && camera) {
                 const distFromCenter = camera.position.length();
                 if (distFromCenter < 2) {
@@ -2022,4 +2018,4 @@ ${perceptionContext}`;
         init();
     </script>
 </body>
-  </html>
+</html>

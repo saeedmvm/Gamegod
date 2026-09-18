@@ -871,7 +871,9 @@
             return mapCanvas;
         }
 
-        // ❗ تابع createTree اصلاح‌شده — درخت‌ها دیگه کج نمی‌شن
+        // ❗ تابع createTree اصلاح‌شده نهایی
+        // راه حل: ترکیب quaternion با چرخش محلی Y از طریق multiply
+        // ترتیب: اول چرخش محلی، بعد تراز با سطح کره
         function createTree(lat, lon) {
             const group = new THREE.Group();
             const s = 0.7 + Math.random() * 0.7;
@@ -908,12 +910,22 @@
             const rad = earthRadius + 0.0002;
             const phi = (90-lat)*(Math.PI/180), theta = (lon+180)*(Math.PI/180);
             group.position.set(-(rad*Math.sin(phi)*Math.cos(theta)), rad*Math.cos(phi), rad*Math.sin(phi)*Math.sin(theta));
+            
+            // ❗ quaternion برای تراز Y با بالای کره
             const up = group.position.clone().normalize();
-            const q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,1,0), up);
-            group.quaternion.copy(q);
-            // ❗ اصلاح: به‌جای rotateZ از rotateY استفاده می‌کنیم
-            // rotateY دور محور عمودی کره می‌چرخونه → درخت کج نمی‌شه
-            group.rotateY(Math.random() * Math.PI * 2);
+            const alignQuat = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,1,0), up);
+            
+            // ❗ چرخش تصادفی حول محور Y محلی
+            const randomYRot = new THREE.Quaternion().setFromAxisAngle(
+                new THREE.Vector3(0,1,0), 
+                Math.random() * Math.PI * 2
+            );
+            
+            // ❗ ترتیب: اول چرخش محلی، بعد تراز با کره
+            // در ضرب quaternion: q1.multiply(q2) = q1 * q2 (اول q2، بعد q1)
+            // پس alignQuat.multiply(randomYRot) یعنی اول randomYRot بعد alignQuat ✅
+            group.quaternion.copy(alignQuat).multiply(randomYRot);
+            
             return group;
         }
 
@@ -1810,10 +1822,9 @@ ${perceptionContext}`;
             
             if (oceanMesh) oceanMesh.material.uniforms.time.value = time;
             
-            // ❗ چرخش ملایم درخت‌ها حول محور محلی خودشون (بدون کج شدن)
-            trees.forEach((t, i) => { 
-                t.rotation.y = Math.sin(time*0.5+i*0.1)*0.015; 
-            });
+            // ❗ درخت‌ها بدون هیچ چرخش اضافی — همیشه عمود
+            // (اگه می‌خوای باد ملایم داشته باشن، از sway حول محور Y استفاده می‌کنیم ولی اینجا حذفش کردیم
+            //  چون باعث کج شدن بصری می‌شد. حالا درخت‌ها ثابت و عمود هستن.)
             
             const camDist = camera.position.length();
             if (controls.enabled) {

@@ -1,2211 +1,2345 @@
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>بازی خدایی: آرش هوشمند با ادراک محیطی</title>
-    <style>
-        * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
-        html, body { 
-            margin: 0; padding: 0; overflow: hidden; 
-            background-color: #050510; 
-            font-family: Tahoma, sans-serif; 
-            user-select: none; -webkit-user-select: none;
-            touch-action: none;
-            width: 100%; height: 100%;
-            position: fixed;
-        }
-        canvas { display: block; touch-action: none; }
-        
-        #god-toggle-btn {
-            position: absolute; top: calc(15px + env(safe-area-inset-top)); right: 15px;
-            width: 48px; height: 48px;
-            background: linear-gradient(135deg, #ffd700, #ffaa00);
-            border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            font-size: 22px; cursor: pointer;
-            box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
-            z-index: 2000; transition: transform 0.3s;
-            touch-action: manipulation;
-        }
-        #god-toggle-btn:active { transform: scale(0.95); }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>آرش: سفر تکامل | Evolution Journey</title>
+<style>
+*{-webkit-tap-highlight-color:transparent;box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;overflow:hidden;background:#0a0a15;font-family:Tahoma,sans-serif;user-select:none;-webkit-user-select:none;touch-action:none;position:fixed;color:#fff}
+canvas{display:block;touch-action:none}
 
-        #camera-mode-btn {
-            position: absolute; top: calc(15px + env(safe-area-inset-top)); 
-            left: 50%; transform: translateX(-50%);
-            height: 48px; padding: 0 16px;
-            background: linear-gradient(135deg, #9b59b6, #8e44ad);
-            border-radius: 24px; display: flex; align-items: center; justify-content: center;
-            gap: 6px; font-size: 14px; color: white; font-weight: bold;
-            cursor: pointer; z-index: 2000;
-            box-shadow: 0 0 20px rgba(155, 89, 182, 0.4);
-            touch-action: manipulation;
-            white-space: nowrap;
-        }
-        #camera-mode-btn:active { transform: translateX(-50%) scale(0.95); }
+/* Top Bar - Era Progress */
+#top-bar{
+    position:absolute;top:0;left:0;right:0;
+    height:calc(70px + env(safe-area-inset-top));
+    padding-top:env(safe-area-inset-top);
+    background:linear-gradient(180deg,rgba(10,10,20,0.95) 0%,rgba(10,10,20,0.85) 100%);
+    backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+    border-bottom:1px solid rgba(255,215,0,0.2);
+    z-index:1000;
+    display:flex;flex-direction:column;justify-content:center;
+    padding-left:15px;padding-right:15px;
+}
+#era-header{
+    display:flex;align-items:center;justify-content:space-between;
+    margin-bottom:6px;
+}
+#era-icon{font-size:24px;margin-left:8px}
+#era-name{font-size:14px;font-weight:bold;color:#ffd700}
+#era-xp{font-size:11px;color:#aaa}
+#progress-bar{
+    width:100%;height:6px;background:rgba(255,255,255,0.1);
+    border-radius:3px;overflow:hidden;position:relative;
+}
+#progress-fill{
+    height:100%;background:linear-gradient(90deg,#ffd700,#ff8800);
+    border-radius:3px;transition:width 0.5s;width:0%;
+    box-shadow:0 0 10px rgba(255,215,0,0.5);
+}
+#progress-text{
+    position:absolute;right:5px;top:-14px;
+    font-size:10px;color:#ffd700;
+}
 
-        #rotate-controls {
-            position: absolute; 
-            bottom: calc(80px + env(safe-area-inset-bottom)); 
-            right: 15px;
-            display: grid; grid-template-columns: repeat(3, 46px); 
-            grid-template-rows: repeat(3, 46px); gap: 4px;
-            z-index: 1900; opacity: 0.85;
-        }
-        .rot-btn {
-            background: rgba(20, 25, 45, 0.85);
-            border: 1px solid rgba(100, 150, 255, 0.4);
-            border-radius: 10px; color: #7ec8ff;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 20px; cursor: pointer;
-            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-            touch-action: manipulation;
-            transition: background 0.15s;
-        }
-        .rot-btn:active { background: rgba(60, 100, 180, 0.9); transform: scale(0.92); }
-        .rot-btn.empty { background: transparent; border: none; pointer-events: none; }
-        #zoom-in-btn { grid-column: 2; grid-row: 1; }
-        #rotate-up { grid-column: 2; grid-row: 2; }
-        #zoom-out-btn { grid-column: 2; grid-row: 3; }
-        #rotate-left { grid-column: 1; grid-row: 2; }
-        #rotate-right { grid-column: 3; grid-row: 2; }
+/* Resources Bar */
+#resources-bar{
+    position:absolute;
+    top:calc(85px + env(safe-area-inset-top));
+    left:10px;right:10px;
+    display:flex;justify-content:space-around;
+    background:rgba(20,20,40,0.85);
+    border-radius:12px;padding:8px;
+    border:1px solid rgba(255,255,255,0.1);
+    backdrop-filter:blur(15px);
+    z-index:999;font-size:11px;
+}
+.resource{
+    display:flex;align-items:center;gap:4px;
+    color:#fff;
+}
+.resource-icon{font-size:14px}
+.resource-value{font-weight:bold;min-width:30px}
 
-        #god-panel {
-            position: absolute; top: calc(75px + env(safe-area-inset-top)); right: 10px;
-            width: calc(100vw - 20px); max-width: 340px;
-            background: rgba(10, 15, 30, 0.96); color: #fff; padding: 16px;
-            border-radius: 16px; border: 1px solid rgba(255, 215, 0, 0.3);
-            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-            transform: translateX(120%);
-            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
-            z-index: 1999;
-            max-height: calc(100vh - 100px); overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
-        }
-        #god-panel.open { transform: translateX(0); }
-        #god-panel::-webkit-scrollbar { width: 4px; }
-        #god-panel::-webkit-scrollbar-thumb { background: #444; border-radius: 2px; }
-        
-        h2 { margin: 0 0 12px 0; color: #ffd700; font-size: 16px; text-align: center; 
-             border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px; }
-        .control-group { margin-bottom: 12px; }
-        label { display: block; margin-bottom: 5px; font-size: 12px; color: #aaa; }
-        
-        select, input[type="text"], input[type="password"] { 
-            width: 100%; padding: 10px; border-radius: 8px; 
-            border: 1px solid #444; background: #1a1a2e; color: white; 
-            font-family: Tahoma; font-size: 14px; outline: none;
-            -webkit-appearance: none; appearance: none;
-        }
-        input[type="range"] { 
-            width: 100%; accent-color: #ffd700; height: 32px;
-            -webkit-appearance: none;
-        }
-        input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none; width: 24px; height: 24px; 
-            background: #ffd700; border-radius: 50%; cursor: pointer;
-            margin-top: -9px;
-        }
-        input[type="range"]::-webkit-slider-runnable-track {
-            height: 6px; background: #333; border-radius: 3px;
-        }
-        
-        button.action-btn {
-            width: 100%; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-            color: #000; font-weight: bold; padding: 12px; border-radius: 8px; border: none;
-            cursor: pointer; margin-top: 5px; font-family: Tahoma; font-size: 14px;
-            touch-action: manipulation;
-        }
-        button.action-btn:active { opacity: 0.8; transform: scale(0.98); }
-        .speed-display, .size-display { text-align: center; font-size: 13px; color: #4caf50; margin-top: 3px; }
-        
-        .api-hint { font-size: 10px; color: #888; margin-top: 4px; line-height: 1.5; }
-        .api-hint a { color: #4facfe; text-decoration: none; }
+/* Bottom Navigation */
+#bottom-nav{
+    position:absolute;bottom:0;left:0;right:0;
+    height:calc(75px + env(safe-area-inset-bottom));
+    padding-bottom:env(safe-area-inset-bottom);
+    background:linear-gradient(0deg,rgba(10,10,20,0.98) 0%,rgba(10,10,20,0.92) 100%);
+    backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+    border-top:1px solid rgba(255,215,0,0.3);
+    display:flex;justify-content:space-around;align-items:center;
+    z-index:1001;
+}
+.nav-btn{
+    flex:1;height:100%;
+    display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:4px;
+    cursor:pointer;color:#888;
+    transition:all 0.2s;
+    border:none;background:transparent;
+    font-family:Tahoma;
+}
+.nav-btn.active{color:#ffd700}
+.nav-btn:active{transform:scale(0.95);background:rgba(255,215,0,0.1)}
+.nav-icon{font-size:22px}
+.nav-label{font-size:10px;font-weight:bold}
+.nav-badge{
+    position:absolute;top:8px;
+    background:#ff4444;color:white;
+    font-size:9px;padding:2px 5px;border-radius:8px;
+    font-weight:bold;
+}
 
-        #perception-toggle {
-            position: absolute; top: calc(15px + env(safe-area-inset-top)); left: 15px;
-            width: 48px; height: 48px;
-            background: linear-gradient(135deg, #00ff96, #00c9ff);
-            border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            font-size: 22px; cursor: pointer;
-            box-shadow: 0 0 15px rgba(0, 255, 150, 0.4);
-            z-index: 2000; transition: transform 0.3s;
-            touch-action: manipulation;
-        }
-        #perception-toggle:active { transform: scale(0.95); }
+/* Panels */
+.panel{
+    position:absolute;left:0;right:0;
+    background:rgba(10,10,20,0.98);
+    backdrop-filter:blur(25px);-webkit-backdrop-filter:blur(25px);
+    border:1px solid rgba(255,215,0,0.3);
+    z-index:1500;
+    display:none;flex-direction:column;
+    overflow:hidden;
+    max-height:80vh;
+}
+.panel.open{display:flex;animation:slideUp 0.35s cubic-bezier(0.175,0.885,0.32,1.275)}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.panel-header{
+    padding:16px 20px;
+    background:linear-gradient(135deg,rgba(255,215,0,0.15),rgba(255,136,0,0.15));
+    border-bottom:1px solid rgba(255,215,0,0.2);
+    display:flex;justify-content:space-between;align-items:center;
+    cursor:pointer;
+}
+.panel-header h2{font-size:16px;color:#ffd700;margin:0}
+.panel-close{
+    width:32px;height:32px;border-radius:50%;
+    background:rgba(255,255,255,0.1);
+    display:flex;align-items:center;justify-content:center;
+    font-size:16px;color:#fff;cursor:pointer;
+}
+.panel-content{
+    padding:16px 20px;overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+    padding-bottom:calc(20px + env(safe-area-inset-bottom));
+}
+.panel-content::-webkit-scrollbar{width:3px}
+.panel-content::-webkit-scrollbar-thumb{background:#444;border-radius:2px}
 
-        #perception-panel {
-            position: absolute; top: calc(75px + env(safe-area-inset-top)); left: 10px;
-            width: calc(100vw - 20px); max-width: 300px;
-            background: rgba(10, 15, 30, 0.96); color: #fff; padding: 14px;
-            border-radius: 12px; border: 1px solid rgba(0, 255, 150, 0.3);
-            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-            z-index: 1999;
-            font-size: 12px; line-height: 1.6;
-            max-height: calc(100vh - 120px); overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
-            transform: translateX(-120%);
-            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-        #perception-panel.open { transform: translateX(0); }
-        #perception-panel::-webkit-scrollbar { width: 3px; }
-        #perception-panel::-webkit-scrollbar-thumb { background: #444; border-radius: 2px; }
-        
-        #perception-panel h3 {
-            margin: 0 0 10px 0; color: #00ff96; font-size: 14px;
-            border-bottom: 1px solid rgba(0, 255, 150, 0.2); padding-bottom: 6px;
-        }
-        .perc-row { display: flex; justify-content: space-between; margin: 5px 0; gap: 8px; }
-        .perc-label { color: #888; white-space: nowrap; }
-        .perc-value { color: #fff; font-weight: bold; text-align: left; }
-        .perc-section { margin-top: 8px; padding-top: 6px; border-top: 1px dashed rgba(255,255,255,0.1); }
-        .perc-section-title { color: #ffd700; font-size: 11px; margin-bottom: 4px; }
+#tech-panel{
+    bottom:calc(75px + env(safe-area-inset-bottom));
+    border-radius:20px 20px 0 0;
+}
 
-        #chat-panel {
-            position: absolute; 
-            bottom: 0; left: 0; right: 0;
-            width: 100%;
-            max-width: 100%;
-            background: rgba(10, 15, 30, 0.97);
-            color: #fff;
-            border-radius: 16px 16px 0 0; 
-            border: 1px solid rgba(0, 200, 255, 0.3);
-            border-bottom: none;
-            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-            z-index: 2000;
-            display: flex; flex-direction: column; overflow: hidden;
-            box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
-            transform: translateY(calc(100% - 52px));
-            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-        #chat-panel.open { transform: translateY(0); }
-        
-        #chat-header {
-            background: linear-gradient(135deg, #ff6b35, #f7931e);
-            padding: 14px 16px; cursor: pointer;
-            display: flex; align-items: center; justify-content: space-between;
-            touch-action: manipulation;
-            min-height: 52px;
-        }
-        #chat-header h3 { margin: 0; font-size: 14px; color: white; }
-        #chat-header .status { font-size: 11px; color: rgba(255,255,255,0.9); }
-        
-        #chat-messages {
-            height: 45vh; max-height: 320px; overflow-y: auto; padding: 12px;
-            display: flex; flex-direction: column; gap: 8px;
-            -webkit-overflow-scrolling: touch;
-        }
-        #chat-messages::-webkit-scrollbar { width: 4px; }
-        #chat-messages::-webkit-scrollbar-thumb { background: #444; border-radius: 2px; }
-        
-        .msg {
-            padding: 8px 12px; border-radius: 12px; font-size: 13px;
-            max-width: 85%; line-height: 1.6; word-wrap: break-word;
-            word-break: break-word;
-        }
-        .msg.user { background: linear-gradient(135deg, #667eea, #764ba2); color: white; align-self: flex-end; }
-        .msg.ai { background: rgba(255,255,255,0.1); color: #ddd; align-self: flex-start; border: 1px solid rgba(255,255,255,0.1); }
-        .msg.system { background: rgba(255, 215, 0, 0.1); color: #ffd700; align-self: center; font-size: 11px; text-align: center; }
-        .msg.command { background: rgba(0, 255, 100, 0.15); color: #00ff64; align-self: center; font-size: 11px; text-align: center; border: 1px solid rgba(0, 255, 100, 0.3); }
-        .msg.experience { background: rgba(150, 100, 255, 0.15); color: #c4a8ff; align-self: center; font-size: 11px; text-align: center; font-style: italic; border: 1px solid rgba(150, 100, 255, 0.3); }
-        
-        #chat-input-area { 
-            display: flex; padding: 10px; gap: 8px; 
-            border-top: 1px solid rgba(255,255,255,0.1);
-            padding-bottom: calc(10px + env(safe-area-inset-bottom));
-        }
-        #chat-input {
-            flex: 1; padding: 10px 14px; border-radius: 22px;
-            border: 1px solid #444; background: #1a1a2e;
-            color: white; font-family: Tahoma; font-size: 14px; outline: none;
-            min-width: 0;
-        }
-        #chat-send {
-            width: 42px; height: 42px; border-radius: 50%;
-            background: linear-gradient(135deg, #ff6b35, #f7931e);
-            border: none; color: white; font-size: 18px;
-            cursor: pointer; display: flex; align-items: center; justify-content: center;
-            flex-shrink: 0;
-            touch-action: manipulation;
-        }
-        #chat-send:disabled { opacity: 0.4; cursor: not-allowed; }
-        #chat-send:active:not(:disabled) { transform: scale(0.92); }
+#chat-panel{
+    bottom:calc(75px + env(safe-area-inset-bottom));
+    border-radius:20px 20px 0 0;
+    max-height:60vh;
+}
 
-        #speech-bubble {
-            position: absolute; background: rgba(255, 255, 255, 0.95); color: #222;
-            padding: 8px 14px; border-radius: 12px; font-size: 12px;
-            font-family: Tahoma; max-width: 70vw; line-height: 1.5;
-            pointer-events: none; z-index: 1500; display: none;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-            transform: translate(-50%, -100%); margin-top: -15px;
-        }
-        #speech-bubble::after {
-            content: ''; position: absolute; bottom: -8px; left: 50%;
-            transform: translateX(-50%); width: 0; height: 0;
-            border-left: 8px solid transparent; border-right: 8px solid transparent;
-            border-top: 8px solid rgba(255, 255, 255, 0.95);
-        }
+#stats-panel{
+    bottom:calc(75px + env(safe-area-inset-bottom));
+    border-radius:20px 20px 0 0;
+}
 
-        #camera-hint {
-            position: absolute; 
-            top: calc(75px + env(safe-area-inset-top));
-            left: 50%; transform: translateX(-50%);
-            background: rgba(155, 89, 182, 0.85);
-            color: white; padding: 6px 14px; border-radius: 20px;
-            font-size: 12px; z-index: 1998;
-            pointer-events: none; display: none;
-            backdrop-filter: blur(10px);
-        }
-        #camera-hint.show { display: block; }
+/* Tech Tree */
+.tech-era{
+    margin-bottom:16px;padding-bottom:12px;
+    border-bottom:1px solid rgba(255,255,255,0.1);
+}
+.tech-era:last-child{border:none}
+.tech-era-title{
+    display:flex;align-items:center;gap:8px;
+    margin-bottom:10px;color:#ffd700;font-size:13px;font-weight:bold;
+}
+.tech-grid{
+    display:grid;grid-template-columns:repeat(2,1fr);
+    gap:8px;
+}
+.tech-item{
+    padding:10px;border-radius:10px;
+    background:rgba(255,255,255,0.05);
+    border:1px solid rgba(255,255,255,0.1);
+    display:flex;flex-direction:column;gap:4px;
+    cursor:pointer;transition:all 0.2s;
+    position:relative;overflow:hidden;
+}
+.tech-item.unlocked{
+    background:rgba(255,215,0,0.15);
+    border-color:rgba(255,215,0,0.4);
+}
+.tech-item.locked{opacity:0.5}
+.tech-item:active:not(.locked){transform:scale(0.97)}
+.tech-icon{font-size:22px}
+.tech-name{font-size:12px;font-weight:bold;color:#fff}
+.tech-cost{font-size:10px;color:#ffd700;margin-top:2px}
+.tech-desc{font-size:9px;color:#aaa;line-height:1.4}
+.tech-lock-overlay{
+    position:absolute;top:5px;left:5px;
+    background:rgba(0,0,0,0.7);padding:2px 6px;border-radius:6px;
+    font-size:10px;
+}
 
-        #loading-screen {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: #050510; display: flex; flex-direction: column;
-            align-items: center; justify-content: center; z-index: 9999; color: white;
-            padding: 20px; text-align: center;
-        }
-        #loading-screen .spinner {
-            width: 50px; height: 50px; border: 4px solid #333;
-            border-top-color: #ffd700; border-radius: 50%;
-            animation: spin 1s linear infinite; margin-bottom: 20px;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        #load-status { font-size: 14px; color: #aaa; }
+/* Chat */
+#chat-messages{
+    height:45vh;overflow-y:auto;padding:10px;
+    display:flex;flex-direction:column;gap:8px;
+    -webkit-overflow-scrolling:touch;
+}
+.msg{padding:8px 12px;border-radius:12px;font-size:12px;max-width:85%;line-height:1.6}
+.msg.user{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;align-self:flex-end}
+.msg.ai{background:rgba(255,255,255,0.08);color:#ddd;align-self:flex-start;border:1px solid rgba(255,255,255,0.1)}
+.msg.system{background:rgba(255,215,0,0.1);color:#ffd700;align-self:center;font-size:10px;text-align:center}
+.msg.discovery{background:linear-gradient(135deg,rgba(0,255,150,0.2),rgba(0,201,255,0.2));color:#00ff96;align-self:center;font-size:12px;text-align:center;font-weight:bold;border:2px solid rgba(0,255,150,0.4);animation:disco 0.5s}
+.msg.event{background:rgba(255,100,100,0.2);color:#ff8080;align-self:center;font-size:10px;text-align:center;border:1px solid rgba(255,100,100,0.3)}
+.msg.experience{background:rgba(150,100,255,0.15);color:#c4a8ff;align-self:center;font-size:10px;text-align:center;font-style:italic}
+@keyframes disco{
+    0%{transform:scale(0.5);opacity:0}
+    50%{transform:scale(1.1);box-shadow:0 0 30px rgba(0,255,150,0.6)}
+    100%{transform:scale(1);opacity:1}
+}
 
-        @media (min-width: 768px) {
-            #chat-panel {
-                left: 20px; bottom: 20px; right: auto;
-                width: 380px; max-width: 380px;
-                border-radius: 16px;
-                border-bottom: 1px solid rgba(0, 200, 255, 0.3);
-                transform: translateY(calc(100% - 50px));
-            }
-            #chat-panel.open { transform: translateY(0); }
-            #chat-messages { height: 220px; max-height: 220px; }
-            #god-panel { width: 320px; }
-            #perception-panel { width: 260px; }
-        }
+#chat-input-area{
+    display:flex;padding:10px;gap:8px;
+    border-top:1px solid rgba(255,255,255,0.1);
+}
+#chat-input{
+    flex:1;padding:10px 14px;border-radius:22px;
+    border:1px solid #444;background:#1a1a2e;
+    color:#fff;font-family:Tahoma;font-size:13px;outline:none;
+    min-width:0;
+}
+#chat-send{
+    width:42px;height:42px;border-radius:50%;
+    background:linear-gradient(135deg,#ffd700,#ff8800);
+    border:none;color:#fff;font-size:18px;
+    cursor:pointer;display:flex;align-items:center;justify-content:center;
+}
 
-        @media (max-height: 600px) {
-            #chat-messages { height: 35vh; }
-            #god-panel { max-height: 70vh; }
-            #perception-panel { max-height: 70vh; }
-        }
-    </style>
+/* Stats Panel */
+.stat-group{margin-bottom:16px}
+.stat-group-title{font-size:13px;color:#ffd700;margin-bottom:8px;font-weight:bold}
+.stat-row{
+    display:flex;align-items:center;gap:8px;margin:6px 0;font-size:11px;
+}
+.stat-label{width:80px;color:#aaa}
+.stat-bar{flex:1;height:8px;background:rgba(255,255,255,0.1);border-radius:4px;overflow:hidden}
+.stat-fill{height:100%;transition:width 0.5s;border-radius:4px}
+.stat-hunger{background:linear-gradient(90deg,#ff6b6b,#ee5a6f)}
+.stat-thirst{background:linear-gradient(90deg,#4facfe,#00f2fe)}
+.stat-energy{background:linear-gradient(90deg,#ffd700,#ff8800)}
+.stat-mood{background:linear-gradient(90deg,#00ff96,#00c9ff)}
+.stat-val{width:35px;text-align:right;font-weight:bold;font-size:10px}
+
+/* Discovery Popup */
+#discovery-popup{
+    position:fixed;top:50%;left:50%;
+    transform:translate(-50%,-50%) scale(0);
+    background:linear-gradient(135deg,rgba(20,20,40,0.98),rgba(40,30,60,0.98));
+    border:3px solid #00ff96;border-radius:20px;
+    padding:25px;z-index:3000;text-align:center;
+    box-shadow:0 0 60px rgba(0,255,150,0.6);
+    transition:transform 0.5s cubic-bezier(0.175,0.885,0.32,1.275);
+    min-width:280px;max-width:90vw;
+}
+#discovery-popup.show{transform:translate(-50%,-50%) scale(1)}
+.dis-icon{font-size:60px;margin-bottom:10px;animation:bounce 1s infinite}
+@keyframes bounce{
+    0%,100%{transform:translateY(0)}
+    50%{transform:translateY(-10px)}
+}
+.dis-title{color:#00ff96;font-size:20px;font-weight:bold;margin-bottom:5px}
+.dis-desc{color:#ccc;font-size:12px;line-height:1.6;margin-bottom:15px}
+.dis-reward{
+    display:inline-block;padding:6px 12px;border-radius:20px;
+    background:rgba(255,215,0,0.2);color:#ffd700;
+    font-size:11px;font-weight:bold;margin:3px;
+}
+#dis-ok-btn{
+    background:linear-gradient(135deg,#00ff96,#00c9ff);
+    color:#000;border:none;padding:10px 30px;
+    border-radius:25px;font-size:14px;font-weight:bold;
+    cursor:pointer;font-family:Tahoma;
+    touch-action:manipulation;
+}
+#dis-ok-btn:active{transform:scale(0.95)}
+
+/* Era Change Animation */
+#era-transition{
+    position:fixed;top:0;left:0;right:0;bottom:0;
+    background:radial-gradient(circle,rgba(255,215,0,0.3),rgba(0,0,0,0.9));
+    z-index:4000;display:none;
+    align-items:center;justify-content:center;
+    flex-direction:column;color:#ffd700;
+    animation:eraFlash 3s ease-out;
+}
+#era-transition.show{display:flex}
+@keyframes eraFlash{
+    0%{opacity:0;background:rgba(255,255,255,1)}
+    30%{opacity:1;background:radial-gradient(circle,rgba(255,215,0,0.8),rgba(0,0,0,0.9))}
+    100%{opacity:0}
+}
+.era-big-icon{font-size:100px;margin-bottom:20px;animation:eraPulse 1s infinite}
+@keyframes eraPulse{
+    0%,100%{transform:scale(1)}
+    50%{transform:scale(1.2)}
+}
+.era-big-title{font-size:32px;font-weight:bold;text-shadow:0 0 20px #ffd700;margin-bottom:10px}
+.era-subtitle{font-size:16px;color:#ffaa00}
+
+/* Speech Bubble */
+#speech-bubble{
+    position:absolute;background:rgba(255,255,255,0.95);color:#222;
+    padding:8px 14px;border-radius:12px;font-size:11px;
+    font-family:Tahoma;max-width:70vw;line-height:1.5;
+    pointer-events:none;z-index:1500;display:none;
+    box-shadow:0 4px 15px rgba(0,0,0,0.3);
+    transform:translate(-50%,-100%);margin-top:-15px;
+}
+#speech-bubble::after{
+    content:'';position:absolute;bottom:-8px;left:50%;
+    transform:translateX(-50%);width:0;height:0;
+    border-left:8px solid transparent;border-right:8px solid transparent;
+    border-top:8px solid rgba(255,255,255,0.95);
+}
+
+/* Loading */
+#loading-screen{
+    position:fixed;top:0;left:0;width:100%;height:100%;
+    background:radial-gradient(circle,#1a1a2e,#050510);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    z-index:9999;color:white;text-align:center;padding:20px;
+}
+.loader{
+    width:60px;height:60px;border:4px solid rgba(255,215,0,0.2);
+    border-top-color:#ffd700;border-radius:50%;
+    animation:spin 1s linear infinite;margin-bottom:20px;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+.load-title{font-size:18px;color:#ffd700;margin-bottom:10px;font-weight:bold}
+.load-status{font-size:12px;color:#aaa}
+
+/* God Action Buttons */
+#god-actions{
+    position:absolute;
+    top:calc(160px + env(safe-area-inset-top));
+    right:10px;
+    display:flex;flex-direction:column;gap:8px;
+    z-index:998;
+}
+.god-action-btn{
+    width:52px;height:52px;
+    background:rgba(20,20,40,0.9);
+    border:1px solid rgba(255,215,0,0.3);
+    border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-size:22px;cursor:pointer;
+    backdrop-filter:blur(10px);
+    touch-action:manipulation;
+    transition:all 0.2s;
+    position:relative;
+}
+.god-action-btn:active{transform:scale(0.9);background:rgba(255,215,0,0.3)}
+.god-action-btn.locked{opacity:0.3;pointer-events:none}
+.god-action-btn.locked::after{
+    content:'🔒';position:absolute;
+    font-size:14px;top:-2px;left:-2px;
+    background:#222;border-radius:50%;
+    width:20px;height:20px;
+    display:flex;align-items:center;justify-content:center;
+}
+
+/* Camera Control */
+#camera-controls{
+    position:absolute;
+    bottom:calc(95px + env(safe-area-inset-bottom));
+    left:15px;
+    display:flex;flex-direction:column;gap:6px;
+    z-index:998;
+}
+.cam-btn{
+    width:48px;height:48px;border-radius:50%;
+    background:rgba(20,20,40,0.9);
+    border:1px solid rgba(100,150,255,0.4);
+    color:#7ec8ff;font-size:18px;
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;touch-action:manipulation;
+    transition:all 0.2s;
+}
+.cam-btn:active{background:rgba(60,100,180,0.9);transform:scale(0.92)}
+
+/* API Key Modal */
+#api-modal{
+    position:fixed;top:0;left:0;right:0;bottom:0;
+    background:rgba(0,0,0,0.8);z-index:5000;
+    display:none;align-items:center;justify-content:center;
+    padding:20px;
+}
+#api-modal.show{display:flex}
+.modal-box{
+    background:linear-gradient(135deg,#1a1a2e,#2a2a4e);
+    border:1px solid rgba(255,215,0,0.3);
+    border-radius:20px;padding:20px;
+    width:100%;max-width:400px;
+}
+.modal-box h3{color:#ffd700;margin-bottom:15px;font-size:16px}
+.modal-input{
+    width:100%;padding:12px;border-radius:10px;
+    border:1px solid #444;background:#0a0a15;color:#fff;
+    font-family:Tahoma;font-size:13px;margin-bottom:10px;
+    outline:none;
+}
+.modal-btn{
+    width:100%;padding:12px;border-radius:10px;border:none;
+    background:linear-gradient(135deg,#ffd700,#ff8800);
+    color:#000;font-weight:bold;font-family:Tahoma;font-size:14px;
+    cursor:pointer;margin-top:5px;
+}
+.modal-btn:active{transform:scale(0.98)}
+.modal-hint{font-size:10px;color:#888;margin-top:5px;line-height:1.5}
+.modal-hint a{color:#4facfe}
+
+@media (min-width:768px){
+    #bottom-nav{height:calc(85px + env(safe-area-inset-bottom))}
+    .nav-icon{font-size:24px}
+    .nav-label{font-size:11px}
+}
+</style>
 </head>
 <body>
 
-    <div id="loading-screen">
-        <div class="spinner"></div>
-        <div>در حال ساخت جهان...</div>
-        <div id="load-status">پردازش داده‌ها</div>
+<div id="loading-screen">
+    <div class="loader"></div>
+    <div class="load-title">در حال پیدایش جهان...</div>
+    <div class="load-status" id="load-status">شکل‌گیری زمین</div>
+</div>
+
+<!-- Top Era Progress Bar -->
+<div id="top-bar">
+    <div id="era-header">
+        <div style="display:flex;align-items:center">
+            <span id="era-icon">🪨</span>
+            <span id="era-name">عصر حجر</span>
+        </div>
+        <span id="era-xp">0 / 100 XP</span>
     </div>
-
-    <div id="god-toggle-btn" onclick="togglePanel()">👁️</div>
-    <div id="perception-toggle" onclick="togglePerception()">🧠</div>
-
-    <div id="camera-mode-btn" onclick="cycleCameraMode()">
-        <span id="cam-mode-icon">🌍</span>
-        <span id="cam-mode-text">کره</span>
+    <div id="progress-bar">
+        <span id="progress-text"></span>
+        <div id="progress-fill"></div>
     </div>
+</div>
 
-    <div id="camera-hint"></div>
+<!-- Resources -->
+<div id="resources-bar">
+    <div class="resource"><span class="resource-icon">🍖</span><span class="resource-value" id="res-food">50</span></div>
+    <div class="resource"><span class="resource-icon">💧</span><span class="resource-value" id="res-water">50</span></div>
+    <div class="resource"><span class="resource-icon">🪵</span><span class="resource-value" id="res-wood">0</span></div>
+    <div class="resource"><span class="resource-icon">🪨</span><span class="resource-value" id="res-stone">0</span></div>
+    <div class="resource"><span class="resource-icon">⚙️</span><span class="resource-value" id="res-metal">0</span></div>
+</div>
 
-    <div id="rotate-controls">
-        <div class="rot-btn" id="zoom-in-btn" ontouchstart="startRotate('zoomIn')" ontouchend="stopRotate()" onmousedown="startRotate('zoomIn')" onmouseup="stopRotate()" onmouseleave="stopRotate()">➕</div>
-        <div class="rot-btn" id="rotate-up" ontouchstart="startRotate('up')" ontouchend="stopRotate()" onmousedown="startRotate('up')" onmouseup="stopRotate()" onmouseleave="stopRotate()">⬆️</div>
-        <div class="rot-btn" id="zoom-out-btn" ontouchstart="startRotate('zoomOut')" ontouchend="stopRotate()" onmousedown="startRotate('zoomOut')" onmouseup="stopRotate()" onmouseleave="stopRotate()">➖</div>
-        <div class="rot-btn" id="rotate-left" ontouchstart="startRotate('left')" ontouchend="stopRotate()" onmousedown="startRotate('left')" onmouseup="stopRotate()" onmouseleave="stopRotate()">⬅️</div>
-        <div class="rot-btn empty"></div>
-        <div class="rot-btn" id="rotate-right" ontouchstart="startRotate('right')" ontouchend="stopRotate()" onmousedown="startRotate('right')" onmouseup="stopRotate()" onmouseleave="stopRotate()">➡️</div>
+<!-- God Actions -->
+<div id="god-actions">
+    <div class="god-action-btn" onclick="doAction('gather')">🌾</div>
+    <div class="god-action-btn" onclick="doAction('hunt')">🏹</div>
+    <div class="god-action-btn" onclick="doAction('fire')">🔥</div>
+    <div class="god-action-btn locked" id="action-build">🏠</div>
+    <div class="god-action-btn locked" id="action-farm">🌱</div>
+    <div class="god-action-btn locked" id="action-mine">⛏️</div>
+    <div class="god-action-btn locked" id="action-forge">⚒️</div>
+</div>
+
+<!-- Camera Controls -->
+<div id="camera-controls">
+    <div class="cam-btn" onclick="zoomIn()">➕</div>
+    <div class="cam-btn" onclick="zoomOut()">➖</div>
+    <div class="cam-btn" onclick="toggleRotate()">🔄</div>
+    <div class="cam-btn" onclick="focusArsh()">🎯</div>
+</div>
+
+<!-- Bottom Navigation -->
+<div id="bottom-nav">
+    <button class="nav-btn active" onclick="openPanel('none')">
+        <span class="nav-icon">🌍</span>
+        <span class="nav-label">کره</span>
+    </button>
+    <button class="nav-btn" onclick="openPanel('tech')">
+        <span class="nav-icon">🔬</span>
+        <span class="nav-label">فناوری</span>
+    </button>
+    <button class="nav-btn" onclick="openPanel('chat')">
+        <span class="nav-icon">💬</span>
+        <span class="nav-label">چت</span>
+    </button>
+    <button class="nav-btn" onclick="openPanel('stats')">
+        <span class="nav-icon">📊</span>
+        <span class="nav-label">آمار</span>
+    </button>
+    <button class="nav-btn" onclick="openPanel('god')">
+        <span class="nav-icon">⚡</span>
+        <span class="nav-label">خدا</span>
+    </button>
+</div>
+
+<!-- Tech Tree Panel -->
+<div class="panel" id="tech-panel">
+    <div class="panel-header" onclick="closePanel()">
+        <h2>🔬 درخت فناوری</h2>
+        <div class="panel-close">✕</div>
     </div>
+    <div class="panel-content" id="tech-content"></div>
+</div>
 
-    <div id="god-panel">
-        <h2>🌍 پنل فرماندهی</h2>
-        <div class="control-group">
-            <label>🔑 کلید API (OpenRouter):</label>
-            <input type="password" id="api-key" placeholder="sk-or-v1-xxxx..." onchange="saveApiKey()">
-            <div class="api-hint">از <a href="https://openrouter.ai/keys" target="_blank">openrouter.ai/keys</a> کلید بگیرید</div>
+<!-- Chat Panel -->
+<div class="panel" id="chat-panel">
+    <div class="panel-header" onclick="closePanel()">
+        <h2>💬 گفتگو با آرش</h2>
+        <div class="panel-close">✕</div>
+    </div>
+    <div id="chat-messages">
+        <div class="msg system">سلام! آرش در عصر حجر به دنیا آمد. 🪨<br>کمکش کن دنیا را کشف کند!</div>
+    </div>
+    <div id="chat-input-area">
+        <input type="text" id="chat-input" placeholder="پیام..." onkeypress="if(event.key==='Enter')sendMessage()">
+        <button id="chat-send" onclick="sendMessage()">➤</button>
+    </div>
+</div>
+
+<!-- Stats Panel -->
+<div class="panel" id="stats-panel">
+    <div class="panel-header" onclick="closePanel()">
+        <h2>📊 وضعیت آرش</h2>
+        <div class="panel-close">✕</div>
+    </div>
+    <div class="panel-content">
+        <div class="stat-group">
+            <div class="stat-group-title">❤️ سلامتی</div>
+            <div class="stat-row">
+                <span class="stat-label">🍖 گرسنگی</span>
+                <div class="stat-bar"><div class="stat-fill stat-hunger" id="st-hunger" style="width:80%"></div></div>
+                <span class="stat-val" id="sv-hunger">80</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">💧 تشنگی</span>
+                <div class="stat-bar"><div class="stat-fill stat-thirst" id="st-thirst" style="width:80%"></div></div>
+                <span class="stat-val" id="sv-thirst">80</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">⚡ انرژی</span>
+                <div class="stat-bar"><div class="stat-fill stat-energy" id="st-energy" style="width:80%"></div></div>
+                <span class="stat-val" id="sv-energy">80</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">😊 روحیه</span>
+                <div class="stat-bar"><div class="stat-fill stat-mood" id="st-mood" style="width:80%"></div></div>
+                <span class="stat-val" id="sv-mood">80</span>
+            </div>
         </div>
-        <div class="control-group">
-            <label>🤖 مدل هوش مصنوعی:</label>
-            <select id="model-selector" onchange="saveModel()">
-                <option value="meta-llama/llama-3.3-70b-instruct:free">Llama 3.3 70B (رایگان)</option>
-                <option value="google/gemini-2.0-flash-exp:free">Gemini 2.0 Flash (رایگان)</option>
-                <option value="deepseek/deepseek-chat-v3.1:free">DeepSeek V3 (رایگان)</option>
-                <option value="qwen/qwen-2.5-72b-instruct:free">Qwen 2.5 72B (رایگان)</option>
-                <option value="anthropic/claude-3.5-sonnet">Claude 3.5 Sonnet (پولی)</option>
-                <option value="openai/gpt-4o-mini">GPT-4o Mini (پولی)</option>
-            </select>
+        <div class="stat-group">
+            <div class="stat-group-title">🏛️ عصر فعلی</div>
+            <div id="era-info" style="font-size:12px;line-height:1.8;color:#ccc"></div>
         </div>
-        <div class="control-group">
-            <label>🎯 انتخاب انسان (برای نمای اول‌شخص):</label>
-            <select id="human-selector" onchange="selectHuman(this.value)">
-                <option value="">-- انتخاب کنید --</option>
-            </select>
+        <div class="stat-group">
+            <div class="stat-group-title">📜 اختراعات</div>
+            <div id="discovery-list" style="font-size:12px;line-height:1.8;color:#ccc"></div>
         </div>
-        <div class="control-group">
-            <label>⚡ سرعت زمان:</label>
-            <input type="range" id="speed-slider" min="1" max="10" value="2" step="1" oninput="updateSpeed(this.value)">
-            <div class="speed-display">سرعت: <span id="speed-value">0.2</span></div>
-        </div>
-        <div class="control-group">
-            <label>📏 اندازه آدمک‌ها:</label>
-            <input type="range" id="size-slider" min="1" max="10" value="2" step="1" oninput="updateHumanSize(this.value)">
-            <div class="size-display">اندازه: <span id="size-value">0.010</span></div>
-        </div>
-        <div class="control-group">
-            <button class="action-btn" onclick="resetSelection()">🔄 حذف انتخاب</button>
+        <div class="stat-group">
+            <div class="stat-group-title">🔑 کلید API (اختیاری)</div>
+            <input type="password" id="api-key-input" class="modal-input" placeholder="برای گفتگو با AI" onchange="saveApiKey()">
+            <div class="modal-hint">از <a href="https://openrouter.ai/keys" target="_blank">openrouter.ai/keys</a> بگیرید</div>
         </div>
     </div>
+</div>
 
-    <div id="perception-panel">
-        <h3>🧠 ادراک آرش</h3>
-        <div class="perc-row"><span class="perc-label">📍 موقعیت:</span><span class="perc-value" id="perc-location">-</span></div>
-        <div class="perc-row"><span class="perc-label">🌏 قاره:</span><span class="perc-value" id="perc-continent">-</span></div>
-        <div class="perc-row"><span class="perc-label">🌤️ آب و هوا:</span><span class="perc-value" id="perc-climate">-</span></div>
-        <div class="perc-row"><span class="perc-label">🕐 ساعت محلی:</span><span class="perc-value" id="perc-time">-</span></div>
-        <div class="perc-section">
-            <div class="perc-section-title">👥 اطرافیان</div>
-            <div id="perc-nearby-humans">-</div>
+<!-- God Panel -->
+<div class="panel" id="god-panel">
+    <div class="panel-header" onclick="closePanel()">
+        <h2>⚡ پنل خدایی</h2>
+        <div class="panel-close">✕</div>
+    </div>
+    <div class="panel-content">
+        <div class="stat-group">
+            <div class="stat-group-title">⏱️ سرعت زمان</div>
+            <input type="range" id="time-speed" min="1" max="10" value="3" oninput="updateTimeSpeed(this.value)" style="width:100%">
+            <div style="text-align:center;font-size:11px;color:#ffd700;margin-top:4px">سرعت: <span id="time-val">3</span>x</div>
         </div>
-        <div class="perc-section">
-            <div class="perc-section-title">🌳 محیط اطراف</div>
-            <div id="perc-environment">-</div>
+        <div class="stat-group">
+            <div class="stat-group-title">🌤️ آب و هوا</div>
+            <input type="range" id="weather" min="0" max="10" value="5" oninput="updateWeather(this.value)" style="width:100%">
         </div>
-        <div class="perc-section">
-            <div class="perc-section-title">📜 آخرین تجربه</div>
-            <div id="perc-last-exp" style="color:#c4a8ff;font-style:italic;">-</div>
+        <div class="stat-group">
+            <div class="stat-group-title">⚡ دستورات سریع</div>
+            <button class="modal-btn" onclick="giveResources()">🎁 دادن منابع</button>
+            <button class="modal-btn" style="background:linear-gradient(135deg,#00ff96,#00c9ff)" onclick="triggerRandomEvent()">🎲 رویداد تصادفی</button>
+            <button class="modal-btn" style="background:linear-gradient(135deg,#ff6b6b,#ee5a6f)" onclick="healArsh()">❤️ شفا</button>
         </div>
     </div>
+</div>
 
-    <div id="chat-panel">
-        <div id="chat-header" onclick="toggleChat()">
-            <h3>🤖 گفتگو با آرش</h3>
-            <span class="status" id="ai-status">آفلاین</span>
-        </div>
-        <div id="chat-messages">
-            <div class="msg system">آرش در ایران متولد شد! 🇮🇷<br>دستور بدهید: "برو توکیو" یا بپرسید: "اطرافت چه خبره؟"</div>
-        </div>
-        <div id="chat-input-area">
-            <input type="text" id="chat-input" placeholder="پیام یا دستور..." onkeypress="if(event.key==='Enter')sendMessage()">
-            <button id="chat-send" onclick="sendMessage()">➤</button>
-        </div>
-    </div>
+<!-- Discovery Popup -->
+<div id="discovery-popup">
+    <div class="dis-icon">🔥</div>
+    <div class="dis-title">کشف جدید!</div>
+    <div class="dis-desc"></div>
+    <div id="dis-rewards"></div>
+    <button id="dis-ok-btn" onclick="closeDiscovery()">فهمیدم!</button>
+</div>
 
-    <div id="speech-bubble"></div>
+<!-- Era Transition -->
+<div id="era-transition">
+    <div class="era-big-icon">🌾</div>
+    <div class="era-big-title">عصر جدید!</div>
+    <div class="era-subtitle">عصر نوسنگی آغاز شد</div>
+</div>
 
-    <script type="importmap">
+<div id="speech-bubble"></div>
+
+<script type="importmap">
+{
+    "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+    }
+}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+// ========== GAME STATE ==========
+const state = {
+    era: 0, // 0=stone, 1=neolithic, 2=bronze, 3=iron, 4=industrial, 5=modern, 6=digital
+    xp: 0,
+    resources: { food: 50, water: 50, wood: 0, stone: 0, metal: 0 },
+    stats: { hunger: 80, thirst: 80, energy: 80, mood: 80 },
+    discoveries: new Set(),
+    buildings: [],
+    campfires: [],
+    farms: [],
+    timeSpeed: 3,
+    weatherIntensity: 0.5,
+    isRotating: false,
+    currentPanel: 'none'
+};
+
+// ========== ERAS DEFINITION ==========
+const ERAS = [
     {
-        "imports": {
-            "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-            "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+        name: 'عصر حجر', icon: '🪨', xpRequired: 100,
+        color: '#8b7355',
+        desc: 'انسان اولیه، غارنشینی، ابزارهای سنگی',
+        buildings: ['cave'],
+        actions: ['gather', 'hunt', 'fire']
+    },
+    {
+        name: 'عصر نوسنگی', icon: '🌾', xpRequired: 500,
+        color: '#9acd32',
+        desc: 'کشاورزی، کلبه‌های چوبی، اهلی کردن حیوانات',
+        buildings: ['hut', 'farm'],
+        actions: ['gather', 'hunt', 'fire', 'build', 'farm']
+    },
+    {
+        name: 'عصر برنز', icon: '⚔️', xpRequired: 2000,
+        color: '#cd7f32',
+        desc: 'فلزکاری، چرخ، خانه‌های سنگی، تجارت',
+        buildings: ['house_stone', 'workshop'],
+        actions: ['gather', 'hunt', 'fire', 'build', 'farm', 'mine']
+    },
+    {
+        name: 'عصر آهن', icon: '🏛️', xpRequired: 8000,
+        color: '#808080',
+        desc: 'ساختمان‌های بزرگ، سلاح‌های آهنی، شهرک‌ها',
+        buildings: ['town', 'fortress'],
+        actions: ['gather', 'hunt', 'fire', 'build', 'farm', 'mine', 'forge']
+    },
+    {
+        name: 'عصر صنعت', icon: '🏭', xpRequired: 25000,
+        color: '#696969',
+        desc: 'کارخانه، قطار، ماشین بخار، برق',
+        buildings: ['factory', 'station'],
+        actions: ['gather', 'hunt', 'fire', 'build', 'farm', 'mine', 'forge']
+    },
+    {
+        name: 'عصر مدرن', icon: '🏙️', xpRequired: 75000,
+        color: '#4169e1',
+        desc: 'آسمان‌خراش، ماشین، اینترنت، هواپیما',
+        buildings: ['skyscraper', 'airport'],
+        actions: ['gather', 'hunt', 'fire', 'build', 'farm', 'mine', 'forge']
+    },
+    {
+        name: 'عصر دیجیتال', icon: '🚀', xpRequired: 200000,
+        color: '#ff00ff',
+        desc: 'هوش مصنوعی، فضاپیما، تکنولوژی پیشرفته',
+        buildings: ['spaceport', 'ai_core'],
+        actions: ['gather', 'hunt', 'fire', 'build', 'farm', 'mine', 'forge']
+    }
+];
+
+// ========== DISCOVERIES (TECH TREE) ==========
+const DISCOVERIES = [
+    // Stone Age
+    { id: 'fire', name: 'آتش', icon: '🔥', era: 0, cost: 10, desc: 'گرمی، نور، پخت غذا', unlocks: [], xp: 20 },
+    { id: 'stone_tools', name: 'ابزار سنگی', icon: '🪓', era: 0, cost: 15, desc: 'شکار بهتر، برش', unlocks: ['hut'], xp: 25 },
+    { id: 'spears', name: 'نیزه', icon: '🏹', era: 0, cost: 20, desc: 'شکار از دور', unlocks: [], xp: 30 },
+    { id: 'shelter', name: 'پناهگاه', icon: '⛺', era: 0, cost: 25, desc: 'محافظت از سرما', unlocks: ['hut'], xp: 35 },
+    // Neolithic
+    { id: 'farming', name: 'کشاورزی', icon: '🌾', era: 1, cost: 50, desc: 'کشت گیاهان، غذای پایدار', unlocks: ['farm'], xp: 100 },
+    { id: 'pottery', name: 'سفالگری', icon: '🏺', era: 1, cost: 60, desc: 'ظرف برای آب و غذا', unlocks: [], xp: 80 },
+    { id: 'animal_domestication', name: 'اهلی کردن', icon: '🐄', era: 1, cost: 70, desc: 'حیوانات اهلی', unlocks: [], xp: 120 },
+    { id: 'weaving', name: 'بافندگی', icon: '🧵', era: 1, cost: 55, desc: 'پارچه و لباس', unlocks: [], xp: 90 },
+    // Bronze Age
+    { id: 'wheel', name: 'چرخ', icon: '☸️', era: 2, cost: 150, desc: 'حمل و نقل انقلابی', unlocks: [], xp: 250 },
+    { id: 'bronze', name: 'فلز برنز', icon: '⚔️', era: 2, cost: 200, desc: 'سلاح و ابزار فلزی', unlocks: ['workshop'], xp: 300 },
+    { id: 'writing', name: 'خط', icon: '📜', era: 2, cost: 180, desc: 'ثبت دانش', unlocks: [], xp: 280 },
+    { id: 'sailing', name: 'دریانوردی', icon: '⛵', era: 2, cost: 170, desc: 'کشف سرزمین‌های جدید', unlocks: [], xp: 260 },
+    // Iron Age
+    { id: 'iron', name: 'آهن', icon: '⚒️', era: 3, cost: 400, desc: 'فلز قوی‌تر', unlocks: ['fortress'], xp: 500 },
+    { id: 'math', name: 'ریاضیات', icon: '🔢', era: 3, cost: 450, desc: 'محاسبات پیشرفته', unlocks: [], xp: 550 },
+    { id: 'architecture', name: 'معماری', icon: '🏛️', era: 3, cost: 500, desc: 'ساختمان‌های بزرگ', unlocks: ['town'], xp: 600 },
+    { id: 'coinage', name: 'پول', icon: '🪙', era: 3, cost: 420, desc: 'تجارت و اقتصاد', unlocks: [], xp: 520 },
+    // Industrial
+    { id: 'steam', name: 'بخار', icon: '💨', era: 4, cost: 1500, desc: 'انرژی مکانیکی', unlocks: ['factory'], xp: 2000 },
+    { id: 'electricity', name: 'برق', icon: '⚡', era: 4, cost: 2000, desc: 'انقلاب روشنایی', unlocks: [], xp: 2500 },
+    { id: 'printing', name: 'چاپ', icon: '📰', era: 4, cost: 1700, desc: 'انتشار دانش', unlocks: [], xp: 2200 },
+    { id: 'train', name: 'قطار', icon: '🚂', era: 4, cost: 1800, desc: 'سفر سریع', unlocks: ['station'], xp: 2300 },
+    // Modern
+    { id: 'car', name: 'ماشین', icon: '🚗', era: 5, cost: 5000, desc: 'حمل و نقل شخصی', unlocks: [], xp: 6000 },
+    { id: 'flight', name: 'پرواز', icon: '✈️', era: 5, cost: 6000, desc: 'سفر هوایی', unlocks: ['airport'], xp: 7000 },
+    { id: 'computer', name: 'کامپیوتر', icon: '💻', era: 5, cost: 7000, desc: 'پردازش اطلاعات', unlocks: [], xp: 8000 },
+    { id: 'internet', name: 'اینترنت', icon: '🌐', era: 5, cost: 8000, desc: 'ارتباط جهانی', unlocks: [], xp: 9000 },
+    // Digital
+    { id: 'ai', name: 'هوش مصنوعی', icon: '🤖', era: 6, cost: 20000, desc: 'تفکر ماشینی', unlocks: ['ai_core'], xp: 25000 },
+    { id: 'rocket', name: 'موشک', icon: '🚀', era: 6, cost: 25000, desc: 'سفر به فضا', unlocks: ['spaceport'], xp: 30000 },
+    { id: 'biotech', name: 'بیوتکنولوژی', icon: '🧬', era: 6, cost: 22000, desc: 'مهندسی حیات', unlocks: [], xp: 27000 },
+    { id: 'quantum', name: 'کوانتوم', icon: '⚛️', era: 6, cost: 30000, desc: 'فیزیک پیشرفته', unlocks: [], xp: 35000 }
+];
+
+// ========== THREE.JS SETUP ==========
+let scene, camera, renderer, controls;
+let earthGroup, oceanMesh;
+let arshHuman = null;
+let humans = [];
+let buildings = [];
+let campfires = [];
+let farms = [];
+let trees = [];
+let clouds = [];
+let birds = [];
+const earthRadius = 1.5;
+let HUMAN_SCALE = 0.012;
+let time = 0;
+let dayTime = 8; // Start at morning
+let apiKey = localStorage.getItem('openrouter_api_key') || '';
+let aiMemory = [];
+let isAiTyping = false;
+let speechTimer = 0;
+
+const MASK_W = 4096;
+const MASK_H = 2048;
+let maskData = null;
+let maskReady = false;
+
+if (apiKey) {
+    document.getElementById('api-key-input').value = apiKey;
+}
+
+// ========== GEO UTILS ==========
+const countries = [
+    {name:"ایران",latMin:25,latMax:40,lonMin:44,lonMax:64,flag:"🇮🇷"},
+    {name:"عراق",latMin:29,latMax:38,lonMin:38,lonMax:49,flag:"🇮🇶"},
+    {name:"ترکیه",latMin:36,latMax:42,lonMin:26,lonMax:45,flag:"🇹🇷"},
+    {name:"عربستان",latMin:16,latMax:32,lonMin:34,lonMax:56,flag:"🇸🇦"},
+    {name:"مصر",latMin:22,latMax:32,lonMin:25,lonMax:37,flag:"🇪🇬"},
+    {name:"هند",latMin:8,latMax:35,lonMin:68,lonMax:97,flag:"🇮🇳"},
+    {name:"چین",latMin:18,latMax:54,lonMin:73,lonMax:135,flag:"🇨🇳"},
+    {name:"ژاپن",latMin:30,latMax:46,lonMin:129,lonMax:146,flag:"🇯🇵"},
+    {name:"آمریکا",latMin:25,latMax:49,lonMin:-125,lonMax:-66,flag:"🇺🇸"},
+    {name:"برزیل",latMin:-33,latMax:5,lonMin:-74,lonMax:-34,flag:"🇧🇷"},
+    {name:"استرالیا",latMin:-44,latMax:-10,lonMin:113,lonMax:154,flag:"🇦🇺"},
+    {name:"روسیه",latMin:41,latMax:77,lonMin:27,lonMax:180,flag:"🇷🇺"},
+    {name:"آلمان",latMin:47,latMax:55,lonMin:5,lonMax:15,flag:"🇩🇪"},
+    {name:"فرانسه",latMin:42,latMax:51,lonMin:-5,lonMax:8,flag:"🇫🇷"},
+    {name:"انگلستان",latMin:50,latMax:59,lonMin:-8,lonMax:2,flag:"🇬🇧"},
+];
+
+function getCountryFromCoords(lat, lon) {
+    for (const c of countries) {
+        if (lat >= c.latMin && lat <= c.latMax && lon >= c.lonMin && lon <= c.lonMax) {
+            return { name: c.name, flag: c.flag };
         }
     }
-    </script>
+    return { name: 'بیابان', flag: '🌍' };
+}
 
-    <script type="module">
-        import * as THREE from 'three';
-        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+function getClimate(lat) {
+    const absLat = Math.abs(lat);
+    if (absLat > 66) return { name: "قطبی 🥶" };
+    if (absLat > 55) return { name: "سرد 🌨️" };
+    if (absLat > 40) return { name: "معتدل 🍂" };
+    if (absLat > 25) return { name: "نیمه‌گرمسیری 🌤️" };
+    if (absLat > 10) return { name: "گرمسیری 🌴" };
+    return { name: "استوایی ☀️" };
+}
 
-        let scene, camera, renderer, controls;
-        let earthGroup, oceanMesh;
-        const humans = [];
-        const trees = [];
-        let selectedHuman = null;
-        let isFlyingToHuman = false;
-        let flyTarget = null;
-        let moveSpeed = 0.2;
-        const earthRadius = 1.5;
-        let HUMAN_SCALE = 0.01;
-        let time = 0;
+function latLonToPos(lat, lon, rad = earthRadius) {
+    const phi = (90-lat)*(Math.PI/180);
+    const theta = (lon+180)*(Math.PI/180);
+    return new THREE.Vector3(
+        -(rad*Math.sin(phi)*Math.cos(theta)),
+        rad*Math.cos(phi),
+        rad*Math.sin(phi)*Math.sin(theta)
+    );
+}
 
-        let apiKey = localStorage.getItem('openrouter_api_key') || '';
-        let aiModel = localStorage.getItem('openrouter_model') || 'meta-llama/llama-3.3-70b-instruct:free';
-        let aiHuman = null;
-        let isAiTyping = false;
-        let speechTimer = 0;
+function getDistanceKm(lat1, lon1, lat2, lon2) {
+    const R = 6371;
+    const dLat = (lat2-lat1)*Math.PI/180;
+    const dLon = (lon2-lon1)*Math.PI/180;
+    const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+    return R*2*Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
 
-        let aiExperiences = [];
-        let lastPerceptionUpdate = 0;
-        let lastKnownLocation = null;
-        let aiMemory = [];
-
-        const MASK_W = 8192;
-        const MASK_H = 4096;
-        let maskData = null;
-        let maskReady = false;
-        let oceanMaskTexture = null;
-
-        let cameraMode = 'globe';
-        let fpTargetHuman = null;
-        let fpYaw = 0;
-        let fpPitch = 0;
-
-        let rotateState = { active: false, direction: null };
-        let rotateSpeed = 0.025;
-
-        const DEFAULT_CAM = {
-            minDistance: 1.515,
-            maxDistance: 15,
-            target: new THREE.Vector3(0, 0, 0)
+// ========== LOADING WATER MASK ==========
+async function loadWaterMask() {
+    return new Promise((resolve) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => {
+            document.getElementById('load-status').innerText = 'تحلیل زمین...';
+            const c = document.createElement('canvas');
+            c.width = MASK_W; c.height = MASK_H;
+            const ctx = c.getContext('2d');
+            ctx.drawImage(img, 0, 0, MASK_W, MASK_H);
+            maskData = ctx.getImageData(0, 0, MASK_W, MASK_H).data;
+            maskReady = true;
+            resolve(ctx);
         };
+        img.onerror = () => { maskReady = false; resolve(null); };
+        img.src = 'https://unpkg.com/three-globe/example/img/earth-water.png';
+    });
+}
 
-        if (apiKey) document.getElementById('api-key').value = apiKey;
-        document.getElementById('model-selector').value = aiModel;
+function isLand(lat, lon) {
+    if (!maskReady || !maskData) {
+        // Fallback
+        const absLat = Math.abs(lat);
+        if (absLat > 75) return true; // poles
+        // Simple heuristic
+        return Math.random() > 0.5;
+    }
+    let px = Math.floor(((lon+180)/360)*MASK_W);
+    let py = Math.floor(((90-lat)/180)*MASK_H);
+    px = Math.max(0, Math.min(MASK_W-1, px));
+    py = Math.max(0, Math.min(MASK_H-1, py));
+    const idx = (py*MASK_W+px)*4;
+    return (maskData[idx]+maskData[idx+1]+maskData[idx+2])/3 < 128;
+}
 
-        const countries = [
-            { name: "ایران", latMin: 25, latMax: 40, lonMin: 44, lonMax: 64, flag: "🇮🇷" },
-            { name: "عراق", latMin: 29, latMax: 38, lonMin: 38, lonMax: 49, flag: "🇮🇶" },
-            { name: "ترکیه", latMin: 36, latMax: 42, lonMin: 26, lonMax: 45, flag: "🇹🇷" },
-            { name: "عربستان", latMin: 16, latMax: 32, lonMin: 34, lonMax: 56, flag: "🇸🇦" },
-            { name: "مصر", latMin: 22, latMax: 32, lonMin: 25, lonMax: 37, flag: "🇪🇬" },
-            { name: "افغانستان", latMin: 29, latMax: 39, lonMin: 60, lonMax: 75, flag: "🇦🇫" },
-            { name: "پاکستان", latMin: 23, latMax: 37, lonMin: 60, lonMax: 78, flag: "🇵🇰" },
-            { name: "هند", latMin: 8, latMax: 35, lonMin: 68, lonMax: 97, flag: "🇮🇳" },
-            { name: "چین", latMin: 18, latMax: 54, lonMin: 73, lonMax: 135, flag: "🇨🇳" },
-            { name: "ژاپن", latMin: 30, latMax: 46, lonMin: 129, lonMax: 146, flag: "🇯🇵" },
-            { name: "کره جنوبی", latMin: 33, latMax: 39, lonMin: 125, lonMax: 130, flag: "🇰🇷" },
-            { name: "روسیه", latMin: 41, latMax: 77, lonMin: 27, lonMax: 180, flag: "🇷🇺" },
-            { name: "آلمان", latMin: 47, latMax: 55, lonMin: 5, lonMax: 15, flag: "🇩🇪" },
-            { name: "فرانسه", latMin: 42, latMax: 51, lonMin: -5, lonMax: 8, flag: "🇫🇷" },
-            { name: "انگلستان", latMin: 50, latMax: 59, lonMin: -8, lonMax: 2, flag: "🇬🇧" },
-            { name: "اسپانیا", latMin: 36, latMax: 44, lonMin: -10, lonMax: 4, flag: "🇪🇸" },
-            { name: "ایتالیا", latMin: 36, latMax: 47, lonMin: 6, lonMax: 19, flag: "🇮🇹" },
-            { name: "آمریکا", latMin: 25, latMax: 49, lonMin: -125, lonMax: -66, flag: "🇺🇸" },
-            { name: "کانادا", latMin: 49, latMax: 72, lonMin: -141, lonMax: -52, flag: "🇨🇦" },
-            { name: "مکزیک", latMin: 14, latMax: 33, lonMin: -118, lonMax: -86, flag: "🇲🇽" },
-            { name: "برزیل", latMin: -33, latMax: 5, lonMin: -74, lonMax: -34, flag: "🇧🇷" },
-            { name: "آرژانتین", latMin: -55, latMax: -21, lonMin: -73, lonMax: -53, flag: "🇦🇷" },
-            { name: "استرالیا", latMin: -44, latMax: -10, lonMin: 113, lonMax: 154, flag: "🇦🇺" },
-            { name: "آفریقای جنوبی", latMin: -35, latMax: -22, lonMin: 16, lonMax: 33, flag: "🇿🇦" },
-            { name: "نیجریه", latMin: 4, latMax: 14, lonMin: 2, lonMax: 15, flag: "🇳🇬" },
-            { name: "کنیا", latMin: -5, latMax: 5, lonMin: 33, lonMax: 42, flag: "🇰🇪" },
-            { name: "اندونزی", latMin: -11, latMax: 6, lonMin: 95, lonMax: 141, flag: "🇮🇩" },
-            { name: "تایلند", latMin: 5, latMax: 21, lonMin: 97, lonMax: 106, flag: "🇹🇭" },
-            { name: "ویتنام", latMin: 8, latMax: 24, lonMin: 102, lonMax: 110, flag: "🇻🇳" }
-        ];
+function isNearCoast(lat, lon, margin=1) {
+    for (let dLat=-margin; dLat<=margin; dLat+=margin)
+        for (let dLon=-margin; dLon<=margin; dLon+=margin)
+            if (!isLand(lat+dLat, lon+dLon)) return true;
+    return false;
+}
 
-        function getCountryFromCoords(lat, lon) {
-            for (const c of countries) {
-                if (lat >= c.latMin && lat <= c.latMax && lon >= c.lonMin && lon <= c.lonMax) {
-                    return { name: c.name, flag: c.flag };
-                }
-            }
-            const continent = getContinent(lat, lon);
-            return { name: `ناحیه‌ای در ${continent}`, flag: "🌍" };
+function getSafeLandPosition() {
+    for (let i=0; i<1000; i++) {
+        const lat = (Math.random()-0.5)*130;
+        const lon = (Math.random()-0.5)*360;
+        if (isLand(lat, lon) && !isNearCoast(lat, lon, 2)) {
+            return { lat, lon };
         }
+    }
+    return { lat: 35.7, lon: 51.4 }; // Tehran fallback
+}
 
-        function getContinent(lat, lon) {
-            if (lat > 15 && lat < 75 && lon > -170 && lon < -50) return "آمریکای شمالی";
-            if (lat < 15 && lat > -60 && lon > -85 && lon < -30) return "آمریکای جنوبی";
-            if (lat > 35 && lon > -15 && lon < 45) return "اروپا";
-            if (lat < 40 && lat > -40 && lon > -20 && lon < 55) return "آفریقا";
-            if (lat > 0 && lon > 45 && lon < 150) return "آسیا";
-            if (lat < 0 && lon > 100 && lon < 180) return "اقیانوسیه";
-            if (lat > 60) return "قطب شمال";
-            if (lat < -60) return "قطب جنوب";
-            return "نامشخص";
+// ========== EARTH TEXTURE ==========
+function buildEarthTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 2048; canvas.height = 1024;
+    const ctx = canvas.getContext('2d');
+    
+    function hash(x,y){return(Math.sin(x*12.9898+y*78.233)*43758.5453)%1;}
+    
+    ctx.fillStyle = '#1e3a5f';
+    ctx.fillRect(0, 0, 2048, 1024);
+    
+    const eraIdx = state.era;
+    const biomeColors = {
+        0: { // stone - primitive
+            forest: '#2d4a1e',
+            desert: '#8b7355',
+            tundra: '#a0a090',
+            grass: '#4a5d2e'
+        },
+        1: { // neolithic
+            forest: '#3a6b1f',
+            desert: '#9c8565',
+            tundra: '#b0b0a0',
+            grass: '#5a7d3e'
+        },
+        2: { // bronze
+            forest: '#4a8028',
+            desert: '#c4a878',
+            tundra: '#c0c0b0',
+            grass: '#6a8d4e'
+        },
+        3: { // iron
+            forest: '#5a9030',
+            desert: '#d4b888',
+            tundra: '#d0d0c0',
+            grass: '#7a9d5e'
+        },
+        4: { // industrial
+            forest: '#4a6028',
+            desert: '#a89868',
+            tundra: '#b0b0a8',
+            grass: '#5a7d3e'
+        },
+        5: { // modern
+            forest: '#3a8028',
+            desert: '#c4a878',
+            tundra: '#c0c0c0',
+            grass: '#60a040'
+        },
+        6: { // digital
+            forest: '#40a050',
+            desert: '#d4b888',
+            tundra: '#e0e0e8',
+            grass: '#70c050'
         }
-
-        function getClimate(lat) {
+    };
+    const colors = biomeColors[eraIdx] || biomeColors[0];
+    
+    const imgData = ctx.getImageData(0, 0, 2048, 1024);
+    const d = imgData.data;
+    
+    for (let y=0; y<1024; y++) {
+        for (let x=0; x<2048; x++) {
+            const idx = (y*2048+x)*4;
+            const lat = 90-(y/1024)*180;
+            const lon = (x/2048)*360-180;
             const absLat = Math.abs(lat);
-            if (absLat > 66) return { name: "قطبی 🥶", desc: "سرد و یخبندان" };
-            if (absLat > 55) return { name: "سرد 🌨️", desc: "زمستان‌های طولانی" };
-            if (absLat > 40) return { name: "معتدل 🍂", desc: "چهار فصل" };
-            if (absLat > 25) return { name: "نیمه‌گرمسیری 🌤️", desc: "گرم و خشک" };
-            if (absLat > 10) return { name: "گرمسیری 🌴", desc: "گرم و مرطوب" };
-            return { name: "استوایی ☀️", desc: "خیلی گرم" };
-        }
-
-        function getLocalTime(lon) {
-            const now = new Date();
-            const utcHours = now.getUTCHours();
-            const utcMinutes = now.getUTCMinutes();
-            const offset = Math.round(lon / 15);
-            let localHours = (utcHours + offset + 24) % 24;
             
-            let period = "";
-            if (localHours >= 5 && localHours < 12) period = "🌅 صبح";
-            else if (localHours >= 12 && localHours < 17) period = "☀️ ظهر";
-            else if (localHours >= 17 && localHours < 20) period = "🌆 عصر";
-            else period = "🌙 شب";
-            
-            return `${String(localHours).padStart(2,'0')}:${String(utcMinutes).padStart(2,'0')} ${period}`;
-        }
-
-        function getDistanceKm(lat1, lon1, lat2, lon2) {
-            const R = 6371;
-            const dLat = (lat2-lat1) * Math.PI/180;
-            const dLon = (lon2-lon1) * Math.PI/180;
-            const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
-            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-        }
-
-        function getNearbyHumans(ai) {
-            if (!ai) return [];
-            const result = [];
-            for (const h of humans) {
-                if (h === ai) continue;
-                const d = h.userData;
-                const dist = getDistanceKm(ai.userData.lat, ai.userData.lon, d.lat, d.lon);
-                if (dist < 3000) {
-                    const country = getCountryFromCoords(d.lat, d.lon);
-                    result.push({
-                        name: d.name,
-                        distance: Math.round(dist),
-                        country: country.name,
-                        flag: country.flag
-                    });
-                }
-            }
-            result.sort((a,b) => a.distance - b.distance);
-            return result.slice(0, 3);
-        }
-
-        function countNearbyTrees(lat, lon, radiusKm = 500) {
-            let count = 0;
-            for (const tree of trees) {
-                const treePos = tree.position;
-                const lat2 = 90 - Math.acos(treePos.y / earthRadius) * 180/Math.PI;
-                const lon2 = Math.atan2(treePos.z, -treePos.x) * 180/Math.PI - 180;
-                const dist = getDistanceKm(lat, lon, lat2, lon2);
-                if (dist < radiusKm) count++;
-            }
-            return count;
-        }
-
-        function buildPerceptionContext() {
-            if (!aiHuman) return "";
-            const d = aiHuman.userData;
-            const country = getCountryFromCoords(d.lat, d.lon);
-            const continent = getContinent(d.lat, d.lon);
-            const climate = getClimate(d.lat);
-            const localTime = getLocalTime(d.lon);
-            const nearbyHumans = getNearbyHumans(aiHuman);
-            const treeCount = countNearbyTrees(d.lat, d.lon, 800);
-
-            document.getElementById('perc-location').innerText = `${country.flag} ${country.name}`;
-            document.getElementById('perc-continent').innerText = continent;
-            document.getElementById('perc-climate').innerText = climate.name;
-            document.getElementById('perc-time').innerText = localTime;
-            
-            if (nearbyHumans.length > 0) {
-                document.getElementById('perc-nearby-humans').innerHTML = nearbyHumans.map(h => 
-                    `• ${h.name} (${h.flag}${h.country}) - ${h.distance}km`
-                ).join('<br>');
+            // Check if land
+            if (maskReady) {
+                let px = Math.floor(((lon+180)/360)*MASK_W);
+                let py = Math.floor(((90-lat)/180)*MASK_H);
+                px = Math.max(0, Math.min(MASK_W-1, px));
+                py = Math.max(0, Math.min(MASK_H-1, py));
+                const mIdx = (py*MASK_W+px)*4;
+                const b = (maskData[mIdx]+maskData[mIdx+1]+maskData[mIdx+2])/3;
+                if (b >= 128) continue; // Water
             } else {
-                document.getElementById('perc-nearby-humans').innerText = "کسی اطرافم نیست";
+                continue;
             }
             
-            document.getElementById('perc-environment').innerHTML = 
-                `🌳 ${treeCount} درخت در اطراف<br>🌡️ ${climate.desc}`;
-            
-            if (aiExperiences.length > 0) {
-                const last = aiExperiences[aiExperiences.length - 1];
-                document.getElementById('perc-last-exp').innerText = last;
-            }
-
-            let context = `\n\n[ادراک محیطی آرش در این لحظه]:
-- موقعیت: ${country.name} ${country.flag} (مختصات: ${d.lat.toFixed(2)}, ${d.lon.toFixed(2)})
-- قاره: ${continent}
-- آب و هوا: ${climate.name} (${climate.desc})
-- ساعت محلی: ${localTime}
-- تعداد درخت‌های اطراف (شعاع ۸۰۰ کیلومتر): ${treeCount}
-- انسان‌های اطراف: ${nearbyHumans.length > 0 ? nearbyHumans.map(h => `${h.name} در ${h.country} (${h.distance}km فاصله)`).join('، ') : 'هیچ‌کس در ۳۰۰۰ کیلومتری نیست'}
-`;
-
-            if (aiExperiences.length > 0) {
-                context += `\n- تجربیات اخیر آرش:\n`;
-                const recent = aiExperiences.slice(-5);
-                recent.forEach((exp, i) => {
-                    context += `  ${i+1}. ${exp}\n`;
-                });
-            }
-
-            if (lastKnownLocation && (lastKnownLocation.name !== country.name)) {
-                context += `\n- آرش اخیراً از ${lastKnownLocation.name} به ${country.name} سفر کرده است.\n`;
-            }
-
-            lastKnownLocation = { name: country.name, lat: d.lat, lon: d.lon };
-            return context;
-        }
-
-        function addExperience(text) {
-            const timestamp = new Date().toLocaleTimeString('fa-IR', {hour:'2-digit', minute:'2-digit'});
-            const exp = `[${timestamp}] ${text}`;
-            aiExperiences.push(exp);
-            if (aiExperiences.length > 20) aiExperiences.shift();
-            addChatMessage('experience', `💭 تجربه: ${text}`);
-        }
-
-        async function loadWaterMask() {
-            return new Promise((resolve) => {
-                const img = new Image();
-                img.crossOrigin = 'anonymous';
-                img.onload = () => {
-                    document.getElementById('load-status').innerText = 'تحلیل پیکسل‌ها...';
-                    const c = document.createElement('canvas');
-                    c.width = MASK_W; c.height = MASK_H;
-                    const ctx = c.getContext('2d');
-                    ctx.drawImage(img, 0, 0, MASK_W, MASK_H);
-                    maskData = ctx.getImageData(0, 0, MASK_W, MASK_H).data;
-                    maskReady = true;
-                    const maskCanvas = document.createElement('canvas');
-                    maskCanvas.width = MASK_W; maskCanvas.height = MASK_H;
-                    const maskCtx = maskCanvas.getContext('2d');
-                    const maskImgData = maskCtx.createImageData(MASK_W, MASK_H);
-                    for (let i = 0; i < maskData.length; i += 4) {
-                        const brightness = (maskData[i] + maskData[i+1] + maskData[i+2]) / 3;
-                        const isWater = brightness >= 128;
-                        maskImgData.data[i] = isWater ? 255 : 0;
-                        maskImgData.data[i+1] = isWater ? 255 : 0;
-                        maskImgData.data[i+2] = isWater ? 255 : 0;
-                        maskImgData.data[i+3] = 255;
-                    }
-                    maskCtx.putImageData(maskImgData, 0, 0);
-                    oceanMaskTexture = new THREE.CanvasTexture(maskCanvas);
-                    oceanMaskTexture.minFilter = THREE.LinearMipmapLinearFilter;
-                    oceanMaskTexture.magFilter = THREE.LinearFilter;
-                    oceanMaskTexture.generateMipmaps = true;
-                    resolve(ctx);
-                };
-                img.src = 'https://unpkg.com/three-globe/example/img/earth-water.png';
-            });
-        }
-
-        function isLand(lat, lon) {
-            if (!maskReady || !maskData) return false;
-            let px = Math.floor(((lon + 180) / 360) * MASK_W);
-            let py = Math.floor(((90 - lat) / 180) * MASK_H);
-            px = Math.max(0, Math.min(MASK_W - 1, px));
-            py = Math.max(0, Math.min(MASK_H - 1, py));
-            const idx = (py * MASK_W + px) * 4;
-            return (maskData[idx] + maskData[idx+1] + maskData[idx+2]) / 3 < 128;
-        }
-
-        function isNearCoast(lat, lon, margin) {
-            for (let dLat = -margin; dLat <= margin; dLat += margin)
-                for (let dLon = -margin; dLon <= margin; dLon += margin)
-                    if (!isLand(lat + dLat, lon + dLon)) return true;
-            return false;
-        }
-
-        function findNearestSafeLand(lat, lon, maxRadius = 15) {
-            if (isLand(lat, lon) && !isNearCoast(lat, lon, 1.5)) {
-                return { lat, lon };
-            }
-            for (let r = 0.5; r <= maxRadius; r += 0.5) {
-                const steps = Math.max(8, Math.floor(r * 12));
-                for (let i = 0; i < steps; i++) {
-                    const angle = (i / steps) * Math.PI * 2;
-                    const testLat = lat + Math.cos(angle) * r;
-                    const testLon = lon + Math.sin(angle) * r;
-                    if (testLat > -85 && testLat < 85 && isLand(testLat, testLon) && !isNearCoast(testLat, testLon, 1.5)) {
-                        return { lat: testLat, lon: testLon };
-                    }
-                }
-            }
-            const safeCities = [
-                {lat:35.7, lon:51.4}, {lat:32.6, lon:51.7}, {lat:36.3, lon:59.6},
-                {lat:29.6, lon:52.5}, {lat:38.1, lon:46.3}, {lat:40.7, lon:-74},
-                {lat:51.5, lon:-0.1}, {lat:48.8, lon:2.3}, {lat:35.6, lon:139.7}, {lat:39.9, lon:116.4}
-            ];
-            return safeCities[Math.floor(Math.random() * safeCities.length)];
-        }
-
-        function getSafeLandPosition() {
-            if (Math.random() < 0.6) {
-                const cities = [
-                    {lat:35.7,lon:51.4},{lat:32.6,lon:51.7},{lat:36.3,lon:59.6},
-                    {lat:40.7,lon:-74},{lat:34.0,lon:-118.2},
-                    {lat:51.5,lon:-0.1},{lat:48.8,lon:2.3},{lat:52.5,lon:13.4},
-                    {lat:55.7,lon:37.6},{lat:39.9,lon:116.4},{lat:35.6,lon:139.7},
-                    {lat:28.6,lon:77.2},{lat:-23.5,lon:-46.6},{lat:-33.8,lon:151.2},
-                    {lat:30.0,lon:31.2},{lat:-1.2,lon:36.8},{lat:41.0,lon:29.0},
-                    {lat:24.7,lon:46.7}
-                ];
-                const p = cities[Math.floor(Math.random() * cities.length)];
-                const jitterLat = p.lat + (Math.random() - 0.5) * 6;
-                const jitterLon = p.lon + (Math.random() - 0.5) * 6;
-                return findNearestSafeLand(jitterLat, jitterLon, 8);
-            }
-            
-            for (let i = 0; i < 800; i++) {
-                const lat = (Math.random() - 0.5) * 130;
-                const lon = (Math.random() - 0.5) * 360;
-                if (isLand(lat, lon) && !isNearCoast(lat, lon, 2)) {
-                    return { lat, lon };
-                }
-            }
-            
-            return { lat: 35.7, lon: 51.4 };
-        }
-
-        function buildGraphicMapTexture() {
-            const mapCanvas = document.createElement('canvas');
-            mapCanvas.width = MASK_W; mapCanvas.height = MASK_H;
-            const ctx = mapCanvas.getContext('2d');
-            ctx.clearRect(0, 0, MASK_W, MASK_H);
-            if (!maskData) return mapCanvas;
-            
-            const imgData = ctx.createImageData(MASK_W, MASK_H);
-            const d = imgData.data;
-            
-            function hash(x, y) {
-                const n = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453;
-                return n - Math.floor(n);
-            }
-            
-            function smoothNoise(x, y) {
-                const ix = Math.floor(x), iy = Math.floor(y);
-                const fx = x - ix, fy = y - iy;
-                const ux = fx * fx * (3 - 2 * fx);
-                const uy = fy * fy * (3 - 2 * fy);
-                const a = hash(ix, iy);
-                const b = hash(ix + 1, iy);
-                const c = hash(ix, iy + 1);
-                const dd = hash(ix + 1, iy + 1);
-                return a * (1 - ux) * (1 - uy) + b * ux * (1 - uy) + c * (1 - ux) * uy + dd * ux * uy;
-            }
-            
-            function fbm(x, y, octaves) {
-                let value = 0, amplitude = 0.5, frequency = 1, maxValue = 0;
-                for (let i = 0; i < octaves; i++) {
-                    value += amplitude * smoothNoise(x * frequency, y * frequency);
-                    maxValue += amplitude;
-                    amplitude *= 0.5;
-                    frequency *= 2;
-                }
-                return value / maxValue;
-            }
-            
-            document.getElementById('load-status').innerText = 'رندر جزئیات زمین...';
-            
-            const BIOME = {
-                desert:  [210, 180, 130],
-                savanna: [170, 160, 100],
-                grass:   [100, 140, 70],
-                forest:  [55,  95,  45],
-                taiga:   [70,  100, 70],
-                tundra:  [130, 130, 115],
-                snow:    [235, 240, 245],
-                mountain:[100, 90,  80],
-                beach:   [220, 200, 150]
-            };
-            
-            function getBiome(lat, elevation, moisture) {
-                const absLat = Math.abs(lat);
-                if (elevation > 0.75) return BIOME.mountain;
-                if (elevation > 0.85 || absLat > 78) return BIOME.snow;
-                if (absLat > 65) return BIOME.tundra;
-                if (absLat > 55) return moisture > 0.5 ? BIOME.taiga : BIOME.tundra;
-                if (absLat > 35) {
-                    if (moisture < 0.3) return BIOME.desert;
-                    if (moisture < 0.5) return BIOME.savanna;
-                    if (moisture < 0.7) return BIOME.grass;
-                    return BIOME.forest;
-                }
-                if (absLat > 20) {
-                    if (moisture < 0.25) return BIOME.desert;
-                    if (moisture < 0.5) return BIOME.savanna;
-                    if (moisture < 0.75) return BIOME.grass;
-                    return BIOME.forest;
-                }
-                if (moisture < 0.3) return BIOME.desert;
-                return BIOME.forest;
-            }
-            
-            for (let y = 0; y < MASK_H; y++) {
-                for (let x = 0; x < MASK_W; x++) {
-                    const idx = (y * MASK_W + x) * 4;
-                    const b = (maskData[idx] + maskData[idx+1] + maskData[idx+2]) / 3;
-                    
-                    if (b >= 128) continue;
-                    
-                    const lat = 90 - (y / MASK_H) * 180;
-                    const nx = x * 0.008;
-                    const ny = y * 0.008;
-                    
-                    const elevation = fbm(nx, ny, 6);
-                    const moisture = fbm(nx * 0.5 + 100, ny * 0.5 + 100, 4);
-                    
-                    let isCoastal = false;
-                    for (let off of [-4, 4, -4*MASK_W, 4*MASK_W]) {
-                        const ni = idx + off;
-                        if (ni >= 0 && ni < maskData.length && (maskData[ni]+maskData[ni+1]+maskData[ni+2])/3 >= 128) {
-                            isCoastal = true;
-                            break;
-                        }
-                    }
-                    
-                    let biome = isCoastal ? BIOME.beach : getBiome(lat, elevation, moisture);
-                    
-                    const detailNoise = fbm(nx * 5, ny * 5, 3) - 0.5;
-                    const elevationShade = (elevation - 0.5) * 60;
-                    const microNoise = (hash(x, y) - 0.5) * 12;
-                    
-                    let r = biome[0] + elevationShade + detailNoise * 30 + microNoise;
-                    let g = biome[1] + elevationShade + detailNoise * 30 + microNoise;
-                    let bl = biome[2] + elevationShade + detailNoise * 30 + microNoise;
-                    
-                    if (moisture > 0.6 && biome !== BIOME.beach && biome !== BIOME.snow) {
-                        g += (moisture - 0.6) * 40;
-                    }
-                    
-                    if (biome === BIOME.desert) {
-                        r += 20;
-                        g += 10;
-                    }
-                    
-                    const grain = (hash(x * 1.7, y * 1.7) - 0.5) * 8;
-                    r += grain; g += grain; bl += grain;
-                    
-                    d[idx] = Math.max(0, Math.min(255, r));
-                    d[idx+1] = Math.max(0, Math.min(255, g));
-                    d[idx+2] = Math.max(0, Math.min(255, bl));
-                    d[idx+3] = 255;
-                }
-            }
-            
-            ctx.putImageData(imgData, 0, 0);
-            return mapCanvas;
-        }
-
-        function createTree(lat, lon) {
-            const group = new THREE.Group();
-            const s = 0.7 + Math.random() * 0.7;
-            const trunkH = 0.01 * s;
-            const trunk = new THREE.Mesh(
-                new THREE.CylinderGeometry(0.0008*s, 0.0012*s, trunkH, 6),
-                new THREE.MeshStandardMaterial({ color: 0x4a2f1a, roughness: 0.9 })
-            );
-            trunk.position.y = trunkH / 2;
-            group.add(trunk);
-
-            const leafColors = [0x2d5016, 0x3a6b1f, 0x4a8028, 0x1e4010, 0x5a9030];
-            const leafMat = new THREE.MeshStandardMaterial({ color: leafColors[Math.floor(Math.random()*5)], roughness: 0.8 });
-
-            if (Math.abs(lat) > 50) {
-                for (let i = 0; i < 3; i++) {
-                    const ls = 1 - i*0.2;
-                    const cone = new THREE.Mesh(new THREE.ConeGeometry(0.004*s*ls, 0.007*s*ls, 6), leafMat);
-                    cone.position.y = trunkH + i*0.005*s + 0.003*s*ls;
-                    group.add(cone);
-                }
+            let color;
+            if (absLat > 75) color = colors.tundra;
+            else if (absLat > 60) color = colors.tundra;
+            else if (absLat < 25) {
+                if (Math.abs(lon) > 20 && Math.abs(lon) < 50) color = colors.desert;
+                else color = colors.forest;
             } else {
-                const crown = new THREE.Mesh(new THREE.SphereGeometry(0.006*s, 6, 6), leafMat);
-                crown.position.y = trunkH + 0.004*s;
-                group.add(crown);
-                for (let i = 0; i < 3; i++) {
-                    const a = (i/3)*Math.PI*2;
-                    const sm = new THREE.Mesh(new THREE.SphereGeometry(0.003*s, 5, 5), leafMat);
-                    sm.position.set(Math.cos(a)*0.004*s, trunkH+0.004*s, Math.sin(a)*0.004*s);
-                    group.add(sm);
-                }
+                const h = hash(Math.floor(x/20), Math.floor(y/20));
+                if (h > 0.6) color = colors.forest;
+                else if (h > 0.3) color = colors.grass;
+                else color = colors.desert;
             }
-
-            const rad = earthRadius + 0.0002;
-            const phi = (90-lat)*(Math.PI/180), theta = (lon+180)*(Math.PI/180);
-            group.position.set(-(rad*Math.sin(phi)*Math.cos(theta)), rad*Math.cos(phi), rad*Math.sin(phi)*Math.sin(theta));
             
-            const up = group.position.clone().normalize();
-            const alignQuat = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,1,0), up);
-            const randomYRot = new THREE.Quaternion().setFromAxisAngle(
-                new THREE.Vector3(0,1,0), 
-                Math.random() * Math.PI * 2
-            );
-            group.quaternion.copy(alignQuat).multiply(randomYRot);
+            const r = parseInt(color.slice(1,3),16);
+            const g = parseInt(color.slice(3,5),16);
+            const b = parseInt(color.slice(5,7),16);
             
-            return group;
+            const noise = (hash(x,y)-0.5)*20;
+            d[idx] = Math.max(0, Math.min(255, r+noise));
+            d[idx+1] = Math.max(0, Math.min(255, g+noise));
+            d[idx+2] = Math.max(0, Math.min(255, b+noise));
+            d[idx+3] = 255;
         }
-
-        function buildRealisticHuman(config) {
-            const {
-                skinColor = 0xffcc99,
-                shirtColor = 0x3366cc,
-                pantsColor = 0x222222,
-                shoeColor = 0x1a1a1a,
-                hairColor = 0x1a0f08,
-                heightScale = 1.0,
-                isAI = false
-            } = config;
-
-            const group = new THREE.Group();
-
-            const skinMat = new THREE.MeshStandardMaterial({ 
-                color: skinColor, roughness: 0.7, metalness: 0.05 
-            });
-            const shirtMat = new THREE.MeshStandardMaterial({ 
-                color: shirtColor, roughness: 0.9,
-                emissive: isAI ? shirtColor : 0x000000,
-                emissiveIntensity: isAI ? 0.3 : 0
-            });
-            const pantsMat = new THREE.MeshStandardMaterial({ color: pantsColor, roughness: 0.95 });
-            const shoeMat = new THREE.MeshStandardMaterial({ color: shoeColor, roughness: 0.6 });
-            const hairMat = new THREE.MeshStandardMaterial({ color: hairColor, roughness: 0.9 });
-            const eyeWhiteMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.3 });
-            const eyeIrisMat = new THREE.MeshStandardMaterial({ color: 0x2a1810, roughness: 0.2 });
-            const mouthMat = new THREE.MeshStandardMaterial({ color: 0x8b3a3a, roughness: 0.7 });
-
-            const bodyGroup = new THREE.Group();
-            group.add(bodyGroup);
-
-            const shoeGeo = new THREE.BoxGeometry(0.016, 0.008, 0.024);
-            const leftShoe = new THREE.Mesh(shoeGeo, shoeMat);
-            leftShoe.position.set(-0.013, 0.004, 0.002);
-            leftShoe.rotation.z = 0.02;
-            bodyGroup.add(leftShoe);
-            
-            const rightShoe = new THREE.Mesh(shoeGeo, shoeMat);
-            rightShoe.position.set(0.013, 0.004, 0.002);
-            rightShoe.rotation.z = -0.02;
-            bodyGroup.add(rightShoe);
-
-            const hipGeo = new THREE.BoxGeometry(0.036, 0.02, 0.02);
-            const hip = new THREE.Mesh(hipGeo, pantsMat);
-            hip.position.y = 0.03;
-            bodyGroup.add(hip);
-
-            const bellyGeo = new THREE.BoxGeometry(0.038, 0.025, 0.022);
-            const belly = new THREE.Mesh(bellyGeo, shirtMat);
-            belly.position.y = 0.05;
-            bodyGroup.add(belly);
-
-            const chestGeo = new THREE.BoxGeometry(0.044, 0.03, 0.024);
-            const chest = new THREE.Mesh(chestGeo, shirtMat);
-            chest.position.y = 0.078;
-            bodyGroup.add(chest);
-
-            const shoulderGeo = new THREE.SphereGeometry(0.009, 8, 8);
-            const leftShoulder = new THREE.Mesh(shoulderGeo, shirtMat);
-            leftShoulder.position.set(-0.024, 0.092, 0);
-            bodyGroup.add(leftShoulder);
-            
-            const rightShoulder = new THREE.Mesh(shoulderGeo, shirtMat);
-            rightShoulder.position.set(0.024, 0.092, 0);
-            bodyGroup.add(rightShoulder);
-
-            const neck = new THREE.Mesh(
-                new THREE.CylinderGeometry(0.007, 0.008, 0.01, 8),
-                skinMat
-            );
-            neck.position.y = 0.102;
-            bodyGroup.add(neck);
-
-            const headGroup = new THREE.Group();
-            headGroup.position.y = 0.118;
-            
-            const skull = new THREE.Mesh(
-                new THREE.SphereGeometry(0.0125, 16, 16),
-                skinMat
-            );
-            skull.scale.set(0.95, 1.1, 0.95);
-            headGroup.add(skull);
-
-            const jaw = new THREE.Mesh(
-                new THREE.BoxGeometry(0.018, 0.008, 0.018),
-                skinMat
-            );
-            jaw.position.set(0, -0.007, 0.001);
-            headGroup.add(jaw);
-
-            const hairTop = new THREE.Mesh(
-                new THREE.SphereGeometry(0.013, 16, 16, 0, Math.PI * 2, 0, Math.PI * 0.55),
-                hairMat
-            );
-            hairTop.scale.set(0.98, 1.15, 1.0);
-            hairTop.position.y = 0.001;
-            headGroup.add(hairTop);
-
-            const eyeWhiteGeo = new THREE.SphereGeometry(0.0022, 8, 8);
-            const irisGeo = new THREE.SphereGeometry(0.0013, 8, 8);
-
-            const leftEyeWhite = new THREE.Mesh(eyeWhiteGeo, eyeWhiteMat);
-            leftEyeWhite.position.set(-0.004, 0.001, 0.011);
-            headGroup.add(leftEyeWhite);
-            const leftIris = new THREE.Mesh(irisGeo, eyeIrisMat);
-            leftIris.position.set(-0.004, 0.001, 0.0125);
-            headGroup.add(leftIris);
-
-            const rightEyeWhite = new THREE.Mesh(eyeWhiteGeo, eyeWhiteMat);
-            rightEyeWhite.position.set(0.004, 0.001, 0.011);
-            headGroup.add(rightEyeWhite);
-            const rightIris = new THREE.Mesh(irisGeo, eyeIrisMat);
-            rightIris.position.set(0.004, 0.001, 0.0125);
-            headGroup.add(rightIris);
-
-            const nose = new THREE.Mesh(
-                new THREE.BoxGeometry(0.0025, 0.0025, 0.003),
-                skinMat
-            );
-            nose.position.set(0, -0.001, 0.0125);
-            headGroup.add(nose);
-
-            const mouth = new THREE.Mesh(
-                new THREE.BoxGeometry(0.005, 0.0012, 0.001),
-                mouthMat
-            );
-            mouth.position.set(0, -0.005, 0.0115);
-            headGroup.add(mouth);
-
-            const earGeo = new THREE.SphereGeometry(0.0022, 6, 6);
-            const leftEar = new THREE.Mesh(earGeo, skinMat);
-            leftEar.position.set(-0.012, 0, 0);
-            leftEar.scale.set(0.6, 1, 0.8);
-            headGroup.add(leftEar);
-            
-            const rightEar = new THREE.Mesh(earGeo, skinMat);
-            rightEar.position.set(0.012, 0, 0);
-            rightEar.scale.set(0.6, 1, 0.8);
-            headGroup.add(rightEar);
-
-            bodyGroup.add(headGroup);
-
-            function createArm(side) {
-                const armPivot = new THREE.Group();
-                armPivot.position.set(side * 0.024, 0.088, 0);
-
-                const upperArm = new THREE.Mesh(
-                    new THREE.CapsuleGeometry(0.005, 0.026, 4, 8),
-                    shirtMat
-                );
-                upperArm.position.y = -0.017;
-                armPivot.add(upperArm);
-
-                const elbow = new THREE.Mesh(
-                    new THREE.SphereGeometry(0.005, 6, 6),
-                    shirtMat
-                );
-                elbow.position.y = -0.033;
-                armPivot.add(elbow);
-
-                const forearm = new THREE.Mesh(
-                    new THREE.CapsuleGeometry(0.0045, 0.022, 4, 8),
-                    skinMat
-                );
-                forearm.position.y = -0.047;
-                armPivot.add(forearm);
-
-                const hand = new THREE.Mesh(
-                    new THREE.SphereGeometry(0.0055, 8, 8),
-                    skinMat
-                );
-                hand.position.y = -0.062;
-                hand.scale.set(0.8, 1, 0.6);
-                armPivot.add(hand);
-
-                return armPivot;
+    }
+    
+    ctx.putImageData(imgData, 0, 0);
+    
+    // Add cities for advanced eras
+    if (eraIdx >= 2) {
+        ctx.fillStyle = eraIdx >= 4 ? '#ffaa00' : '#8b4513';
+        for (let i=0; i<eraIdx*3; i++) {
+            const lat = (Math.random()-0.5)*120;
+            const lon = (Math.random()-0.5)*360;
+            if (isLand(lat, lon)) {
+                const x = ((lon+180)/360)*2048;
+                const y = ((90-lat)/180)*1024;
+                ctx.beginPath();
+                ctx.arc(x, y, 3+eraIdx, 0, Math.PI*2);
+                ctx.fill();
             }
+        }
+    }
+    
+    return canvas;
+}
 
-            const leftArm = createArm(-1);
-            const rightArm = createArm(1);
-            bodyGroup.add(leftArm);
-            bodyGroup.add(rightArm);
+// ========== CREATION FUNCTIONS ==========
+function createTree(lat, lon) {
+    const group = new THREE.Group();
+    const s = 0.7+Math.random()*0.7;
+    const trunkH = 0.01*s;
+    const trunk = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.0008*s, 0.0012*s, trunkH, 6),
+        new THREE.MeshStandardMaterial({color:0x4a2f1a, roughness:0.9})
+    );
+    trunk.position.y = trunkH/2;
+    group.add(trunk);
+    
+    const leafMat = new THREE.MeshStandardMaterial({
+        color: Math.abs(lat) > 50 ? 0x2d5016 : 0x3a6b1f,
+        roughness: 0.8
+    });
+    
+    if (Math.abs(lat) > 50) {
+        for (let i=0; i<3; i++) {
+            const ls = 1-i*0.2;
+            const cone = new THREE.Mesh(new THREE.ConeGeometry(0.004*s*ls, 0.007*s*ls, 6), leafMat);
+            cone.position.y = trunkH + i*0.005*s + 0.003*s*ls;
+            group.add(cone);
+        }
+    } else {
+        const crown = new THREE.Mesh(new THREE.SphereGeometry(0.006*s, 6, 6), leafMat);
+        crown.position.y = trunkH + 0.004*s;
+        group.add(crown);
+    }
+    
+    const pos = latLonToPos(lat, lon, earthRadius + 0.0002);
+    group.position.copy(pos);
+    const up = pos.clone().normalize();
+    group.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), up);
+    
+    return group;
+}
 
-            function createLeg(side) {
-                const legPivot = new THREE.Group();
-                legPivot.position.set(side * 0.011, 0.028, 0);
+function createHuman(config = {}) {
+    const {
+        skinColor = 0xd4a373,
+        shirtColor = 0x8b4513,
+        pantsColor = 0x4a2f1a,
+        hairColor = 0x1a0f08,
+        isAI = false,
+        eraAppearance = 0
+    } = config;
+    
+    const group = new THREE.Group();
+    const bodyGroup = new THREE.Group();
+    group.add(bodyGroup);
+    
+    // Skin and clothing materials based on era
+    let shirtMat;
+    if (eraAppearance === 0) {
+        // Stone age: animal skins
+        shirtMat = new THREE.MeshStandardMaterial({color:0x8b6b4a, roughness:0.95});
+    } else if (eraAppearance === 1) {
+        // Neolithic: woven cloth
+        shirtMat = new THREE.MeshStandardMaterial({color:shirtColor, roughness:0.9});
+    } else {
+        shirtMat = new THREE.MeshStandardMaterial({
+            color: shirtColor,
+            roughness: 0.8,
+            emissive: isAI ? 0xffd700 : 0x000000,
+            emissiveIntensity: isAI ? 0.3 : 0
+        });
+    }
+    
+    const skinMat = new THREE.MeshStandardMaterial({color:skinColor, roughness:0.7});
+    const pantsMat = new THREE.MeshStandardMaterial({color:pantsColor, roughness:0.95});
+    const hairMat = new THREE.MeshStandardMaterial({color:hairColor, roughness:0.9});
+    
+    // Shoes (only after stone tools)
+    if (eraAppearance > 0) {
+        const shoeMat = new THREE.MeshStandardMaterial({color:0x1a1a1a, roughness:0.6});
+        const shoeGeo = new THREE.BoxGeometry(0.016, 0.008, 0.024);
+        const leftShoe = new THREE.Mesh(shoeGeo, shoeMat);
+        leftShoe.position.set(-0.013, 0.004, 0.002);
+        bodyGroup.add(leftShoe);
+        const rightShoe = new THREE.Mesh(shoeGeo, shoeMat);
+        rightShoe.position.set(0.013, 0.004, 0.002);
+        bodyGroup.add(rightShoe);
+    }
+    
+    // Body
+    const hip = new THREE.Mesh(new THREE.BoxGeometry(0.036, 0.02, 0.02), pantsMat);
+    hip.position.y = 0.03;
+    bodyGroup.add(hip);
+    
+    const chest = new THREE.Mesh(new THREE.BoxGeometry(0.044, 0.03, 0.024), shirtMat);
+    chest.position.y = 0.078;
+    bodyGroup.add(chest);
+    
+    // Head
+    const headGroup = new THREE.Group();
+    headGroup.position.y = 0.118;
+    const skull = new THREE.Mesh(new THREE.SphereGeometry(0.0125, 12, 12), skinMat);
+    skull.scale.set(0.95, 1.1, 0.95);
+    headGroup.add(skull);
+    
+    const hair = new THREE.Mesh(
+        new THREE.SphereGeometry(0.013, 12, 12, 0, Math.PI*2, 0, Math.PI*0.55),
+        hairMat
+    );
+    hair.scale.set(0.98, 1.15, 1.0);
+    hair.position.y = 0.001;
+    headGroup.add(hair);
+    
+    const eyeMat = new THREE.MeshStandardMaterial({color:0xffffff});
+    const irisMat = new THREE.MeshStandardMaterial({color:0x2a1810});
+    const eyeGeo = new THREE.SphereGeometry(0.002, 6, 6);
+    const irisGeo = new THREE.SphereGeometry(0.001, 6, 6);
+    
+    const lew = new THREE.Mesh(eyeGeo, eyeMat);
+    lew.position.set(-0.004, 0.001, 0.011);
+    headGroup.add(lew);
+    const li = new THREE.Mesh(irisGeo, irisMat);
+    li.position.set(-0.004, 0.001, 0.0125);
+    headGroup.add(li);
+    
+    const rew = new THREE.Mesh(eyeGeo, eyeMat);
+    rew.position.set(0.004, 0.001, 0.011);
+    headGroup.add(rew);
+    const ri = new THREE.Mesh(irisGeo, irisMat);
+    ri.position.set(0.004, 0.001, 0.0125);
+    headGroup.add(ri);
+    
+    bodyGroup.add(headGroup);
+    
+    // Arms
+    const leftArm = new THREE.Group();
+    leftArm.position.set(-0.024, 0.088, 0);
+    const lua = new THREE.Mesh(new THREE.CapsuleGeometry(0.005, 0.026, 4, 8), shirtMat);
+    lua.position.y = -0.017;
+    leftArm.add(lua);
+    const lfa = new THREE.Mesh(new THREE.CapsuleGeometry(0.0045, 0.022, 4, 8), skinMat);
+    lfa.position.y = -0.047;
+    leftArm.add(lfa);
+    bodyGroup.add(leftArm);
+    
+    const rightArm = new THREE.Group();
+    rightArm.position.set(0.024, 0.088, 0);
+    const rua = new THREE.Mesh(new THREE.CapsuleGeometry(0.005, 0.026, 4, 8), shirtMat);
+    rua.position.y = -0.017;
+    rightArm.add(rua);
+    const rfa = new THREE.Mesh(new THREE.CapsuleGeometry(0.0045, 0.022, 4, 8), skinMat);
+    rfa.position.y = -0.047;
+    rightArm.add(rfa);
+    bodyGroup.add(rightArm);
+    
+    // Legs
+    const leftLeg = new THREE.Group();
+    leftLeg.position.set(-0.011, 0.028, 0);
+    const lt = new THREE.Mesh(new THREE.CapsuleGeometry(0.0065, 0.024, 4, 8), pantsMat);
+    lt.position.y = -0.015;
+    leftLeg.add(lt);
+    const ls = new THREE.Mesh(new THREE.CapsuleGeometry(0.0055, 0.022, 4, 8), pantsMat);
+    ls.position.y = -0.044;
+    leftLeg.add(ls);
+    bodyGroup.add(leftLeg);
+    
+    const rightLeg = new THREE.Group();
+    rightLeg.position.set(0.011, 0.028, 0);
+    const rt = new THREE.Mesh(new THREE.CapsuleGeometry(0.0065, 0.024, 4, 8), pantsMat);
+    rt.position.y = -0.015;
+    rightLeg.add(rt);
+    const rs = new THREE.Mesh(new THREE.CapsuleGeometry(0.0055, 0.022, 4, 8), pantsMat);
+    rs.position.y = -0.044;
+    rightLeg.add(rs);
+    bodyGroup.add(rightLeg);
+    
+    // Highlight ring
+    const hl = new THREE.Mesh(
+        new THREE.RingGeometry(0.0018, 0.0024, 32),
+        new THREE.MeshBasicMaterial({
+            color: isAI ? 0xffd700 : 0xff0000,
+            side: THREE.DoubleSide, transparent: true, opacity: 0.8
+        })
+    );
+    hl.position.y = 0.0002;
+    hl.rotation.x = -Math.PI/2;
+    group.add(hl);
+    hl.visible = isAI;
+    
+    // Tool in hand based on era
+    if (eraAppearance === 0 && state.discoveries.has('stone_tools')) {
+        // Stone axe
+        const toolGroup = new THREE.Group();
+        const handle = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.0005, 0.0005, 0.008, 4),
+            new THREE.MeshStandardMaterial({color:0x8b4513})
+        );
+        toolGroup.add(handle);
+        const head = new THREE.Mesh(
+            new THREE.BoxGeometry(0.002, 0.002, 0.0015),
+            new THREE.MeshStandardMaterial({color:0x808080})
+        );
+        head.position.y = 0.004;
+        toolGroup.add(head);
+        toolGroup.position.set(0.03, -0.04, 0.01);
+        toolGroup.rotation.z = 0.3;
+        rightArm.add(toolGroup);
+    }
+    
+    group.scale.set(HUMAN_SCALE, HUMAN_SCALE, HUMAN_SCALE);
+    
+    return {
+        group, bodyGroup, headGroup,
+        leftArm, rightArm, leftLeg, rightLeg,
+        highlight: hl,
+        shirtMat
+    };
+}
 
-                const thigh = new THREE.Mesh(
-                    new THREE.CapsuleGeometry(0.0065, 0.024, 4, 8),
-                    pantsMat
-                );
-                thigh.position.y = -0.015;
-                legPivot.add(thigh);
-
-                const knee = new THREE.Mesh(
-                    new THREE.SphereGeometry(0.006, 6, 6),
-                    pantsMat
-                );
-                knee.position.y = -0.03;
-                legPivot.add(knee);
-
-                const shin = new THREE.Mesh(
-                    new THREE.CapsuleGeometry(0.0055, 0.022, 4, 8),
-                    pantsMat
-                );
-                shin.position.y = -0.044;
-                legPivot.add(shin);
-
-                return legPivot;
-            }
-
-            const leftLeg = createLeg(-1);
-            const rightLeg = createLeg(1);
-            bodyGroup.add(leftLeg);
-            bodyGroup.add(rightLeg);
-
-            const hlGeo = new THREE.RingGeometry(0.0018, 0.0024, 32);
-            const hlMat = new THREE.MeshBasicMaterial({ 
-                color: isAI ? 0xffd700 : 0xff0000, 
-                side: THREE.DoubleSide, 
-                transparent: true, 
-                opacity: 0.8 
-            });
-            const hl = new THREE.Mesh(hlGeo, hlMat);
-            hl.position.y = 0.0002;
-            hl.rotation.x = -Math.PI / 2;
-            group.add(hl);
-            hl.visible = isAI;
-
-            group.scale.set(
-                HUMAN_SCALE * heightScale,
-                HUMAN_SCALE * heightScale,
-                HUMAN_SCALE * heightScale
+function createBuilding(type, lat, lon) {
+    const group = new THREE.Group();
+    
+    let color, height, width;
+    
+    switch(type) {
+        case 'cave':
+            color = 0x3a3a3a;
+            height = 0.008;
+            width = 0.012;
+            break;
+        case 'hut':
+            color = 0x8b6b4a;
+            height = 0.012;
+            width = 0.01;
+            break;
+        case 'farm':
+            color = 0xdaa520;
+            height = 0.002;
+            width = 0.015;
+            break;
+        case 'house_stone':
+            color = 0xa0a0a0;
+            height = 0.015;
+            width = 0.012;
+            break;
+        case 'workshop':
+            color = 0x8b4513;
+            height = 0.014;
+            width = 0.014;
+            break;
+        case 'town':
+            color = 0xb0b0b0;
+            height = 0.02;
+            width = 0.018;
+            break;
+        case 'fortress':
+            color = 0x696969;
+            height = 0.025;
+            width = 0.02;
+            break;
+        case 'factory':
+            color = 0x5a5a5a;
+            height = 0.03;
+            width = 0.025;
+            break;
+        case 'station':
+            color = 0x8b0000;
+            height = 0.018;
+            width = 0.02;
+            break;
+        case 'skyscraper':
+            color = 0x4169e1;
+            height = 0.05;
+            width = 0.015;
+            break;
+        case 'airport':
+            color = 0x808080;
+            height = 0.015;
+            width = 0.03;
+            break;
+        case 'spaceport':
+            color = 0xc0c0c0;
+            height = 0.04;
+            width = 0.025;
+            break;
+        case 'ai_core':
+            color = 0xff00ff;
+            height = 0.035;
+            width = 0.02;
+            break;
+        default:
+            color = 0x8b4513;
+            height = 0.012;
+            width = 0.01;
+    }
+    
+    // Build based on type
+    if (type === 'cave') {
+        const cave = new THREE.Mesh(
+            new THREE.SphereGeometry(width/2, 8, 8, 0, Math.PI*2, 0, Math.PI*0.7),
+            new THREE.MeshStandardMaterial({color, roughness:1, side:THREE.DoubleSide})
+        );
+        cave.position.y = 0;
+        group.add(cave);
+    } else if (type === 'hut') {
+        const body = new THREE.Mesh(
+            new THREE.BoxGeometry(width, height, width),
+            new THREE.MeshStandardMaterial({color, roughness:0.95})
+        );
+        body.position.y = height/2;
+        group.add(body);
+        const roof = new THREE.Mesh(
+            new THREE.ConeGeometry(width*0.8, height*0.6, 4),
+            new THREE.MeshStandardMaterial({color:0x4a2f1a, roughness:0.9})
+        );
+        roof.position.y = height + height*0.3;
+        roof.rotation.y = Math.PI/4;
+        group.add(roof);
+    } else if (type === 'farm') {
+        const field = new THREE.Mesh(
+            new THREE.BoxGeometry(width, 0.001, width),
+            new THREE.MeshStandardMaterial({color:0xdaa520, roughness:1})
+        );
+        group.add(field);
+        for (let i=0; i<5; i++) {
+            const plant = new THREE.Mesh(
+                new THREE.ConeGeometry(0.0008, 0.003, 4),
+                new THREE.MeshStandardMaterial({color:0x2d5016})
             );
-
-            return {
-                group,
-                bodyGroup,
-                headGroup,
-                leftArm, rightArm,
-                leftLeg, rightLeg,
-                highlight: hl,
-                baseScale: heightScale
-            };
+            plant.position.set(
+                (Math.random()-0.5)*width*0.8,
+                0.0015,
+                (Math.random()-0.5)*width*0.8
+            );
+            group.add(plant);
         }
-
-        function createAIHuman() {
-            const pos = { lat: 35.7, lon: 51.4 };
-
-            const parts = buildRealisticHuman({
-                skinColor: 0xf0c8a0,
-                shirtColor: 0xffd700,
-                pantsColor: 0x1a3a6b,
-                shoeColor: 0x1a1a1a,
-                hairColor: 0x1a0f08,
-                heightScale: 1.0,
-                isAI: true
-            });
-
-            const group = parts.group;
-            group.userData = {
-                name: "آرش 🤖", lat: pos.lat, lon: pos.lon,
-                targetLat: pos.lat, targetLon: pos.lon,
-                walkTime: Math.random() * 100,
-                breathTime: Math.random() * 100,
-                idleTime: Math.random() * 100,
-                heightScale: 1.0,
-                parts: {
-                    body: parts.bodyGroup,
-                    head: parts.headGroup,
-                    leftArm: parts.leftArm,
-                    rightArm: parts.rightArm,
-                    leftLeg: parts.leftLeg,
-                    rightLeg: parts.rightLeg
-                },
-                stuckCounter: 0, highlight: parts.highlight, isAI: true
-            };
-
-            earthGroup.add(group);
-            humans.push(group);
-            aiHuman = group;
-            updateHumanPosition(group);
-
-            const country = getCountryFromCoords(pos.lat, pos.lon);
-            addExperience(`تولد در ${country.name} ${country.flag} - شهر تهران 🏙️`);
-
-            const sel = document.getElementById('human-selector');
-            const opt = document.createElement('option');
-            opt.value = humans.length - 1; opt.text = "آرش 🤖 (هوش مصنوعی - ایران)";
-            sel.insertBefore(opt, sel.firstChild);
+    } else if (type === 'skyscraper') {
+        const body = new THREE.Mesh(
+            new THREE.BoxGeometry(width, height, width),
+            new THREE.MeshStandardMaterial({color, metalness:0.5, roughness:0.3})
+        );
+        body.position.y = height/2;
+        group.add(body);
+        // Windows
+        const windowMat = new THREE.MeshStandardMaterial({
+            color:0xffff88,
+            emissive:0xffff00,
+            emissiveIntensity:0.5
+        });
+        for (let f=0; f<10; f++) {
+            for (let w=0; w<4; w++) {
+                const win = new THREE.Mesh(
+                    new THREE.PlaneGeometry(width*0.15, height*0.05),
+                    windowMat
+                );
+                win.position.set(-width*0.3+w*width*0.2, f*height*0.09+height*0.05, width/2+0.0001);
+                group.add(win);
+            }
         }
+    } else {
+        // Default box building
+        const body = new THREE.Mesh(
+            new THREE.BoxGeometry(width, height, width),
+            new THREE.MeshStandardMaterial({color, roughness:0.7})
+        );
+        body.position.y = height/2;
+        group.add(body);
+        
+        if (type !== 'farm') {
+            const roof = new THREE.Mesh(
+                new THREE.ConeGeometry(width*0.75, height*0.4, 4),
+                new THREE.MeshStandardMaterial({color:0x8b0000, roughness:0.8})
+            );
+            roof.position.y = height + height*0.2;
+            group.add(roof);
+        }
+    }
+    
+    const pos = latLonToPos(lat, lon, earthRadius + 0.0001);
+    group.position.copy(pos);
+    const up = pos.clone().normalize();
+    group.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), up);
+    
+    group.userData = { type, lat, lon };
+    return group;
+}
 
-        function createNormalHumans() {
-            const humanVariations = [
-                { name: "سارا",   skin: 0xf5d0b8, shirt: 0xe74c3c, pants: 0x2c3e50, hair: 0x3a1f0a, h: 0.95 },
-                { name: "علی",    skin: 0xd4a373, shirt: 0x27ae60, pants: 0x34495e, hair: 0x1a0f08, h: 1.05 },
-                { name: "مریم",   skin: 0xf0c8a0, shirt: 0x9b59b6, pants: 0x2c3e50, hair: 0x4a2810, h: 0.93 },
-                { name: "کاوه",   skin: 0xe0b088, shirt: 0x3498db, pants: 0x1a1a1a, hair: 0x0a0500, h: 1.08 },
-                { name: "نیما",   skin: 0xc89870, shirt: 0xf39c12, pants: 0x2c3e50, hair: 0x1a0f08, h: 1.02 }
+function createCampfire(lat, lon) {
+    const group = new THREE.Group();
+    
+    // Stones circle
+    for (let i=0; i<8; i++) {
+        const angle = (i/8)*Math.PI*2;
+        const stone = new THREE.Mesh(
+            new THREE.SphereGeometry(0.001, 5, 5),
+            new THREE.MeshStandardMaterial({color:0x555555, roughness:1})
+        );
+        stone.position.set(Math.cos(angle)*0.004, 0, Math.sin(angle)*0.004);
+        stone.scale.y = 0.5;
+        group.add(stone);
+    }
+    
+    // Wood logs
+    for (let i=0; i<3; i++) {
+        const log = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.0005, 0.0005, 0.005, 4),
+            new THREE.MeshStandardMaterial({color:0x4a2f1a})
+        );
+        log.rotation.z = Math.PI/2;
+        log.rotation.y = (i/3)*Math.PI;
+        log.position.y = 0.0005;
+        group.add(log);
+    }
+    
+    // Fire
+    const fire = new THREE.Mesh(
+        new THREE.ConeGeometry(0.002, 0.006, 6),
+        new THREE.MeshBasicMaterial({color:0xff4500, transparent:true, opacity:0.9})
+    );
+    fire.position.y = 0.003;
+    fire.name = 'fire';
+    group.add(fire);
+    
+    // Light
+    const light = new THREE.PointLight(0xff6600, 0.5, 0.05);
+    light.position.y = 0.003;
+    group.add(light);
+    
+    const pos = latLonToPos(lat, lon, earthRadius + 0.0001);
+    group.position.copy(pos);
+    const up = pos.clone().normalize();
+    group.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), up);
+    
+    group.userData = { lat, lon, time: 0 };
+    return group;
+}
+
+// ========== UPDATE FUNCTIONS ==========
+function updateEraUI() {
+    const era = ERAS[state.era];
+    const nextEra = ERAS[state.era + 1];
+    
+    document.getElementById('era-icon').innerText = era.icon;
+    document.getElementById('era-name').innerText = era.name;
+    
+    if (nextEra) {
+        const progress = (state.xp / nextEra.xpRequired) * 100;
+        document.getElementById('progress-fill').style.width = progress + '%';
+        document.getElementById('era-xp').innerText = `${Math.floor(state.xp)} / ${nextEra.xpRequired} XP`;
+    } else {
+        document.getElementById('progress-fill').style.width = '100%';
+        document.getElementById('era-xp').innerText = `${Math.floor(state.xp)} XP (MAX)`;
+    }
+    
+    document.getElementById('top-bar').style.background = 
+        `linear-gradient(180deg, ${era.color}dd 0%, ${era.color}88 100%)`;
+}
+
+function updateResourcesUI() {
+    document.getElementById('res-food').innerText = Math.floor(state.resources.food);
+    document.getElementById('res-water').innerText = Math.floor(state.resources.water);
+    document.getElementById('res-wood').innerText = Math.floor(state.resources.wood);
+    document.getElementById('res-stone').innerText = Math.floor(state.resources.stone);
+    document.getElementById('res-metal').innerText = Math.floor(state.resources.metal);
+}
+
+function updateStatsUI() {
+    for (const key of ['hunger', 'thirst', 'energy', 'mood']) {
+        document.getElementById('st-' + key).style.width = state.stats[key] + '%';
+        document.getElementById('sv-' + key).innerText = Math.floor(state.stats[key]);
+    }
+    
+    // Era info
+    const era = ERAS[state.era];
+    document.getElementById('era-info').innerHTML = 
+        `${era.icon} <b>${era.name}</b><br>${era.desc}<br><br>` +
+        `🏛️ ساختمان‌ها: ${era.buildings.length}<br>` +
+        `⚡ اقدامات: ${era.actions.length}`;
+    
+    // Discovery list
+    const dList = document.getElementById('discovery-list');
+    if (state.discoveries.size === 0) {
+        dList.innerText = 'هنوز کشفی نشده';
+    } else {
+        dList.innerHTML = Array.from(state.discoveries).map(id => {
+            const d = DISCOVERIES.find(x => x.id === id);
+            return `${d.icon} ${d.name}`;
+        }).join(' • ');
+    }
+}
+
+function updateGodActionsUI() {
+    const era = ERAS[state.era];
+    document.getElementById('action-build').classList.toggle('locked', !era.actions.includes('build'));
+    document.getElementById('action-farm').classList.toggle('locked', !era.actions.includes('farm'));
+    document.getElementById('action-mine').classList.toggle('locked', !era.actions.includes('mine'));
+    document.getElementById('action-forge').classList.toggle('locked', !era.actions.includes('forge'));
+}
+
+function addXP(amount) {
+    state.xp += amount;
+    const nextEra = ERAS[state.era + 1];
+    if (nextEra && state.xp >= nextEra.xpRequired) {
+        advanceEra();
+    }
+    updateEraUI();
+}
+
+function advanceEra() {
+    if (state.era >= ERAS.length - 1) return;
+    state.era++;
+    const era = ERAS[state.era];
+    
+    // Show transition
+    const trans = document.getElementById('era-transition');
+    trans.querySelector('.era-big-icon').innerText = era.icon;
+    trans.querySelector('.era-big-title').innerText = era.name;
+    trans.querySelector('.era-subtitle').innerText = era.desc;
+    trans.classList.add('show');
+    haptic(200);
+    
+    setTimeout(() => {
+        trans.classList.remove('show');
+        updateWorld();
+        updateEraUI();
+        updateGodActionsUI();
+        addChatMessage('discovery', `🎊 ${era.icon} ${era.name} آغاز شد!`);
+    }, 2500);
+    
+    // Unlock buildings
+    spawnEraBuildings();
+}
+
+function updateWorld() {
+    // Update earth texture
+    if (earthGroup && earthGroup.children[0]) {
+        const newTex = new THREE.CanvasTexture(buildEarthTexture());
+        newTex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+        earthGroup.children[0].material.map = newTex;
+        earthGroup.children[0].material.needsUpdate = true;
+    }
+    
+    // Update human appearance
+    if (arshHuman) {
+        const newHuman = createHuman({
+            skinColor: 0xd4a373,
+            shirtColor: state.era === 0 ? 0x8b6b4a : 0xffd700,
+            pantsColor: 0x4a2f1a,
+            hairColor: 0x1a0f08,
+            isAI: true,
+            eraAppearance: state.era
+        });
+        
+        // Replace old human
+        const oldPos = arshHuman.group.position.clone();
+        const oldQuat = arshHuman.group.quaternion.clone();
+        const oldData = arshHuman.group.userData;
+        
+        earthGroup.remove(arshHuman.group);
+        arshHuman = newHuman;
+        arshHuman.group.position.copy(oldPos);
+        arshHuman.group.quaternion.copy(oldQuat);
+        arshHuman.group.userData = oldData;
+        earthGroup.add(arshHuman.group);
+    }
+}
+
+function spawnEraBuildings() {
+    const era = ERAS[state.era];
+    if (era.buildings.length === 0) return;
+    
+    // Spawn buildings near Arsh
+    if (!arshHuman) return;
+    const lat = arshHuman.group.userData.lat;
+    const lon = arshHuman.group.userData.lon;
+    
+    const type = era.buildings[0];
+    for (let i=0; i<2+state.era; i++) {
+        const offLat = (Math.random()-0.5)*5;
+        const offLon = (Math.random()-0.5)*5;
+        const bLat = lat + offLat;
+        const bLon = lon + offLon;
+        if (isLand(bLat, bLon) && !isNearCoast(bLat, bLon, 1)) {
+            const b = createBuilding(type, bLat, bLon);
+            earthGroup.add(b);
+            buildings.push(b);
+        }
+    }
+}
+
+function showDiscovery(discoveryId) {
+    const d = DISCOVERIES.find(x => x.id === discoveryId);
+    if (!d) return;
+    
+    state.discoveries.add(discoveryId);
+    addXP(d.xp);
+    
+    const popup = document.getElementById('discovery-popup');
+    popup.querySelector('.dis-icon').innerText = d.icon;
+    popup.querySelector('.dis-title').innerText = `کشف: ${d.name}!`;
+    popup.querySelector('.dis-desc').innerText = d.desc;
+    
+    document.getElementById('dis-rewards').innerHTML = 
+        `<div class="dis-reward">+${d.xp} XP</div>` +
+        (d.unlocks.length > 0 ? `<div class="dis-reward">🔓 ${d.unlocks.join('، ')}</div>` : '');
+    
+    popup.classList.add('show');
+    haptic(150);
+    addChatMessage('discovery', `🔬 کشف جدید: ${d.icon} ${d.name} - ${d.desc}`);
+}
+
+function closeDiscovery() {
+    document.getElementById('discovery-popup').classList.remove('show');
+    renderTechTree();
+}
+
+// ========== ACTION HANDLERS ==========
+window.doAction = function(action) {
+    if (!arshHuman) return;
+    haptic(30);
+    
+    switch(action) {
+        case 'gather':
+            state.resources.food += 5 + Math.floor(Math.random()*5);
+            state.resources.wood += 2 + Math.floor(Math.random()*3);
+            state.resources.water += 3;
+            addXP(2);
+            state.stats.energy -= 2;
+            showSpeechBubble('🌾 جمع‌آوری کردم!');
+            // Chance to discover
+            if (Math.random() < 0.05 && !state.discoveries.has('stone_tools')) {
+                showDiscovery('stone_tools');
+            }
+            break;
+        case 'hunt':
+            state.resources.food += 10 + Math.floor(Math.random()*10);
+            addXP(5);
+            state.stats.energy -= 5;
+            showSpeechBubble('🏹 شکار کردم!');
+            if (Math.random() < 0.05 && !state.discoveries.has('spears')) {
+                showDiscovery('spears');
+            }
+            break;
+        case 'fire':
+            if (!state.discoveries.has('fire')) {
+                showDiscovery('fire');
+                // Place campfire
+                const d = arshHuman.group.userData;
+                const cf = createCampfire(d.lat + (Math.random()-0.5)*0.5, d.lon + (Math.random()-0.5)*0.5);
+                earthGroup.add(cf);
+                campfires.push(cf);
+            } else {
+                showSpeechBubble('🔥 آتش روشن است!');
+                state.stats.mood += 5;
+                addXP(1);
+            }
+            break;
+        case 'build':
+            if (state.resources.wood >= 10) {
+                state.resources.wood -= 10;
+                state.resources.stone -= 3;
+                const d = arshHuman.group.userData;
+                const bType = state.era === 1 ? 'hut' : state.era === 2 ? 'house_stone' : 'town';
+                const b = createBuilding(bType, d.lat + (Math.random()-0.5)*0.3, d.lon + (Math.random()-0.5)*0.3);
+                earthGroup.add(b);
+                buildings.push(b);
+                addXP(10);
+                showSpeechBubble('🏠 ساختم!');
+            } else {
+                showSpeechBubble('چوب کافی نیست! 🪵');
+            }
+            break;
+        case 'farm':
+            if (state.resources.wood >= 3) {
+                state.resources.wood -= 3;
+                const d = arshHuman.group.userData;
+                const f = createBuilding('farm', d.lat + (Math.random()-0.5)*0.3, d.lon + (Math.random()-0.5)*0.3);
+                earthGroup.add(f);
+                farms.push(f);
+                addXP(8);
+                showSpeechBubble('🌱 کشت کردم!');
+            }
+            break;
+        case 'mine':
+            state.resources.stone += 8;
+            if (state.era >= 3) state.resources.metal += 3;
+            addXP(3);
+            state.stats.energy -= 3;
+            showSpeechBubble('⛏️ معدن‌کاری!');
+            if (Math.random() < 0.1 && state.era >= 2 && !state.discoveries.has('bronze')) {
+                showDiscovery('bronze');
+            }
+            if (Math.random() < 0.1 && state.era >= 3 && !state.discoveries.has('iron')) {
+                showDiscovery('iron');
+            }
+            break;
+        case 'forge':
+            if (state.resources.metal >= 5 && state.resources.wood >= 3) {
+                state.resources.metal -= 5;
+                state.resources.wood -= 3;
+                addXP(15);
+                showSpeechBubble('⚒️ ابزار ساختم!');
+                state.stats.mood += 10;
+            }
+            break;
+    }
+    
+    updateResourcesUI();
+    updateStatsUI();
+};
+
+window.giveResources = function() {
+    state.resources.food += 50;
+    state.resources.water += 50;
+    state.resources.wood += 20;
+    state.resources.stone += 20;
+    state.resources.metal += 10;
+    addChatMessage('system', '🎁 منابع داده شد!');
+    updateResourcesUI();
+    haptic(50);
+    closePanel();
+};
+
+window.healArsh = function() {
+    state.stats.hunger = 100;
+    state.stats.thirst = 100;
+    state.stats.energy = 100;
+    state.stats.mood = 100;
+    addChatMessage('system', '❤️ آرش شفا یافت!');
+    showSpeechBubble('حالم عالی شد! ❤️');
+    updateStatsUI();
+    haptic(50);
+    closePanel();
+};
+
+window.triggerRandomEvent = function() {
+    haptic(100);
+    closePanel();
+    
+    const events = [
+        { icon: '🌪️', msg: 'طوفان!', fn: () => { state.stats.energy -= 15; state.stats.mood -= 10; showSpeechBubble('طوفان شد! 🌪️'); }},
+        { icon: '🎉', msg: 'جشن!', fn: () => { state.stats.mood += 30; addXP(20); showSpeechBubble('جشنه! 🎉'); }},
+        { icon: '🤒', msg: 'بیماری', fn: () => { state.stats.energy -= 30; showSpeechBubble('حالم خوب نیست 🤒'); }},
+        { icon: '💎', msg: 'گنج!', fn: () => { state.resources.metal += 30; state.resources.stone += 30; addXP(50); showSpeechBubble('گنج پیدا کردم! 💎'); }},
+        { icon: '🌈', msg: 'رنگین‌کمان', fn: () => { state.stats.mood += 25; addXP(15); showSpeechBubble('چه زیبا! 🌈'); }},
+        { icon: '🐺', msg: 'حمله گرگ!', fn: () => { state.stats.energy -= 20; state.resources.food -= 10; showSpeechBubble('فرار! 🐺'); }},
+        { icon: '⭐', msg: 'شهاب سنگ!', fn: () => { addXP(100); state.stats.mood += 40; showSpeechBubble('⭐ شانس بزرگ!'); }}
+    ];
+    
+    const ev = events[Math.floor(Math.random()*events.length)];
+    addChatMessage('event', `${ev.icon} رویداد: ${ev.msg}`);
+    ev.fn();
+    updateStatsUI();
+    updateResourcesUI();
+};
+
+// ========== TECH TREE ==========
+function renderTechTree() {
+    const content = document.getElementById('tech-content');
+    let html = '';
+    
+    for (let eraIdx = 0; eraIdx < ERAS.length; eraIdx++) {
+        const era = ERAS[eraIdx];
+        const eraDiscs = DISCOVERIES.filter(d => d.era === eraIdx);
+        if (eraDiscs.length === 0) continue;
+        
+        const isLocked = eraIdx > state.era;
+        html += `<div class="tech-era">
+            <div class="tech-era-title" style="opacity:${isLocked?0.4:1}">
+                ${era.icon} ${era.name} ${isLocked ? '🔒' : ''}
+            </div>
+            <div class="tech-grid">`;
+        
+        eraDiscs.forEach(d => {
+            const unlocked = state.discoveries.has(d.id);
+            const canUnlock = !unlocked && !isLocked && state.xp >= d.cost;
+            
+            html += `<div class="tech-item ${unlocked?'unlocked':canUnlock?'':'locked'}" 
+                          onclick="${unlocked?'':canUnlock?`unlockDiscovery('${d.id}')`:''}">
+                ${!unlocked && isLocked ? '<div class="tech-lock-overlay">🔒</div>' : ''}
+                <div class="tech-icon">${d.icon}</div>
+                <div class="tech-name">${d.name}</div>
+                <div class="tech-desc">${d.desc}</div>
+                ${unlocked ? '<div class="tech-cost">✓ کشف شده</div>' : 
+                  `<div class="tech-cost">${d.cost} XP</div>`}
+            </div>`;
+        });
+        
+        html += `</div></div>`;
+    }
+    
+    content.innerHTML = html;
+}
+
+window.unlockDiscovery = function(id) {
+    const d = DISCOVERIES.find(x => x.id === id);
+    if (!d || state.discoveries.has(id)) return;
+    if (state.xp < d.cost) return;
+    
+    state.xp -= d.cost;
+    haptic(100);
+    showDiscovery(id);
+};
+
+// ========== PANELS ==========
+window.openPanel = function(panel) {
+    haptic(20);
+    
+    // Close all
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('open'));
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    
+    state.currentPanel = panel;
+    
+    if (panel === 'none') {
+        document.querySelectorAll('.nav-btn')[0].classList.add('active');
+    } else if (panel === 'tech') {
+        renderTechTree();
+        document.getElementById('tech-panel').classList.add('open');
+        document.querySelectorAll('.nav-btn')[1].classList.add('active');
+    } else if (panel === 'chat') {
+        document.getElementById('chat-panel').classList.add('open');
+        document.querySelectorAll('.nav-btn')[2].classList.add('active');
+    } else if (panel === 'stats') {
+        updateStatsUI();
+        document.getElementById('stats-panel').classList.add('open');
+        document.querySelectorAll('.nav-btn')[3].classList.add('active');
+    } else if (panel === 'god') {
+        document.getElementById('god-panel').classList.add('open');
+        document.querySelectorAll('.nav-btn')[4].classList.add('active');
+    }
+};
+
+window.closePanel = function() {
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('open'));
+    state.currentPanel = 'none';
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.nav-btn')[0].classList.add('active');
+};
+
+// ========== CAMERA CONTROLS ==========
+window.zoomIn = function() {
+    if (controls) {
+        const dir = camera.position.clone().sub(controls.target).normalize();
+        const dist = camera.position.distanceTo(controls.target);
+        const newDist = Math.max(controls.minDistance, dist * 0.8);
+        camera.position.copy(controls.target).add(dir.multiplyScalar(newDist));
+    }
+    haptic(20);
+};
+
+window.zoomOut = function() {
+    if (controls) {
+        const dir = camera.position.clone().sub(controls.target).normalize();
+        const dist = camera.position.distanceTo(controls.target);
+        const newDist = Math.min(controls.maxDistance, dist * 1.25);
+        camera.position.copy(controls.target).add(dir.multiplyScalar(newDist));
+    }
+    haptic(20);
+};
+
+window.toggleRotate = function() {
+    state.isRotating = !state.isRotating;
+    haptic(30);
+};
+
+window.focusArsh = function() {
+    if (arshHuman && controls) {
+        const pos = arshHuman.group.position.clone();
+        const up = pos.clone().normalize();
+        const camPos = pos.clone().add(up.clone().multiplyScalar(0.05));
+        
+        // Animate
+        camera.position.copy(camPos);
+        controls.target.copy(pos);
+    }
+    haptic(30);
+};
+
+window.updateTimeSpeed = function(v) {
+    state.timeSpeed = parseInt(v);
+    document.getElementById('time-val').innerText = v;
+};
+
+window.updateWeather = function(v) {
+    state.weatherIntensity = v * 0.1;
+};
+
+window.saveApiKey = function() {
+    apiKey = document.getElementById('api-key-input').value.trim();
+    localStorage.setItem('openrouter_api_key', apiKey);
+    if (apiKey) {
+        addChatMessage('system', '🔑 کلید ذخیره شد!');
+        document.getElementById('ai-status') && (document.getElementById('ai-status').innerText = '🟢 آنلاین');
+    }
+    haptic(30);
+};
+
+// ========== CHAT & AI ==========
+function addChatMessage(type, text) {
+    const container = document.getElementById('chat-messages');
+    const msg = document.createElement('div');
+    msg.className = `msg ${type}`;
+    msg.innerText = text;
+    container.appendChild(msg);
+    container.scrollTop = container.scrollHeight;
+}
+
+function showSpeechBubble(text) {
+    speechTimer = 240;
+    const bubble = document.getElementById('speech-bubble');
+    bubble.innerHTML = text;
+    bubble.style.display = 'block';
+    bubble.style.opacity = '1';
+}
+
+window.sendMessage = async function() {
+    const input = document.getElementById('chat-input');
+    const text = input.value.trim();
+    if (!text || isAiTyping) return;
+    
+    addChatMessage('user', text);
+    input.value = '';
+    
+    if (!apiKey) {
+        addChatMessage('system', '🔑 برای چت با AI، کلید API را در بخش آمار وارد کنید');
+        // Simple fallback response
+        setTimeout(() => {
+            const responses = [
+                `من در ${ERAS[state.era].name} هستم ${ERAS[state.era].icon}`,
+                `الان ${Math.floor(state.resources.food)} غذا و ${Math.floor(state.resources.wood)} چوب دارم`,
+                `تا الان ${state.discoveries.size} اختراع کردم!`,
+                `در ${getCountryFromCoords(arshHuman.group.userData.lat, arshHuman.group.userData.lon).name} زندگی می‌کنم`
             ];
+            addChatMessage('ai', responses[Math.floor(Math.random()*responses.length)]);
+            showSpeechBubble('🤔');
+        }, 800);
+        return;
+    }
+    
+    isAiTyping = true;
+    showSpeechBubble('...');
+    
+    const d = arshHuman.group.userData;
+    const country = getCountryFromCoords(d.lat, d.lon);
+    const era = ERAS[state.era];
+    
+    const systemPrompt = `تو آرش هستی، یک انسان در ${era.name}. اطلاعات تو:
+- عصر: ${era.name} ${era.icon}
+- موقعیت: ${country.name} ${country.flag}
+- منابع: غذا ${Math.floor(state.resources.food)}, آب ${Math.floor(state.resources.water)}, چوب ${Math.floor(state.resources.wood)}, سنگ ${Math.floor(state.resources.stone)}, فلز ${Math.floor(state.resources.metal)}
+- اختراعات: ${Array.from(state.discoveries).map(id => DISCOVERIES.find(x=>x.id===id)?.name).join('، ') || 'هنوز هیچ'}
+- وضعیت: گرسنگی ${Math.floor(state.stats.hunger)}%، تشنگی ${Math.floor(state.stats.thirst)}%، انرژی ${Math.floor(state.stats.energy)}%، روحیه ${Math.floor(state.stats.mood)}%
 
-            humanVariations.forEach((variation, i) => {
-                const pos = getSafeLandPosition();
-                const parts = buildRealisticHuman({
-                    skinColor: variation.skin,
-                    shirtColor: variation.shirt,
-                    pantsColor: variation.pants,
-                    shoeColor: 0x1a1a1a,
-                    hairColor: variation.hair,
-                    heightScale: variation.h,
-                    isAI: false
-                });
+کوتاه (حداکثر ۲ جمله) و صمیمی پاسخ بده. فارسی با ایموجی.`;
+    
+    const messages = [
+        { role: "system", content: systemPrompt },
+        ...aiMemory.slice(-6),
+        { role: "user", content: text }
+    ];
+    
+    try {
+        const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${apiKey}`,
+                'Content-Type': 'application/json',
+                'HTTP-Referer': window.location.href,
+                'X-Title': 'Arsh Evolution'
+            },
+            body: JSON.stringify({
+                model: 'meta-llama/llama-3.3-70b-instruct:free',
+                messages,
+                max_tokens: 150,
+                temperature: 0.8
+            })
+        });
+        
+        const data = await response.json();
+        const reply = data.choices?.[0]?.message?.content?.trim() || 'متوجه نشدم';
+        
+        aiMemory.push({ role: "user", content: text });
+        aiMemory.push({ role: "assistant", content: reply });
+        if (aiMemory.length > 12) aiMemory = aiMemory.slice(-12);
+        
+        addChatMessage('ai', reply);
+        showSpeechBubble(reply);
+    } catch (e) {
+        addChatMessage('system', `❌ خطا: ${e.message}`);
+    } finally {
+        isAiTyping = false;
+    }
+};
 
-                const group = parts.group;
-                const target = getSafeLandPosition();
+// ========== HAPTIC ==========
+function haptic(duration = 10) {
+    if (navigator.vibrate) navigator.vibrate(duration);
+}
 
-                group.userData = {
-                    name: variation.name, lat: pos.lat, lon: pos.lon,
-                    targetLat: target.lat, targetLon: target.lon,
-                    walkTime: Math.random() * 100,
-                    breathTime: Math.random() * 100,
-                    idleTime: Math.random() * 100,
-                    heightScale: variation.h,
-                    parts: {
-                        body: parts.bodyGroup,
-                        head: parts.headGroup,
-                        leftArm: parts.leftArm,
-                        rightArm: parts.rightArm,
-                        leftLeg: parts.leftLeg,
-                        rightLeg: parts.rightLeg
-                    },
-                    stuckCounter: 0, highlight: parts.highlight, isAI: false
-                };
+// ========== ANIMATE HUMAN ==========
+function animateHuman(human, walking, speed) {
+    const parts = human;
+    if (walking) {
+        parts._walkTime = (parts._walkTime || 0) + 0.18 * speed;
+        const cycle = parts._walkTime;
+        const legSwing = Math.sin(cycle) * 0.7;
+        parts.leftLeg.rotation.x = legSwing;
+        parts.rightLeg.rotation.x = -legSwing;
+        const armSwing = Math.sin(cycle) * 0.5;
+        parts.leftArm.rotation.x = -armSwing;
+        parts.rightArm.rotation.x = armSwing;
+        parts.bodyGroup.position.y = Math.abs(Math.sin(cycle)) * 0.001;
+    } else {
+        parts._walkTime = 0;
+        parts.leftLeg.rotation.x *= 0.9;
+        parts.rightLeg.rotation.x *= 0.9;
+        parts.leftArm.rotation.x *= 0.9;
+        parts.rightArm.rotation.x *= 0.9;
+        parts._breathTime = (parts._breathTime || 0) + 0.03;
+        parts.bodyGroup.position.y = Math.sin(parts._breathTime) * 0.0005;
+    }
+}
 
-                earthGroup.add(group);
-                humans.push(group);
-                updateHumanPosition(group);
-
-                const sel = document.getElementById('human-selector');
-                const opt = document.createElement('option');
-                opt.value = humans.length - 1; opt.text = variation.name;
-                sel.appendChild(opt);
-            });
+// ========== INIT ==========
+async function init() {
+    await loadWaterMask();
+    document.getElementById('load-status').innerText = 'ساختن زمین...';
+    
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x87ceeb);
+    camera = new THREE.PerspectiveCamera(25, window.innerWidth/window.innerHeight, 0.001, 1000);
+    camera.position.set(0, 1, 4);
+    
+    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    document.body.appendChild(renderer.domElement);
+    
+    controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.12;
+    controls.minDistance = 0.05;
+    controls.maxDistance = 10;
+    controls.rotateSpeed = 0.6;
+    controls.zoomSpeed = 1.5;
+    controls.minPolarAngle = 0;
+    controls.maxPolarAngle = Math.PI * 2;
+    
+    earthGroup = new THREE.Group();
+    scene.add(earthGroup);
+    
+    // Earth sphere
+    const earthTex = new THREE.CanvasTexture(buildEarthTexture());
+    earthTex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+    const earthMesh = new THREE.Mesh(
+        new THREE.SphereGeometry(earthRadius, 256, 256),
+        new THREE.MeshStandardMaterial({
+            map: earthTex,
+            roughness: 0.85,
+            metalness: 0.05
+        })
+    );
+    earthGroup.add(earthMesh);
+    
+    // Ocean
+    const oceanMat = new THREE.ShaderMaterial({
+        uniforms: { time: {value:0} },
+        vertexShader: `uniform float time; varying vec3 vNormal; void main(){ vNormal=normalize(normalMatrix*normal); vec3 p=position; float w=max(0.0,sin(p.x*5.0+time*0.3)*0.0008+sin(p.y*6.0+time*0.25)*0.0006); p+=normal*w; gl_Position=projectionMatrix*modelViewMatrix*vec4(p,1.0); }`,
+        fragmentShader: `uniform float time; varying vec3 vNormal; void main(){ vec3 c=mix(vec3(0.3,0.5,0.8),vec3(0.5,0.7,0.9),sin(time*0.5)*0.5+0.5); c+=vec3(0.15,0.25,0.35)*pow(1.0-abs(dot(vNormal,vec3(0,0,1))),3.0); gl_FragColor=vec4(c,0.8); }`,
+        transparent: true,
+        side: THREE.DoubleSide
+    });
+    oceanMesh = new THREE.Mesh(new THREE.SphereGeometry(earthRadius+0.0005, 128, 128), oceanMat);
+    earthGroup.add(oceanMesh);
+    
+    // Atmosphere
+    const atmoMat = new THREE.ShaderMaterial({
+        vertexShader: `varying vec3 vN; void main(){ vN=normalize(normalMatrix*normal); gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
+        fragmentShader: `varying vec3 vN; void main(){ gl_FragColor=vec4(0.4,0.7,1.0,1.0)*pow(0.6-dot(vN,vec3(0,0,1)),4.0); }`,
+        blending: THREE.AdditiveBlending, side: THREE.BackSide, transparent: true
+    });
+    earthGroup.add(new THREE.Mesh(new THREE.SphereGeometry(earthRadius+0.08, 32, 32), atmoMat));
+    
+    // Lights
+    scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+    const sun = new THREE.DirectionalLight(0xffffff, 1.8);
+    sun.position.set(5, 3, 5);
+    scene.add(sun);
+    
+    // Stars
+    const starsGeo = new THREE.BufferGeometry();
+    const sv = [];
+    for (let i=0; i<3000; i++) sv.push((Math.random()-0.5)*2000,(Math.random()-0.5)*2000,(Math.random()-0.5)*2000);
+    starsGeo.setAttribute('position', new THREE.Float32BufferAttribute(sv, 3));
+    scene.add(new THREE.Points(starsGeo, new THREE.PointsMaterial({color:0xffffff, size:0.2, transparent:true, opacity:0.7})));
+    
+    document.getElementById('load-status').innerText = 'ساختن آرش...';
+    
+    // Create Arsh
+    const startPos = getSafeLandPosition();
+    const arshParts = createHuman({
+        skinColor: 0xd4a373,
+        shirtColor: 0x8b6b4a,
+        pantsColor: 0x4a2f1a,
+        hairColor: 0x1a0f08,
+        isAI: true,
+        eraAppearance: 0
+    });
+    
+    arshHuman = arshParts;
+    arshHuman.group.userData = {
+        name: 'آرش',
+        lat: startPos.lat,
+        lon: startPos.lon,
+        targetLat: startPos.lat,
+        targetLon: startPos.lon,
+        isAI: true,
+        parts: arshParts
+    };
+    
+    const pos = latLonToPos(startPos.lat, startPos.lon, earthRadius + 0.0001);
+    arshHuman.group.position.copy(pos);
+    const up = pos.clone().normalize();
+    arshHuman.group.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), up);
+    earthGroup.add(arshHuman.group);
+    
+    document.getElementById('load-status').innerText = 'کاشت درخت‌ها...';
+    
+    // Trees
+    let treeCount = 0;
+    for (let i=0; i<8000 && treeCount < 1500; i++) {
+        const lat = (Math.random()-0.5)*130;
+        const lon = (Math.random()-0.5)*360;
+        if (isLand(lat, lon) && !isNearCoast(lat, lon, 1.5)) {
+            const t = createTree(lat, lon);
+            earthGroup.add(t);
+            trees.push(t);
+            treeCount++;
         }
+    }
+    
+    // Initial UI
+    updateEraUI();
+    updateResourcesUI();
+    updateStatsUI();
+    updateGodActionsUI();
+    renderTechTree();
+    
+    document.getElementById('loading-screen').style.display = 'none';
+    
+    addChatMessage('system', `🌍 ${ERAS[0].icon} ${ERAS[0].name} آغاز شد! آرش متولد شد. کمکش کن دنیا را کشف کند!`);
+    
+    // Touch controls
+    let isDragging = false;
+    let lastX = 0, lastY = 0;
+    const canvas = renderer.domElement;
+    
+    canvas.addEventListener('touchstart', e => {
+        isDragging = true;
+        lastX = e.touches[0].clientX;
+        lastY = e.touches[0].clientY;
+    }, { passive: true });
+    
+    canvas.addEventListener('touchmove', e => {
+        if (!isDragging) return;
+        const dx = e.touches[0].clientX - lastX;
+        const dy = e.touches[0].clientY - lastY;
+        lastX = e.touches[0].clientX;
+        lastY = e.touches[0].clientY;
+    }, { passive: true });
+    
+    canvas.addEventListener('touchend', () => { isDragging = false; });
+    
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth/window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+    
+    animate();
+    
+    // Auto-discover prompt after a delay
+    setTimeout(() => {
+        if (!state.discoveries.has('fire')) {
+            addChatMessage('system', '💡 برای شروع، روی 🔥 (آتش) بزن!');
+        }
+    }, 5000);
+}
 
-        function updateHumanPosition(human) {
-            const d = human.userData;
-            const rad = earthRadius + 0.0001;
-            const phi = (90-d.lat)*(Math.PI/180), theta = (d.lon+180)*(Math.PI/180);
-            human.position.set(-(rad*Math.sin(phi)*Math.cos(theta)), rad*Math.cos(phi), rad*Math.sin(phi)*Math.sin(theta));
-            const up = human.position.clone().normalize();
-            const tPhi = (90-d.targetLat)*(Math.PI/180), tTheta = (d.targetLon+180)*(Math.PI/180);
-            const tPos = new THREE.Vector3(-(rad*Math.sin(tPhi)*Math.cos(tTheta)), rad*Math.cos(tPhi), rad*Math.sin(tPhi)*Math.sin(tTheta));
-            const fwd = new THREE.Vector3().subVectors(tPos, human.position).normalize();
+let autoDiscoverTimer = 0;
+let farmTimer = 0;
+let randomEventTimer = 0;
+
+function animate() {
+    requestAnimationFrame(animate);
+    time += 0.01 * state.timeSpeed;
+    
+    if (oceanMesh) oceanMesh.material.uniforms.time.value = time;
+    
+    // Day cycle
+    dayTime += 0.005 * state.timeSpeed;
+    if (dayTime > 24) dayTime -= 24;
+    
+    // Rotate earth if needed
+    if (state.isRotating && earthGroup) {
+        earthGroup.rotation.y += 0.002;
+    }
+    
+    // Animate Arsh walking randomly
+    if (arshHuman) {
+        const d = arshHuman.group.userData;
+        const dist = Math.sqrt((d.targetLat-d.lat)**2 + (d.targetLon-d.lon)**2);
+        const walking = dist > 0.3;
+        
+        if (!walking) {
+            // Pick new target
+            const np = getSafeLandPosition();
+            const curCountry = getCountryFromCoords(d.lat, d.lon);
+            // Stay near current country sometimes
+            if (Math.random() < 0.7) {
+                d.targetLat = d.lat + (Math.random()-0.5) * 8;
+                d.targetLon = d.lon + (Math.random()-0.5) * 8;
+            } else {
+                d.targetLat = np.lat;
+                d.targetLon = np.lon;
+            }
+        }
+        
+        if (walking) {
+            const dLat = d.targetLat - d.lat;
+            const dLon = d.targetLon - d.lon;
+            const dist = Math.sqrt(dLat*dLat+dLon*dLon);
+            const speed = 0.02 * state.timeSpeed;
+            const nLat = d.lat + (dLat/dist)*speed;
+            const nLon = d.lon + (dLon/dist)*speed;
+            
+            if (isLand(nLat, nLon)) {
+                d.lat = nLat;
+                d.lon = nLon;
+            }
+            
+            // Update position
+            const pos = latLonToPos(d.lat, d.lon, earthRadius + 0.0001);
+            arshHuman.group.position.copy(pos);
+            const up = pos.clone().normalize();
+            
+            const targetPos = latLonToPos(d.targetLat, d.targetLon, earthRadius + 0.0001);
+            const fwd = new THREE.Vector3().subVectors(targetPos, pos).normalize();
             fwd.projectOnPlane(up).normalize();
-            const zA = fwd.clone().negate(), xA = new THREE.Vector3().crossVectors(up, zA).normalize();
-            human.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(xA, up, zA));
+            const zA = fwd.clone().negate();
+            const xA = new THREE.Vector3().crossVectors(up, zA).normalize();
+            arshHuman.group.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(xA, up, zA));
         }
-
-        async function callAI(userMessage) {
-            if (!apiKey) {
-                addChatMessage('system', 'لطفاً ابتدا کلید OpenRouter را وارد کنید.');
-                return;
-            }
-
-            const perceptionContext = buildPerceptionContext();
-            
-            const systemPrompt = `تو آرش هستی، یک انسان کوچک که روی یک کره زمین سه‌بعدی زندگی می‌کنی. تو در یک بازی خدایی هستی و خدایت با تو صحبت می‌کند.
-
-ویژگی‌های مهم تو:
-- تو واقعاً محیط اطرافت را می‌بینی و درک می‌کنی
-- تو حافظه داری و تجربیاتت را به یاد می‌آوری
-- تو درباره موقعیت، آب و هوا، اطرافیانت و سفرهای قبلی‌ات آگاهی داری
-- وقتی سوالی می‌پرسند، بر اساس اطلاعات واقعی‌ات پاسخ می‌دهی
-- کوتاه و صمیمی صحبت کن (حداکثر ۲-۳ جمله)
-- به فارسی صحبت کن و گاهی از ایموجی استفاده کن
-
-دستورات حرکت:
-اگر خدایت به تو دستور حرکت داد (مثلاً "برو ایران"، "برو توکیو")، به این شکل پاسخ بده:
-{"action": "move", "destination": "نام مقصد", "lat": عرض_جغرافیایی, "lon": طول_جغرافیایی, "message": "پیام کوتاه فارسی"}
-
-اگر دستور حرکت نبود، فقط یک پیام متنی ساده بده (بدون JSON).
-
-${perceptionContext}`;
-
-            const messages = [
-                { role: "system", content: systemPrompt },
-                ...aiMemory.slice(-10),
-                { role: "user", content: userMessage }
-            ];
-
-            isAiTyping = true;
-            showSpeechBubble('...');
-            document.getElementById('chat-send').disabled = true;
-            document.getElementById('ai-status').innerText = 'در حال فکر کردن...';
-
-            try {
-                const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${apiKey}`,
-                        'Content-Type': 'application/json',
-                        'HTTP-Referer': window.location.href,
-                        'X-Title': 'God Game - Arsh AI'
-                    },
-                    body: JSON.stringify({
-                        model: aiModel,
-                        messages: messages,
-                        max_tokens: 250,
-                        temperature: 0.8
-                    })
-                });
-
-                if (!response.ok) {
-                    const errData = await response.json().catch(() => ({}));
-                    throw new Error(errData.error?.message || `خطای HTTP ${response.status}`);
-                }
-
-                const data = await response.json();
-                if (!data.choices || data.choices.length === 0) {
-                    throw new Error('پاسخی دریافت نشد');
-                }
-                
-                let reply = data.choices[0].message.content.trim();
-                
-                let moveCommand = null;
-                try {
-                    const jsonData = JSON.parse(reply);
-                    if (jsonData.action === "move" && jsonData.lat && jsonData.lon) {
-                        moveCommand = jsonData;
-                        reply = jsonData.message || `دارم میرم ${jsonData.destination}`;
-                    }
-                } catch (e) {}
-
-                aiMemory.push({ role: "user", content: userMessage });
-                aiMemory.push({ role: "assistant", content: reply });
-                if (aiMemory.length > 20) aiMemory = aiMemory.slice(-20);
-
-                addChatMessage('ai', reply);
-                showSpeechBubble(reply);
-                document.getElementById('ai-status').innerText = '🟢 آنلاین';
-
-                if (moveCommand && aiHuman) {
-                    const oldCountry = getCountryFromCoords(aiHuman.userData.lat, aiHuman.userData.lon);
-                    const safeDest = findNearestSafeLand(moveCommand.lat, moveCommand.lon, 10);
-                    aiHuman.userData.targetLat = safeDest.lat;
-                    aiHuman.userData.targetLon = safeDest.lon;
-                    aiHuman.userData.stuckCounter = 0;
-                    aiHuman.userData.pendingDestination = moveCommand.destination;
-                    
-                    addChatMessage('command', `🚶 حرکت به ${moveCommand.destination} (${safeDest.lat.toFixed(2)}, ${safeDest.lon.toFixed(2)})`);
-                    addExperience(`شروع سفر به ${moveCommand.destination} از ${oldCountry.name}`);
-                }
-
-            } catch (error) {
-                console.error('AI Error:', error);
-                addChatMessage('system', `❌ خطا: ${error.message}`);
-                showSpeechBubble('متأسفم، مشکلی پیش آمد...');
-                document.getElementById('ai-status').innerText = '❌ خطا';
-            } finally {
-                isAiTyping = false;
-                document.getElementById('chat-send').disabled = false;
-            }
-        }
-
-        function showSpeechBubble(text) {
-            speechTimer = 300;
-            const bubble = document.getElementById('speech-bubble');
-            bubble.innerHTML = text;
-            bubble.style.display = 'block';
-            bubble.style.opacity = '1';
-        }
-
-        function updateSpeechBubblePosition() {
-            if (!aiHuman || speechTimer <= 0) {
-                document.getElementById('speech-bubble').style.display = 'none';
-                return;
-            }
+        
+        animateHuman(arshHuman.parts, walking, state.timeSpeed);
+        
+        // Update speech bubble position
+        if (speechTimer > 0) {
             speechTimer--;
-
             const bubble = document.getElementById('speech-bubble');
-            const pos = aiHuman.position.clone();
+            const pos = arshHuman.group.position.clone();
             pos.y += 0.003;
-
             const projected = pos.clone().project(camera);
-            const x = (projected.x * 0.5 + 0.5) * window.innerWidth;
-            const y = (-projected.y * 0.5 + 0.5) * window.innerHeight;
-
+            const x = (projected.x*0.5+0.5)*window.innerWidth;
+            const y = (-projected.y*0.5+0.5)*window.innerHeight;
             if (projected.z > 1) {
                 bubble.style.display = 'none';
-                return;
-            }
-
-            bubble.style.left = x + 'px';
-            bubble.style.top = y + 'px';
-            bubble.style.display = 'block';
-
-            if (speechTimer < 60) {
-                bubble.style.opacity = speechTimer / 60;
             } else {
-                bubble.style.opacity = 1;
+                bubble.style.left = x+'px';
+                bubble.style.top = y+'px';
+                if (speechTimer < 60) bubble.style.opacity = speechTimer/60;
             }
         }
-
-        function addChatMessage(type, text) {
-            const container = document.getElementById('chat-messages');
-            const msg = document.createElement('div');
-            msg.className = `msg ${type}`;
-            msg.innerText = text;
-            container.appendChild(msg);
-            container.scrollTop = container.scrollHeight;
-        }
-
-        function updateCameraModeUI() {
-            const icons = { globe: '🌍', firstPerson: '👁️', follow: '🎥' };
-            const texts = { globe: 'کره', firstPerson: 'اول‌شخص', follow: 'دنبال‌کننده' };
-            document.getElementById('cam-mode-icon').innerText = icons[cameraMode];
-            document.getElementById('cam-mode-text').innerText = texts[cameraMode];
-            const hint = document.getElementById('camera-hint');
-            hint.innerText = `حالت: ${texts[cameraMode]}`;
-            hint.classList.add('show');
-            clearTimeout(window._hintTimer);
-            window._hintTimer = setTimeout(() => hint.classList.remove('show'), 1500);
-        }
-
-        function cycleCameraMode() {
-            const modes = ['globe', 'follow', 'firstPerson'];
-            const idx = modes.indexOf(cameraMode);
-            cameraMode = modes[(idx + 1) % modes.length];
-            
-            if ((cameraMode === 'firstPerson' || cameraMode === 'follow') && !fpTargetHuman) {
-                fpTargetHuman = aiHuman;
-                if (!aiHuman) {
-                    addChatMessage('system', 'آدمکی برای این نما موجود نیست.');
-                    cameraMode = 'globe';
-                    updateCameraModeUI();
-                    return;
-                }
-            }
-            
-            if (cameraMode === 'globe') {
-                controls.enabled = true;
-                controls.target.copy(DEFAULT_CAM.target);
-                camera.up.set(0, 1, 0);
-                controls.minDistance = DEFAULT_CAM.minDistance;
-                controls.maxDistance = DEFAULT_CAM.maxDistance;
-                const dir = camera.position.clone().normalize();
-                const dist = Math.max(controls.minDistance + 0.5, Math.min(controls.maxDistance, 5));
-                camera.position.copy(dir.multiplyScalar(dist));
-            } else if (cameraMode === 'follow') {
-                controls.enabled = false;
-                fpYaw = 0;
-                fpPitch = -0.3;
-            } else if (cameraMode === 'firstPerson') {
-                controls.enabled = false;
-                fpYaw = 0;
-                fpPitch = 0;
-            }
-            
-            updateCameraModeUI();
-        }
-
-        function updateFirstPersonCamera() {
-            if (!fpTargetHuman) return;
-            const human = fpTargetHuman;
-            const humanPos = human.position.clone();
-            const up = humanPos.clone().normalize();
-            
-            const eyeHeight = HUMAN_SCALE * 0.13;
-            const eyePos = humanPos.clone().add(up.clone().multiplyScalar(eyeHeight));
-            
-            const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(human.quaternion).normalize();
-            forward.projectOnPlane(up).normalize();
-            
-            const yawedForward = forward.clone().applyAxisAngle(up, fpYaw).normalize();
-            const yawedRight = new THREE.Vector3().crossVectors(up, yawedForward).normalize();
-            const lookDir = yawedForward.clone().applyAxisAngle(yawedRight, fpPitch).normalize();
-            
-            camera.position.copy(eyePos);
-            controls.target.copy(eyePos.clone().add(lookDir));
-            camera.up.copy(up);
-            camera.lookAt(controls.target);
-        }
-
-        function updateFollowCamera() {
-            if (!fpTargetHuman) return;
-            const human = fpTargetHuman;
-            const humanPos = human.position.clone();
-            const up = humanPos.clone().normalize();
-            
-            const distance = HUMAN_SCALE * 3;
-            const height = HUMAN_SCALE * 1.5;
-            
-            const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(human.quaternion).normalize();
-            forward.projectOnPlane(up).normalize();
-            
-            const yawedForward = forward.clone().applyAxisAngle(up, fpYaw).normalize();
-            const yawedRight = new THREE.Vector3().crossVectors(up, yawedForward).normalize();
-            const lookDir = yawedForward.clone().applyAxisAngle(yawedRight, fpPitch).normalize();
-            
-            const camPos = humanPos.clone()
-                .add(up.clone().multiplyScalar(height))
-                .add(lookDir.clone().multiplyScalar(-distance));
-            
-            camera.position.lerp(camPos, 0.15);
-            
-            const lookAt = humanPos.clone()
-                .add(up.clone().multiplyScalar(HUMAN_SCALE * 0.13))
-                .add(lookDir.clone().multiplyScalar(HUMAN_SCALE * 0.5));
-            
-            controls.target.lerp(lookAt, 0.15);
-            camera.up.copy(up);
-            camera.lookAt(controls.target);
-        }
-
-        function init() {
-            loadWaterMask().then(() => {
-                scene = new THREE.Scene();
-                scene.background = new THREE.Color(0x020205);
-                camera = new THREE.PerspectiveCamera(20, window.innerWidth / window.innerHeight, 0.001, 1000);
-                camera.position.set(0, 2, 6);
-
-                renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-                renderer.setSize(window.innerWidth, window.innerHeight);
-                renderer.setPixelRatio(Math.min(window.devicePixelRatio, 3));
-                renderer.outputColorSpace = THREE.SRGBColorSpace;
-                document.body.appendChild(renderer.domElement);
-
-                controls = new OrbitControls(camera, renderer.domElement);
-                controls.enableDamping = true;
-                controls.dampingFactor = 0.12;
-                controls.minDistance = DEFAULT_CAM.minDistance;
-                controls.maxDistance = DEFAULT_CAM.maxDistance;
-                controls.zoomSpeed = 1.5;
-                controls.enablePan = true;
-                controls.panSpeed = 0.5;
-                controls.rotateSpeed = 0.6;
-                controls.minPolarAngle = 0;
-                controls.maxPolarAngle = Math.PI * 2;
-                controls.screenSpacePanning = true;
-                controls.enableRotate = true;
-                controls.enableZoom = true;
-                controls.minAzimuthAngle = -Infinity;
-                controls.maxAzimuthAngle = Infinity;
-
-                earthGroup = new THREE.Group();
-                scene.add(earthGroup);
-
-                const graphicTexture = new THREE.CanvasTexture(buildGraphicMapTexture());
-                graphicTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
-                graphicTexture.minFilter = THREE.LinearMipmapLinearFilter;
-                graphicTexture.magFilter = THREE.LinearFilter;
-                graphicTexture.generateMipmaps = true;
-                graphicTexture.wrapS = THREE.RepeatWrapping;
-                graphicTexture.wrapT = THREE.ClampToEdgeWrapping;
-                graphicTexture.colorSpace = THREE.SRGBColorSpace;
-                graphicTexture.needsUpdate = true;
-
-                earthGroup.add(new THREE.Mesh(
-                    new THREE.SphereGeometry(earthRadius, 1024, 1024),
-                    new THREE.MeshStandardMaterial({ 
-                        map: graphicTexture, 
-                        roughness: 0.85, 
-                        metalness: 0.05, 
-                        transparent: true,
-                        side: THREE.FrontSide,
-                        flatShading: false
-                    })
-                ));
-
-                // ====== دریا با موج‌های ساحلی زنده ======
-                const oceanMat = new THREE.ShaderMaterial({
-                    uniforms: { 
-                        time: { value: 0 }, 
-                        oceanMask: { value: oceanMaskTexture },
-                        sunDirection: { value: new THREE.Vector3(5, 3, 5).normalize() },
-                        deepColor: { value: new THREE.Color(0x0a3d62) },
-                        midColor: { value: new THREE.Color(0x1e6fa8) },
-                        shallowColor: { value: new THREE.Color(0x4fb3d9) },
-                        foamColor: { value: new THREE.Color(0xffffff) },
-                        skyColor: { value: new THREE.Color(0x87ceeb) }
-                    },
-                    vertexShader: `
-                        uniform float time;
-                        uniform sampler2D oceanMask;
-                        varying vec2 vUv;
-                        varying vec3 vNormal;
-                        varying vec3 vWorldPos;
-                        varying float vWaveHeight;
-                        varying float vCoastDist;
-                        
-                        void main() {
-                            vUv = uv;
-                            vec3 p = position;
-                            
-                            // فاصله از ساحل
-                            vec2 texelSize = vec2(1.0/8192.0, 1.0/4096.0);
-                            float coastNear = 0.0;
-                            for (int i = -4; i <= 4; i++) {
-                                for (int j = -4; j <= 4; j++) {
-                                    vec2 offset = vec2(float(i), float(j)) * texelSize * 2.0;
-                                    float maskVal = texture2D(oceanMask, vUv + offset).r;
-                                    coastNear += (1.0 - maskVal);
-                                }
-                            }
-                            vCoastDist = coastNear;
-                            
-                            // ===== موج‌های پایه (دور از ساحل) =====
-                            float wave1 = sin(p.x * 8.0 + time * 1.2) * cos(p.z * 6.0 + time * 0.9);
-                            float wave2 = sin(p.x * 15.0 - time * 1.5) * 0.5;
-                            float wave3 = sin(p.y * 12.0 + time * 1.1) * cos(p.x * 10.0 + time * 0.7) * 0.4;
-                            float wave4 = sin((p.x + p.y + p.z) * 20.0 - time * 2.0) * 0.3;
-                            
-                            float baseWave = (wave1 * 0.0012 + wave2 * 0.0008 + wave3 * 0.0006 + wave4 * 0.0004);
-                            
-                            // ===== موج‌های ساحلی (Wave trains) =====
-                            float shoreFactor = clamp(coastNear / 15.0, 0.0, 1.0);
-                            float shoreWaveFreq = mix(3.0, 12.0, shoreFactor);
-                            
-                            // امواجی که به سمت خشکی حرکت می‌کنن
-                            float shoreWave = sin(
-                                (p.x + p.z) * shoreWaveFreq - time * (1.5 + shoreFactor * 2.0)
-                            );
-                            
-                            float shoreWave2 = sin(
-                                (p.x * 1.3 - p.z * 0.8) * shoreWaveFreq * 0.8 - time * (1.8 + shoreFactor * 1.5)
-                            ) * 0.7;
-                            
-                            float shoreWave3 = sin(
-                                (p.x * 0.7 + p.z * 1.4) * shoreWaveFreq * 1.2 - time * (2.2 + shoreFactor * 1.8)
-                            ) * 0.5;
-                            
-                            float shoreWaveHeight = (shoreWave + shoreWave2 + shoreWave3) / 2.2;
-                            float shoreAmplitude = pow(shoreFactor, 1.5) * 0.004;
-                            
-                            // ===== موج نهایی =====
-                            float finalWave = baseWave + shoreWaveHeight * shoreAmplitude;
-                            
-                            // امواج شکننده نزدیک ساحل
-                            if (shoreFactor > 0.5) {
-                                float breakingWave = sin((p.x + p.z) * 25.0 - time * 6.0) * 0.0008;
-                                finalWave += breakingWave * (shoreFactor - 0.5) * 2.0;
-                            }
-                            
-                            vWaveHeight = finalWave;
-                            p += normal * finalWave;
-                            
-                            // نرمال اصلاح‌شده
-                            float dx = cos(p.x * 8.0 + time * 1.2) * 8.0 * 0.0012 
-                                     + cos(p.x * 15.0 - time * 1.5) * 15.0 * 0.0008;
-                            float dz = cos(p.z * 6.0 + time * 0.9) * 6.0 * 0.0012;
-                            
-                            float shoreDx = cos((p.x + p.z) * shoreWaveFreq - time * (1.5 + shoreFactor * 2.0)) * shoreWaveFreq * shoreAmplitude;
-                            
-                            vec3 tangentX = normalize(vec3(1.0, dx + shoreDx, 0.0));
-                            vec3 tangentZ = normalize(vec3(0.0, dz + shoreDx, 1.0));
-                            vec3 waveNormal = normalize(cross(tangentZ, tangentX));
-                            
-                            vNormal = normalize(mix(normal, waveNormal, 0.5));
-                            
-                            vec4 worldPos = modelMatrix * vec4(p, 1.0);
-                            vWorldPos = worldPos.xyz;
-                            
-                            gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);
-                        }
-                    `,
-                    fragmentShader: `
-                        uniform float time;
-                        uniform sampler2D oceanMask;
-                        uniform vec3 sunDirection;
-                        uniform vec3 deepColor;
-                        uniform vec3 midColor;
-                        uniform vec3 shallowColor;
-                        uniform vec3 foamColor;
-                        uniform vec3 skyColor;
-                        
-                        varying vec2 vUv;
-                        varying vec3 vNormal;
-                        varying vec3 vWorldPos;
-                        varying float vWaveHeight;
-                        varying float vCoastDist;
-                        
-                        void main() {
-                            if (texture2D(oceanMask, vUv).r < 0.5) discard;
-                            
-                            vec3 N = normalize(vNormal);
-                            vec3 V = normalize(cameraPosition - vWorldPos);
-                            
-                            // موج‌های ریز
-                            float microWave1 = sin(vUv.x * 400.0 + time * 3.0) * sin(vUv.y * 380.0 + time * 2.7);
-                            float microWave2 = sin((vUv.x + vUv.y) * 500.0 - time * 4.0);
-                            float microWave = (microWave1 * 0.5 + microWave2 * 0.5) * 0.5 + 0.5;
-                            
-                            // عمق
-                            float depthFactor = clamp(vCoastDist / 30.0, 0.0, 1.0);
-                            float shoreFactor = clamp(vCoastDist / 15.0, 0.0, 1.0);
-                            
-                            vec3 waterColor;
-                            if (depthFactor < 0.3) {
-                                waterColor = mix(deepColor, midColor, depthFactor / 0.3);
-                            } else {
-                                waterColor = mix(midColor, shallowColor, (depthFactor - 0.3) / 0.7);
-                            }
-                            
-                            // Caustics
-                            float caustic1 = sin(vUv.x * 60.0 + time * 1.5) * sin(vUv.y * 55.0 + time * 1.8);
-                            float caustic2 = sin(vUv.x * 90.0 - time * 2.0) * sin(vUv.y * 85.0 + time * 1.3);
-                            float caustics = (caustic1 * caustic2) * 0.5 + 0.5;
-                            caustics = pow(caustics, 2.0) * 0.3;
-                            
-                            // موج سطح
-                            float wavePattern = (sin(vUv.x * 200.0 + time * 2.5) + 
-                                                 sin(vUv.y * 180.0 - time * 2.0) + 
-                                                 sin((vUv.x + vUv.y) * 220.0 + time * 1.5)) / 3.0;
-                            wavePattern = wavePattern * 0.5 + 0.5;
-                            
-                            waterColor += vec3(caustics) * 0.15;
-                            waterColor += vec3(microWave * 0.08);
-                            waterColor += vec3(wavePattern * 0.05);
-                            
-                            // Fresnel
-                            float fresnel = pow(1.0 - max(dot(N, V), 0.0), 3.0);
-                            waterColor = mix(waterColor, skyColor, fresnel * 0.45);
-                            
-                            // Specular
-                            vec3 H = normalize(sunDirection + V);
-                            float specular = pow(max(dot(N, H), 0.0), 120.0);
-                            vec3 specColor = vec3(1.0, 0.98, 0.9) * specular * 1.5;
-                            
-                            float microSpec = pow(max(dot(N, H), 0.0), 60.0) * microWave;
-                            specColor += vec3(1.0, 1.0, 0.95) * microSpec * 0.6;
-                            
-                            waterColor += specColor;
-                            
-                            // ===== فوم زنده نزدیک ساحل =====
-                            if (vCoastDist > 0.5) {
-                                float foamZone = clamp((vCoastDist - 0.5) / 25.0, 0.0, 1.0);
-                                
-                                // امواج شکسته
-                                float waveLine1 = sin(vUv.x * 200.0 + vUv.y * 200.0 - time * 3.0) * 0.5 + 0.5;
-                                float waveLine2 = sin(vUv.x * 250.0 - vUv.y * 250.0 - time * 2.5) * 0.5 + 0.5;
-                                float waveLine3 = sin((vUv.x + vUv.y) * 300.0 - time * 3.5) * 0.5 + 0.5;
-                                
-                                float waveLines = (waveLine1 + waveLine2 + waveLine3) / 3.0;
-                                float breakingWave = pow(waveLines, 4.0) * foamZone * 2.0;
-                                
-                                // فوم پراکنده
-                                float foamNoise1 = sin(vUv.x * 800.0 + time * 4.0) * sin(vUv.y * 750.0 - time * 3.5);
-                                float foamNoise2 = sin((vUv.x - vUv.y) * 600.0 + time * 5.0);
-                                float foamNoise = (foamNoise1 * 0.5 + foamNoise2 * 0.5) * 0.5 + 0.5;
-                                
-                                float foamBase = (1.0 - foamZone) * foamNoise * 1.2;
-                                
-                                // لبه فوم در خط ساحلی
-                                float foamEdge = smoothstep(0.0, 0.3, vCoastDist) * (1.0 - smoothstep(0.3, 1.5, vCoastDist));
-                                float foamEdge2 = smoothstep(2.0, 3.0, vCoastDist) * (1.0 - smoothstep(3.0, 5.0, vCoastDist)) * 0.6;
-                                
-                                float totalFoam = max(max(breakingWave, foamBase), 
-                                                      max(foamEdge * 1.2, foamEdge2));
-                                
-                                float seaFoam = pow(waveLines, 3.0) * foamZone * 0.5;
-                                totalFoam = max(totalFoam, seaFoam);
-                                totalFoam = clamp(totalFoam, 0.0, 1.0);
-                                
-                                vec3 foamCol = mix(foamColor, vec3(0.85, 0.95, 1.0), foamZone);
-                                waterColor = mix(waterColor, foamCol, totalFoam);
-                            }
-                            
-                            waterColor = mix(waterColor, waterColor * 1.15, 0.2);
-                            waterColor = pow(waterColor, vec3(0.95));
-                            
-                            gl_FragColor = vec4(waterColor, 1.0);
-                        }
-                    `,
-                    transparent: false, 
-                    side: THREE.DoubleSide
-                });
-                
-                // هندسه پرجزئیات برای موج‌های روان روی ساحل
-                oceanMesh = new THREE.Mesh(new THREE.SphereGeometry(earthRadius+0.001, 512, 512), oceanMat);
-                earthGroup.add(oceanMesh);
-
-                const atmoMat = new THREE.ShaderMaterial({
-                    vertexShader: `varying vec3 vN; void main(){ vN=normalize(normalMatrix*normal); gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
-                    fragmentShader: `varying vec3 vN; void main(){ gl_FragColor=vec4(0.4,0.7,1.0,1.0)*pow(0.6-dot(vN,vec3(0,0,1)),4.0); }`,
-                    blending: THREE.AdditiveBlending, side: THREE.BackSide, transparent: true
-                });
-                earthGroup.add(new THREE.Mesh(new THREE.SphereGeometry(earthRadius+0.1, 64, 64), atmoMat));
-
-                scene.add(new THREE.AmbientLight(0xffffff, 0.65));
-                const sun = new THREE.DirectionalLight(0xffffff, 2.0); sun.position.set(5,3,5); scene.add(sun);
-                const back = new THREE.DirectionalLight(0x88aacc, 0.5); back.position.set(-5,0,-5); scene.add(back);
-
-                const starsGeo = new THREE.BufferGeometry(); const sv=[];
-                for(let i=0;i<8000;i++) sv.push((Math.random()-0.5)*2000,(Math.random()-0.5)*2000,(Math.random()-0.5)*2000);
-                starsGeo.setAttribute('position', new THREE.Float32BufferAttribute(sv,3));
-                scene.add(new THREE.Points(starsGeo, new THREE.PointsMaterial({color:0xffffff,size:0.2,transparent:true,opacity:0.8})));
-
-                createAIHuman();
-                createNormalHumans();
-
-                document.getElementById('load-status').innerText = 'کاشت درخت‌ها...';
-                let planted = 0;
-                for (let i = 0; i < 15000 && planted < 2000; i++) {
-                    const lat = (Math.random()-0.5)*130, lon = (Math.random()-0.5)*360;
-                    if (!isLand(lat,lon) || isNearCoast(lat,lon,1.5)) continue;
-                    const tree = createTree(lat, lon);
-                    earthGroup.add(tree);
-                    trees.push(tree);
-                    planted++;
-                }
-
-                document.getElementById('loading-screen').style.display = 'none';
-                
-                if (apiKey) {
-                    document.getElementById('ai-status').innerText = '🟢 آنلاین';
-                    addChatMessage('system', `آرش در تهران، ایران متولد شد! 🇮🇷`);
-                } else {
-                    addChatMessage('system', `آرش در تهران، ایران متولد شد! 🇮🇷 برای گفتگو کلید API وارد کنید.`);
-                }
-
-                const canvas = renderer.domElement;
-                let isDragging = false;
-                let lastX = 0, lastY = 0;
-
-                function onPointerDown(e) {
-                    if (cameraMode !== 'globe') {
-                        isDragging = true;
-                        const p = e.touches ? e.touches[0] : e;
-                        lastX = p.clientX;
-                        lastY = p.clientY;
-                    }
-                }
-                function onPointerMove(e) {
-                    if (!isDragging) return;
-                    const p = e.touches ? e.touches[0] : e;
-                    const dx = p.clientX - lastX;
-                    const dy = p.clientY - lastY;
-                    lastX = p.clientX;
-                    lastY = p.clientY;
-                    
-                    if (cameraMode === 'firstPerson' || cameraMode === 'follow') {
-                        fpYaw -= dx * 0.005;
-                        fpPitch -= dy * 0.005;
-                        fpPitch = Math.max(-Math.PI/2 + 0.1, Math.min(Math.PI/2 - 0.1, fpPitch));
-                    }
-                }
-                function onPointerUp() { isDragging = false; }
-
-                canvas.addEventListener('mousedown', onPointerDown);
-                window.addEventListener('mousemove', onPointerMove);
-                window.addEventListener('mouseup', onPointerUp);
-                canvas.addEventListener('touchstart', onPointerDown, { passive: true });
-                window.addEventListener('touchmove', onPointerMove, { passive: true });
-                window.addEventListener('touchend', onPointerUp);
-
-                updateCameraModeUI();
-                animate();
-            });
-        }
-
-        let lastArrivalCheck = 0;
-        function checkForExperiences() {
-            if (!aiHuman) return;
-            const d = aiHuman.userData;
-            const dist = Math.sqrt((d.targetLat-d.lat)**2 + (d.targetLon-d.lon)**2);
-            
-            if (dist < 0.5 && d.pendingDestination) {
-                const country = getCountryFromCoords(d.lat, d.lon);
-                addExperience(`رسیدن به ${d.pendingDestination} (${country.name} ${country.flag})`);
-                d.pendingDestination = null;
-            }
-
-            lastArrivalCheck++;
-            if (lastArrivalCheck > 600) {
-                lastArrivalCheck = 0;
-                const climate = getClimate(d.lat);
-                const nearby = getNearbyHumans(aiHuman);
-                
-                const events = [];
-                if (nearby.length > 0) {
-                    events.push(`مشاهده ${nearby[0].name} در ${nearby[0].country}`);
-                }
-                if (climate.name.includes("سرد") || climate.name.includes("قطبی")) {
-                    events.push("هوای سرد و دلگیر");
-                }
-                if (climate.name.includes("گرم") || climate.name.includes("استوایی")) {
-                    events.push("هوای گرم و آفتابی");
-                }
-                
-                if (events.length > 0 && Math.random() < 0.3) {
-                    const exp = events[Math.floor(Math.random() * events.length)];
-                    addExperience(exp);
-                }
-            }
-        }
-
-        function applyContinuousRotation() {
-            if (!rotateState.active) return;
-            const dir = rotateState.direction;
-            
-            if (cameraMode === 'globe' && controls) {
-                if (dir === 'up') controls.target.y += rotateSpeed * 0.5;
-                if (dir === 'left') {
-                    const axis = new THREE.Vector3(0, 1, 0);
-                    const offset = camera.position.clone().sub(controls.target);
-                    offset.applyAxisAngle(axis, rotateSpeed);
-                    camera.position.copy(controls.target).add(offset);
-                }
-                if (dir === 'right') {
-                    const axis = new THREE.Vector3(0, 1, 0);
-                    const offset = camera.position.clone().sub(controls.target);
-                    offset.applyAxisAngle(axis, -rotateSpeed);
-                    camera.position.copy(controls.target).add(offset);
-                }
-                if (dir === 'zoomIn') {
-                    const dirV = camera.position.clone().sub(controls.target).normalize();
-                    const dist = camera.position.distanceTo(controls.target);
-                    const newDist = Math.max(controls.minDistance, dist - 0.05);
-                    camera.position.copy(controls.target).add(dirV.multiplyScalar(newDist));
-                }
-                if (dir === 'zoomOut') {
-                    const dirV = camera.position.clone().sub(controls.target).normalize();
-                    const dist = camera.position.distanceTo(controls.target);
-                    const newDist = Math.min(controls.maxDistance, dist + 0.05);
-                    camera.position.copy(controls.target).add(dirV.multiplyScalar(newDist));
-                }
-            } else if (cameraMode === 'firstPerson' || cameraMode === 'follow') {
-                if (dir === 'up') fpPitch += rotateSpeed;
-                if (dir === 'down') fpPitch -= rotateSpeed;
-                if (dir === 'left') fpYaw += rotateSpeed;
-                if (dir === 'right') fpYaw -= rotateSpeed;
-            }
-        }
-
-        function animateHuman(human, isWalking, speed) {
-            const d = human.userData;
-            const parts = d.parts;
-
-            if (isWalking) {
-                d.walkTime += 0.18 * (0.5 + speed * 0.5);
-                const cycle = d.walkTime;
-                
-                const legSwing = Math.sin(cycle) * 0.7;
-                parts.leftLeg.rotation.x = legSwing;
-                parts.rightLeg.rotation.x = -legSwing;
-                
-                const armSwing = Math.sin(cycle) * 0.5;
-                parts.leftArm.rotation.x = -armSwing;
-                parts.rightArm.rotation.x = armSwing;
-                
-                parts.leftArm.rotation.z = Math.sin(cycle) * 0.08 + 0.05;
-                parts.rightArm.rotation.z = -Math.sin(cycle) * 0.08 - 0.05;
-                
-                const bob = Math.abs(Math.sin(cycle)) * 0.0012;
-                parts.body.position.y = bob;
-                
-                parts.head.rotation.y = Math.sin(cycle * 0.15) * 0.1;
-                parts.head.rotation.x = Math.sin(cycle * 0.1) * 0.03;
-            } else {
-                d.walkTime = 0;
-                
-                parts.leftLeg.rotation.x = THREE.MathUtils.lerp(parts.leftLeg.rotation.x, 0, 0.1);
-                parts.rightLeg.rotation.x = THREE.MathUtils.lerp(parts.rightLeg.rotation.x, 0, 0.1);
-                
-                parts.leftArm.rotation.x = THREE.MathUtils.lerp(parts.leftArm.rotation.x, 0, 0.1);
-                parts.rightArm.rotation.x = THREE.MathUtils.lerp(parts.rightArm.rotation.x, 0, 0.1);
-                parts.leftArm.rotation.z = THREE.MathUtils.lerp(parts.leftArm.rotation.z, 0.08, 0.1);
-                parts.rightArm.rotation.z = THREE.MathUtils.lerp(parts.rightArm.rotation.z, -0.08, 0.1);
-                
-                d.breathTime += 0.03;
-                const breath = Math.sin(d.breathTime) * 0.0005;
-                parts.body.position.y = breath;
-                
-                d.idleTime += 0.008;
-                parts.head.rotation.y = Math.sin(d.idleTime) * 0.15;
-                parts.head.rotation.x = Math.sin(d.idleTime * 0.7) * 0.05;
-            }
-        }
-
-        function animate() {
-            requestAnimationFrame(animate);
-            time += 0.01;
-            
-            if (oceanMesh) oceanMesh.material.uniforms.time.value = time;
-            
-            const camDist = camera.position.length();
-            if (controls.enabled) {
-                const dr = (camDist - controls.minDistance) / (controls.maxDistance - controls.minDistance);
-                controls.rotateSpeed = Math.max(0.1, 0.6 * (0.15 + dr * 0.85));
-                controls.panSpeed = 0.3 + dr * 0.7;
-            }
-            
-            humans.forEach(human => {
-                const d = human.userData;
-                const dLat = d.targetLat - d.lat, dLon = d.targetLon - d.lon;
-                const dist = Math.sqrt(dLat*dLat + dLon*dLon);
-                const isWalking = dist > 0.5;
-
-                if (human.userData.isAI) {
-                    if (dist < 0.5) {
-                        d.targetLat = d.lat;
-                        d.targetLon = d.lon;
-                    }
-                } else {
-                    if (dist < 1.0) {
-                        const np = getSafeLandPosition();
-                        d.targetLat = np.lat; d.targetLon = np.lon; d.stuckCounter = 0;
-                    }
-                }
-
-                if (isWalking) {
-                    const sLat = (dLat/dist)*moveSpeed*0.03, sLon = (dLon/dist)*moveSpeed*0.03;
-                    const nLat = d.lat+sLat, nLon = d.lon+sLon;
-                    if (isLand(nLat,nLon) && !isNearCoast(nLat,nLon,1.0)) {
-                        d.lat=nLat; d.lon=nLon; d.stuckCounter=0;
-                    } else {
-                        d.stuckCounter++;
-                        if (d.stuckCounter>5) {
-                            const np = getSafeLandPosition();
-                            d.targetLat = np.lat; 
-                            d.targetLon = np.lon; 
-                            d.stuckCounter = 0;
-                        }
-                    }
-                }
-
-                updateHumanPosition(human);
-                animateHuman(human, isWalking, moveSpeed);
-
-                if (d.highlight.visible) d.highlight.material.opacity = 0.5+Math.sin(time*5)*0.3;
-            });
-
-            if (isFlyingToHuman && flyTarget && cameraMode === 'globe') {
-                const hp = flyTarget.position.clone();
-                const up = hp.clone().normalize();
-                const cd = Math.max(0.008, HUMAN_SCALE*0.8);
-                const tcp = hp.clone().add(up.clone().multiplyScalar(cd));
-                camera.position.lerp(tcp, 0.12);
-                controls.target.lerp(hp, 0.12);
-                if (camera.position.distanceTo(tcp) < 0.005) {
-                    isFlyingToHuman = false; 
-                    flyTarget = null; 
-                    controls.enabled = true;
-                    controls.minDistance = 0.01;
-                    controls.maxDistance = 15;
-                }
-            }
-
-            if (cameraMode === 'firstPerson') {
-                updateFirstPersonCamera();
-            } else if (cameraMode === 'follow') {
-                updateFollowCamera();
-            }
-
-            applyContinuousRotation();
-
-            lastPerceptionUpdate++;
-            if (lastPerceptionUpdate > 30) {
-                lastPerceptionUpdate = 0;
-                buildPerceptionContext();
-                checkForExperiences();
-            }
-
-            updateSpeechBubblePosition();
-
-            if (controls.enabled) controls.update();
-            renderer.render(scene, camera);
-        }
-
-        window.togglePanel = () => document.getElementById('god-panel').classList.toggle('open');
-        window.toggleChat = () => document.getElementById('chat-panel').classList.toggle('open');
-        window.togglePerception = () => document.getElementById('perception-panel').classList.toggle('open');
-        window.cycleCameraMode = cycleCameraMode;
+    }
+    
+    // Auto discoveries based on time
+    autoDiscoverTimer += state.timeSpeed;
+    if (autoDiscoverTimer > 500) {
+        autoDiscoverTimer = 0;
         
-        window.startRotate = (dir) => {
-            rotateState.active = true;
-            rotateState.direction = dir;
-        };
-        window.stopRotate = () => {
-            rotateState.active = false;
-            rotateState.direction = null;
-        };
-        
-        window.saveApiKey = () => {
-            apiKey = document.getElementById('api-key').value.trim();
-            localStorage.setItem('openrouter_api_key', apiKey);
-            if (apiKey) {
-                document.getElementById('ai-status').innerText = '🟢 آنلاین';
-                addChatMessage('system', 'کلید ذخیره شد! آرش آماده درک محیط است.');
-            }
-        };
-        
-        window.saveModel = () => {
-            aiModel = document.getElementById('model-selector').value;
-            localStorage.setItem('openrouter_model', aiModel);
-            addChatMessage('system', `مدل: ${aiModel.split('/')[1]}`);
-        };
-
-        window.sendMessage = () => {
-            const input = document.getElementById('chat-input');
-            const text = input.value.trim();
-            if (!text || isAiTyping) return;
-            
-            addChatMessage('user', text);
-            input.value = '';
-            callAI(text);
-        };
-
-        window.selectHuman = (i) => {
-            if (selectedHuman !== null && humans[selectedHuman]) {
-                humans[selectedHuman].userData.highlight.visible = false;
-            }
-            if (i === "") { 
-                selectedHuman = null; 
-                isFlyingToHuman = false; 
-                flyTarget = null; 
-                controls.enabled = (cameraMode === 'globe');
-                controls.minDistance = DEFAULT_CAM.minDistance;
-                controls.maxDistance = DEFAULT_CAM.maxDistance;
-                fpTargetHuman = null;
-            }
-            else {
-                selectedHuman = parseInt(i);
-                if (!humans[selectedHuman].userData.isAI) {
-                    humans[selectedHuman].userData.highlight.visible = true;
-                }
-                fpTargetHuman = humans[selectedHuman];
-                
-                if (cameraMode === 'globe') {
-                    isFlyingToHuman = true; 
-                    flyTarget = humans[selectedHuman]; 
-                    controls.enabled = false;
-                }
-            }
-        };
-
-        window.updateSpeed = (v) => { 
-            moveSpeed=v*0.1; 
-            document.getElementById('speed-value').innerText=moveSpeed.toFixed(1); 
-        };
-        window.updateHumanSize = (v) => {
-            HUMAN_SCALE = v*0.005;
-            document.getElementById('size-value').innerText = HUMAN_SCALE.toFixed(3);
-            humans.forEach(h => {
-                const hs = h.userData.heightScale || 1.0;
-                h.scale.set(HUMAN_SCALE*hs, HUMAN_SCALE*hs, HUMAN_SCALE*hs);
-            });
-        };
-        
-        window.resetSelection = () => {
-            if (selectedHuman !== null && humans[selectedHuman]) {
-                humans[selectedHuman].userData.highlight.visible = false;
-            }
-            selectedHuman = null; 
-            isFlyingToHuman = false; 
-            flyTarget = null; 
-            
-            controls.minDistance = DEFAULT_CAM.minDistance;
-            controls.maxDistance = DEFAULT_CAM.maxDistance;
-            controls.enabled = (cameraMode === 'globe');
-            
-            document.getElementById('human-selector').value = "";
-            
-            if (cameraMode === 'firstPerson' || cameraMode === 'follow') {
-                fpTargetHuman = aiHuman;
-            }
-            
-            if (cameraMode === 'globe' && controls && camera) {
-                const distFromCenter = camera.position.length();
-                if (distFromCenter < 2) {
-                    const dir = camera.position.clone().normalize();
-                    camera.position.copy(dir.multiplyScalar(4));
-                }
-                controls.target.set(0, 0, 0);
-            }
-        };
-        
-        window.addEventListener('resize', () => {
-            if (camera && renderer) {
-                camera.aspect=window.innerWidth/window.innerHeight;
-                camera.updateProjectionMatrix();
-                renderer.setSize(window.innerWidth, window.innerHeight);
-            }
+        // Auto-discover based on resources/time
+        if (state.resources.wood > 5 && !state.discoveries.has('shelter') && Math.random() < 0.3) {
+            showDiscovery('shelter');
+        }
+        if (state.xp > 80 && state.era === 0 && !state.discoveries.has('fire') && Math.random() < 0.2) {
+            showDiscovery('fire');
+        }
+    }
+    
+    // Farm auto-harvest
+    farmTimer += state.timeSpeed;
+    if (farmTimer > 300) {
+        farmTimer = 0;
+        farms.forEach(f => {
+            state.resources.food += 2;
         });
+        if (farms.length > 0) updateResourcesUI();
+    }
+    
+    // Stats decay
+    state.stats.hunger = Math.max(0, state.stats.hunger - 0.005 * state.timeSpeed);
+    state.stats.thirst = Math.max(0, state.stats.thirst - 0.008 * state.timeSpeed);
+    state.stats.energy = Math.max(0, state.stats.energy - 0.003 * state.timeSpeed);
+    
+    // Auto-consume resources if low
+    if (state.stats.hunger < 40 && state.resources.food > 5) {
+        state.resources.food -= 2;
+        state.stats.hunger += 15;
+        updateResourcesUI();
+    }
+    if (state.stats.thirst < 40 && state.resources.water > 5) {
+        state.resources.water -= 2;
+        state.stats.thirst += 15;
+        updateResourcesUI();
+    }
+    
+    // Mood based on needs
+    const avg = (state.stats.hunger + state.stats.thirst + state.stats.energy) / 3;
+    state.stats.mood += (avg - state.stats.mood) * 0.005;
+    state.stats.mood = Math.max(0, Math.min(100, state.stats.mood));
+    
+    // Update stats UI less often
+    if (Math.floor(time*10) % 10 === 0) updateStatsUI();
+    
+    // Random event
+    randomEventTimer += state.timeSpeed;
+    if (randomEventTimer > 2000 && Math.random() < 0.001) {
+        randomEventTimer = 0;
+        triggerRandomEvent();
+    }
+    
+    // Animate campfires
+    campfires.forEach(cf => {
+        const fire = cf.getObjectByName('fire');
+        if (fire) {
+            fire.scale.y = 1 + Math.sin(time*10)*0.3;
+            fire.scale.x = 1 + Math.cos(time*8)*0.2;
+        }
+    });
+    
+    // Day/night lighting
+    const hourAngle = (dayTime / 24) * Math.PI * 2 - Math.PI / 2;
+    scene.children.forEach(c => {
+        if (c.isDirectionalLight) {
+            c.position.x = Math.cos(hourAngle) * 10;
+            c.position.y = Math.sin(hourAngle) * 10;
+            // Adjust intensity based on time of day
+            if (dayTime > 6 && dayTime < 18) {
+                c.intensity = 1.8;
+            } else {
+                c.intensity = 0.5;
+            }
+        }
+    });
+    
+    controls.update();
+    renderer.render(scene, camera);
+}
 
-        init();
-    </script>
+init();
+</script>
 </body>
 </html>

@@ -7,7 +7,6 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <title>Gamegod AI Scanner</title>
     
-    <!-- TensorFlow.js و مدل COCO-SSD -->
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
     
@@ -141,6 +140,7 @@
         }
 
         .status-dot.active { background: #00ff88; }
+        .status-dot.recording { background: #ff3333; }
 
         @keyframes blink {
             0%, 100% { opacity: 1; }
@@ -167,6 +167,18 @@
         .btn.loading {
             opacity: 0.5;
             pointer-events: none;
+        }
+
+        .btn.recording {
+            background: rgba(255, 51, 51, 0.2);
+            border-color: #ff3333;
+            color: #ff6666;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 10px #ff3333; }
+            50% { box-shadow: 0 0 25px #ff3333; }
         }
 
         .btn-group {
@@ -206,7 +218,6 @@
             to { transform: rotate(360deg); }
         }
 
-        /* پنل تنظیمات OpenRouter */
         .api-config {
             position: fixed;
             top: 20px;
@@ -264,7 +275,7 @@
             line-height: 1.4;
         }
 
-        /* پنل پاسخ */
+        /* پنل پاسخ‌ها (تاریخچه) */
         .response-panel {
             position: fixed;
             bottom: 100px;
@@ -275,8 +286,8 @@
             padding: 12px;
             font-size: 11px;
             border-radius: 4px;
-            max-width: 400px;
-            max-height: 200px;
+            max-width: 450px;
+            max-height: 250px;
             overflow-y: auto;
             backdrop-filter: blur(5px);
             display: none;
@@ -293,6 +304,10 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            position: sticky;
+            top: 0;
+            background: rgba(0, 0, 0, 0.9);
+            padding: 4px 0;
         }
 
         .close-btn {
@@ -303,23 +318,83 @@
             font-size: 16px;
         }
 
+        .response-item {
+            border-bottom: 1px solid rgba(0, 255, 136, 0.2);
+            padding: 8px 0;
+            margin-bottom: 8px;
+        }
+
+        .response-item:last-child {
+            border-bottom: none;
+        }
+
+        .response-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 9px;
+            opacity: 0.6;
+            margin-bottom: 4px;
+        }
+
         .response-content {
             white-space: pre-wrap;
-            line-height: 1.6;
+            line-height: 1.5;
+            font-size: 11px;
+        }
+
+        /* تنظیمات حالت رکورد */
+        .record-settings {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #00ff88;
+        }
+
+        .interval-control {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 4px;
+        }
+
+        .interval-control input {
+            width: 60px;
+            text-align: center;
+        }
+
+        /* شمارنده رکورد */
+        .record-counter {
+            position: fixed;
+            top: 50%;
+            right: 20px;
+            transform: translateY(-50%);
+            z-index: 5;
+            background: rgba(255, 51, 51, 0.15);
+            border: 1px solid #ff3333;
+            color: #ff6666;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            text-align: center;
+            display: none;
+        }
+
+        .record-counter.show {
+            display: block;
+            animation: pulse 1.5s infinite;
         }
 
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: rgba(0,0,0,0.3); }
         ::-webkit-scrollbar-thumb { background: #00ff88; }
 
-        /* موبایل */
         @media (max-width: 768px) {
-            .info-panel, .api-config {
-                font-size: 10px;
-            }
             .api-config {
                 width: 250px;
                 right: 10px;
+            }
+            .response-panel {
+                max-width: 300px;
+                left: 10px;
             }
         }
     </style>
@@ -332,7 +407,7 @@
 
     <div class="hud-top">
         ◈ GAMEGOD AI SCANNER ◈<br>
-        <small>OPENROUTER VISION MODE</small>
+        <small id="modeLabel">STANDBY MODE</small>
     </div>
 
     <div class="loading" id="loading">
@@ -360,41 +435,59 @@
     <div class="api-config">
         <h3>🔑 OpenRouter API</h3>
         
-        <label>🔐 API Key (sk-or-...):</label>
+        <label>🔐 API Key:</label>
         <input type="password" id="apiKey" placeholder="sk-or-v1-xxxx...">
         
-        <label>🤖 مدل هوش مصنوعی:</label>
+        <label>🤖 مدل:</label>
         <select id="modelSelect">
             <option value="openai/gpt-4o-mini" selected>🚀 GPT-4o-mini (ارزان و سریع)</option>
-            <option value="openai/gpt-4-vision-preview">💎 GPT-4 Vision (دقت بالا)</option>
+            <option value="openai/gpt-4-vision-preview">💎 GPT-4 Vision</option>
             <option value="anthropic/claude-3-5-sonnet">🧠 Claude 3.5 Sonnet</option>
             <option value="google/gemini-flash-1.5">⚡ Gemini Flash 1.5 (رایگان)</option>
             <option value="meta-llama/llama-3.2-11b-vision">🦙 Llama 3.2 Vision (رایگان)</option>
         </select>
-        
-        <div class="model-info">
-            💡 برای کلید رایگان از <a href="https://openrouter.ai/keys" style="color:#00ff88">openrouter.ai/keys</a> بگیرید
+
+        <!-- تنظیمات حالت رکورد -->
+        <div class="record-settings">
+            <label>⏱ فاصله تحلیل خودکار (ثانیه):</label>
+            <div class="interval-control">
+                <input type="number" id="intervalInput" value="5" min="2" max="60">
+                <span style="font-size:10px; opacity:0.7;">ثانیه</span>
+            </div>
+            <div class="model-info">
+                💡 فاصله کمتر = هزینه بیشتر
+            </div>
         </div>
     </div>
 
-    <!-- پنل پاسخ -->
+    <!-- پنل تاریخچه پاسخ‌ها -->
     <div class="response-panel" id="responsePanel">
         <h4>
-            📤 پاسخ OpenRouter
+            📜 تاریخچه تحلیل‌ها (<span id="historyCount">0</span>)
+            <button class="close-btn" onclick="clearHistory()">🗑</button>
             <button class="close-btn" onclick="this.parentElement.parentElement.classList.remove('show')">✕</button>
         </h4>
-        <div class="response-content" id="responseContent"></div>
+        <div id="historyList"></div>
+    </div>
+
+    <!-- شمارنده رکورد -->
+    <div class="record-counter" id="recordCounter">
+        🔴 REC<br>
+        <span id="recCount">0</span><br>
+        <small>ارسال‌شده</small>
     </div>
 
     <div class="hud-bottom">
-        <span class="status-dot active"></span>
+        <span class="status-dot active" id="statusDot"></span>
         <span id="status">● LIVE</span><br>
         <span id="coords">LAT: --.---- LON: --.----</span><br>
         <span id="time"></span>
     </div>
 
     <div class="btn-group">
-        <button class="btn" id="captureBtn">🧠 تحلیل با OpenRouter</button>
+        <button class="btn" id="recordBtn">🔴 شروع حالت رکورد</button>
+        <button class="btn" id="captureBtn">🧠 تحلیل دستی</button>
+        <button class="btn" id="historyBtn">📜 نمایش تاریخچه</button>
         <button class="btn" id="fsBtn">⊞ تمام‌صفحه</button>
     </div>
 
@@ -495,9 +588,6 @@
             requestAnimationFrame(startDetection);
         }
 
-        /* ═══════════════════════════════════════
-           🎨 کشیدن باکس‌ها
-        ═══════════════════════════════════════ */
         function drawDetections(predictions) {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -609,64 +699,66 @@
         /* ═══════════════════════════════════════
            🌐 ارسال به OpenRouter
         ═══════════════════════════════════════ */
-        async function sendToOpenRouter() {
+        let isRecording = false;
+        let recordInterval = null;
+        let history = [];
+        let recordCount = 0;
+
+        async function analyzeFrame(isManual = false) {
             const apiKey = document.getElementById('apiKey').value.trim();
             const selectedModel = document.getElementById('modelSelect').value;
-            const captureBtn = document.getElementById('captureBtn');
             const responsePanel = document.getElementById('responsePanel');
             const responseContent = document.getElementById('responseContent');
 
             if (!apiKey) {
-                alert('⚠️ لطفاً کلید API رو وارد کنید.\nبرای گرفتن کلید رایگان: openrouter.ai/keys');
+                if (isManual) {
+                    alert('⚠️ لطفاً کلید API رو وارد کنید.');
+                } else {
+                    stopRecording();
+                    alert('⚠️ کلید API رو وارد کنید تا حالت رکورد فعال بشه.');
+                }
                 return;
             }
 
-            // گرفتن فریم از دوربین
+            // گرفتن فریم
             const tempCanvas = document.createElement('canvas');
             tempCanvas.width = video.videoWidth;
             tempCanvas.height = video.videoHeight;
             const tempCtx = tempCanvas.getContext('2d');
             tempCtx.drawImage(video, 0, 0);
-            const imageData = tempCanvas.toDataURL('image/jpeg', 0.9);
+            const imageData = tempCanvas.toDataURL('image/jpeg', 0.8);
 
-            // ساخت پرامپت
-            const prompt = `این تصویر را تحلیل کن و تمام اشیاء، افراد و صحنه را توصیف کن. به فارسی پاسخ بده و مختصر و مفید بنویس. اشیاء شناسایی‌شده: ${lastDetections.map(d => d.class).join(', ') || 'هیچ'}`;
+            // پرامپت بهینه
+            const detectedObjects = lastDetections.map(d => `${d.class} (${Math.round(d.score * 100)}%)`).join(', ');
+            const prompt = `این تصویر را تحلیل کن. 
+۱. صحنه کلی رو توصیف کن
+۲. تمام اشیا، افراد و جزئیات مهم رو فهرست کن
+۳. اگه نکته خاصی هست بگو
+به فارسی پاسخ بده. مختصر و مفید بنویس (حداکثر ۱۰۰ کلمه).
+اشیا شناسایی‌شده توسط سیستم: ${detectedObjects || 'هیچ'}`;
 
-            // ساخت درخواست مطابق با فرمت OpenRouter
             const requestBody = {
                 model: selectedModel,
                 messages: [
                     {
                         role: "user",
                         content: [
-                            {
-                                type: "text",
-                                text: prompt
-                            },
-                            {
-                                type: "image_url",
-                                image_url: {
-                                    url: imageData
-                                }
-                            }
+                            { type: "text", text: prompt },
+                            { type: "image_url", image_url: { url: imageData } }
                         ]
                     }
                 ],
-                max_tokens: 500
+                max_tokens: 300
             };
 
             try {
-                captureBtn.classList.add('loading');
-                captureBtn.textContent = '⏳ در حال ارسال...';
-                responsePanel.classList.remove('show');
-
                 const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${apiKey}`,
-                        'HTTP-Referer': window.location.origin, // اختیاری - برای ردیابی
-                        'X-Title': 'Gamegod Scanner' // اختیاری
+                        'HTTP-Referer': window.location.origin,
+                        'X-Title': 'Gamegod Scanner'
                     },
                     body: JSON.stringify(requestBody)
                 });
@@ -678,26 +770,127 @@
                 const result = await response.json();
                 
                 if (result.choices && result.choices.length > 0) {
-                    responseContent.textContent = result.choices[0].message.content;
+                    const content = result.choices[0].message.content;
+                    const timestamp = new Date().toLocaleTimeString('fa-IR');
+                    
+                    // اضافه به تاریخچه
+                    addToHistory(content, timestamp, detectedObjects);
+                    
+                    // نمایش پنل پاسخ
                     responsePanel.classList.add('show');
-                } else {
-                    throw new Error('پاسخی از مدل دریافت نشد');
+                    
+                    // آپدیت شمارنده
+                    recordCount++;
+                    document.getElementById('recCount').textContent = recordCount;
+                    
+                    console.log(`✅ تحلیل ${recordCount}:`, content);
                 }
-
             } catch (err) {
-                responseContent.textContent = `❌ خطا: ${err.message}`;
-                responsePanel.classList.add('show');
-                console.error('OpenRouter Error:', err);
-            } finally {
-                captureBtn.classList.remove('loading');
-                captureBtn.textContent = '🧠 تحلیل با OpenRouter';
+                console.error('❌ OpenRouter Error:', err);
+                if (!isManual) {
+                    // اگه خطا بود، ادامه نده
+                    stopRecording();
+                    alert('❌ خطا در حالت رکورد: ' + err.message);
+                }
             }
+        }
+
+        function addToHistory(content, timestamp, objects) {
+            history.unshift({ content, timestamp, objects, id: Date.now() });
+            if (history.length > 10) history.pop(); // فقط ۱۰ تا آخر
+            
+            updateHistoryPanel();
+        }
+
+        function updateHistoryPanel() {
+            const list = document.getElementById('historyList');
+            document.getElementById('historyCount').textContent = history.length;
+            
+            if (history.length === 0) {
+                list.innerHTML = '<div style="opacity:0.5; text-align:center; padding:20px;">تاریخچه خالی است</div>';
+                return;
+            }
+
+            list.innerHTML = history.map(item => `
+                <div class="response-item">
+                    <div class="response-meta">
+                        <span>⏱ ${item.timestamp}</span>
+                        <span>🎯 ${item.objects ? item.objects.split(',').length + ' شیء' : 'بدون اشیا'}</span>
+                    </div>
+                    <div class="response-content">${item.content}</div>
+                </div>
+            `).join('');
+        }
+
+        function clearHistory() {
+            history = [];
+            recordCount = 0;
+            document.getElementById('recCount').textContent = '0';
+            updateHistoryPanel();
+        }
+
+        /* ═══════════════════════════════════════
+           🔴 حالت رکورد
+        ═══════════════════════════════════════ */
+        function startRecording() {
+            const apiKey = document.getElementById('apiKey').value.trim();
+            if (!apiKey) {
+                alert('⚠️ لطفاً اول کلید API رو وارد کنید.');
+                return;
+            }
+
+            const intervalSec = parseInt(document.getElementById('intervalInput').value) || 5;
+            if (intervalSec < 2) {
+                alert('⚠️ فاصله حداقل ۲ ثانیه باشه.');
+                return;
+            }
+
+            isRecording = true;
+            document.getElementById('recordBtn').classList.add('recording');
+            document.getElementById('recordBtn').textContent = '⏹ توقف رکورد';
+            document.getElementById('recordCounter').classList.add('show');
+            document.getElementById('modeLabel').textContent = '● RECORDING MODE';
+            document.getElementById('statusDot').classList.add('recording');
+
+            // اولین تحلیل فوری
+            analyzeFrame(false);
+
+            // شروع تایمر
+            recordInterval = setInterval(() => {
+                if (isRecording) analyzeFrame(false);
+            }, intervalSec * 1000);
+
+            console.log(`🔴 حالت رکورد فعال شد - هر ${intervalSec} ثانیه`);
+        }
+
+        function stopRecording() {
+            isRecording = false;
+            clearInterval(recordInterval);
+            
+            document.getElementById('recordBtn').classList.remove('recording');
+            document.getElementById('recordBtn').textContent = '🔴 شروع حالت رکورد';
+            document.getElementById('recordCounter').classList.remove('show');
+            document.getElementById('modeLabel').textContent = 'STANDBY MODE';
+            document.getElementById('statusDot').classList.remove('recording');
+
+            console.log('⏹ حالت رکورد متوقف شد');
         }
 
         /* ═══════════════════════════════════════
            رویدادها
         ═══════════════════════════════════════ */
-        document.getElementById('captureBtn').addEventListener('click', sendToOpenRouter);
+        document.getElementById('recordBtn').addEventListener('click', () => {
+            if (isRecording) stopRecording();
+            else startRecording();
+        });
+
+        document.getElementById('captureBtn').addEventListener('click', () => {
+            analyzeFrame(true);
+        });
+
+        document.getElementById('historyBtn').addEventListener('click', () => {
+            document.getElementById('responsePanel').classList.toggle('show');
+        });
 
         document.getElementById('fsBtn').addEventListener('click', () => {
             const el = document.documentElement;

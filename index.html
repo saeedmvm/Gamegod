@@ -30,6 +30,7 @@
             height: 100vh;
             object-fit: cover;
             z-index: 1;
+            filter: brightness(0.85) contrast(1.1) saturate(1.2);
         }
 
         #canvas {
@@ -42,6 +43,21 @@
             pointer-events: none;
         }
 
+        /* گرید پس‌زمینه */
+        .grid-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image:
+                linear-gradient(rgba(0, 255, 136, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 255, 136, 0.05) 1px, transparent 1px);
+            background-size: 50px 50px;
+            pointer-events: none;
+            z-index: 2;
+        }
+
         .scan-lines {
             position: fixed;
             top: 0;
@@ -50,8 +66,8 @@
             height: 100%;
             background: repeating-linear-gradient(
                 0deg,
-                rgba(0, 255, 136, 0.02),
-                rgba(0, 255, 136, 0.02) 1px,
+                rgba(0, 255, 136, 0.015),
+                rgba(0, 255, 136, 0.015) 1px,
                 transparent 1px,
                 transparent 3px
             );
@@ -160,14 +176,8 @@
             transition: all 0.2s;
         }
 
-        .btn:active {
-            background: rgba(0, 255, 136, 0.4);
-        }
-
-        .btn.loading {
-            opacity: 0.5;
-            pointer-events: none;
-        }
+        .btn:active { background: rgba(0, 255, 136, 0.4); }
+        .btn.loading { opacity: 0.5; pointer-events: none; }
 
         .btn.recording {
             background: rgba(255, 51, 51, 0.2);
@@ -214,9 +224,7 @@
             animation: spin 1s linear infinite;
         }
 
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
         .api-config {
             position: fixed;
@@ -260,13 +268,7 @@
             border-radius: 2px;
         }
 
-        .api-config select {
-            cursor: pointer;
-        }
-
-        .api-config select option {
-            background: #000;
-        }
+        .api-config select option { background: #000; }
 
         .model-info {
             margin-top: 6px;
@@ -275,7 +277,6 @@
             line-height: 1.4;
         }
 
-        /* پنل پاسخ‌ها (تاریخچه) */
         .response-panel {
             position: fixed;
             bottom: 100px;
@@ -293,9 +294,7 @@
             display: none;
         }
 
-        .response-panel.show {
-            display: block;
-        }
+        .response-panel.show { display: block; }
 
         .response-panel h4 {
             font-size: 12px;
@@ -324,10 +323,6 @@
             margin-bottom: 8px;
         }
 
-        .response-item:last-child {
-            border-bottom: none;
-        }
-
         .response-meta {
             display: flex;
             justify-content: space-between;
@@ -342,7 +337,6 @@
             font-size: 11px;
         }
 
-        /* تنظیمات حالت رکورد */
         .record-settings {
             margin-top: 10px;
             padding-top: 10px;
@@ -361,7 +355,6 @@
             text-align: center;
         }
 
-        /* شمارنده رکورد */
         .record-counter {
             position: fixed;
             top: 50%;
@@ -388,20 +381,15 @@
         ::-webkit-scrollbar-thumb { background: #00ff88; }
 
         @media (max-width: 768px) {
-            .api-config {
-                width: 250px;
-                right: 10px;
-            }
-            .response-panel {
-                max-width: 300px;
-                left: 10px;
-            }
+            .api-config { width: 250px; right: 10px; }
+            .response-panel { max-width: 300px; left: 10px; }
         }
     </style>
 </head>
 <body>
 
     <video id="video" autoplay playsinline muted></video>
+    <div class="grid-overlay"></div>
     <canvas id="canvas"></canvas>
     <div class="scan-lines"></div>
 
@@ -415,7 +403,6 @@
         <div>🤖 در حال بارگذاری مدل هوش مصنوعی...</div>
     </div>
 
-    <!-- پنل اشیا شناسایی‌شده -->
     <div class="info-panel">
         <h3>🎯 اشیا شناسایی‌شده</h3>
         <div class="info-row">
@@ -431,7 +418,6 @@
         </div>
     </div>
 
-    <!-- ⚙️ تنظیمات OpenRouter -->
     <div class="api-config">
         <h3>🔑 OpenRouter API</h3>
         
@@ -440,27 +426,22 @@
         
         <label>🤖 مدل:</label>
         <select id="modelSelect">
-            <option value="openai/gpt-4o-mini" selected>🚀 GPT-4o-mini (ارزان و سریع)</option>
+            <option value="openai/gpt-4o-mini" selected>🚀 GPT-4o-mini</option>
             <option value="openai/gpt-4-vision-preview">💎 GPT-4 Vision</option>
-            <option value="anthropic/claude-3-5-sonnet">🧠 Claude 3.5 Sonnet</option>
-            <option value="google/gemini-flash-1.5">⚡ Gemini Flash 1.5 (رایگان)</option>
-            <option value="meta-llama/llama-3.2-11b-vision">🦙 Llama 3.2 Vision (رایگان)</option>
+            <option value="anthropic/claude-3-5-sonnet">🧠 Claude 3.5</option>
+            <option value="google/gemini-flash-1.5">⚡ Gemini Flash (رایگان)</option>
+            <option value="meta-llama/llama-3.2-11b-vision">🦙 Llama Vision (رایگان)</option>
         </select>
 
-        <!-- تنظیمات حالت رکورد -->
         <div class="record-settings">
-            <label>⏱ فاصله تحلیل خودکار (ثانیه):</label>
+            <label>⏱ فاصله تحلیل خودکار:</label>
             <div class="interval-control">
                 <input type="number" id="intervalInput" value="5" min="2" max="60">
                 <span style="font-size:10px; opacity:0.7;">ثانیه</span>
             </div>
-            <div class="model-info">
-                💡 فاصله کمتر = هزینه بیشتر
-            </div>
         </div>
     </div>
 
-    <!-- پنل تاریخچه پاسخ‌ها -->
     <div class="response-panel" id="responsePanel">
         <h4>
             📜 تاریخچه تحلیل‌ها (<span id="historyCount">0</span>)
@@ -470,7 +451,6 @@
         <div id="historyList"></div>
     </div>
 
-    <!-- شمارنده رکورد -->
     <div class="record-counter" id="recordCounter">
         🔴 REC<br>
         <span id="recCount">0</span><br>
@@ -499,10 +479,70 @@
             const path = window.location.pathname;
             const fileMatch = path.match(/\/[^\/]+\.html$/i);
             if (fileMatch) {
-                const cleanPath = path.replace(/\/[^\/]+\.html$/i, '/');
-                window.history.replaceState(null, '', cleanPath);
+                window.history.replaceState(null, '', path.replace(/\/[^\/]+\.html$/i, '/'));
             }
         })();
+
+        /* ═══════════════════════════════════════
+           🎨 رنگ‌بندی هوشمند بر اساس دسته‌بندی
+        ═══════════════════════════════════════ */
+        const objectCategories = {
+            'person': { color: '#00aaff', icon: '👤', fa: 'انسان', cat: 'human' },
+            'bicycle': { color: '#ff6b35', icon: '🚲', fa: 'دوچرخه', cat: 'vehicle' },
+            'car': { color: '#ff4444', icon: '🚗', fa: 'ماشین', cat: 'vehicle' },
+            'motorcycle': { color: '#ff4444', icon: '🏍', fa: 'موتور', cat: 'vehicle' },
+            'airplane': { color: '#aa00ff', icon: '✈', fa: 'هواپیما', cat: 'vehicle' },
+            'bus': { color: '#ff4444', icon: '🚌', fa: 'اتوبوس', cat: 'vehicle' },
+            'train': { color: '#ff4444', icon: '🚂', fa: 'قطار', cat: 'vehicle' },
+            'truck': { color: '#ff4444', icon: '🚚', fa: 'کامیون', cat: 'vehicle' },
+            'boat': { color: '#00aaff', icon: '🚤', fa: 'قایق', cat: 'vehicle' },
+            'traffic light': { color: '#ffff00', icon: '🚦', fa: 'چراغ راهنمایی', cat: 'signal' },
+            'fire hydrant': { color: '#ff6b35', icon: '🚒', fa: 'شیر آتش‌نشانی', cat: 'object' },
+            'stop sign': { color: '#ff0000', icon: '🛑', fa: 'تابلو ایست', cat: 'signal' },
+            'bench': { color: '#8b7355', icon: '🪑', fa: 'نیمکت', cat: 'furniture' },
+            'bird': { color: '#ffaa00', icon: '🐦', fa: 'پرنده', cat: 'animal' },
+            'cat': { color: '#ffaa00', icon: '🐱', fa: 'گربه', cat: 'animal' },
+            'dog': { color: '#ffaa00', icon: '🐕', fa: 'سگ', cat: 'animal' },
+            'horse': { color: '#ffaa00', icon: '🐎', fa: 'اسب', cat: 'animal' },
+            'sheep': { color: '#ffaa00', icon: '🐑', fa: 'گوسفند', cat: 'animal' },
+            'cow': { color: '#ffaa00', icon: '🐄', fa: 'گاو', cat: 'animal' },
+            'umbrella': { color: '#00ff88', icon: '☂', fa: 'چتر', cat: 'object' },
+            'handbag': { color: '#ff69b4', icon: '👜', fa: 'کیف', cat: 'object' },
+            'suitcase': { color: '#8b7355', icon: '🧳', fa: 'چمدان', cat: 'object' },
+            'bottle': { color: '#00ff88', icon: '🍼', fa: 'بطری', cat: 'object' },
+            'wine glass': { color: '#ffffff', icon: '🍷', fa: 'لیوان', cat: 'object' },
+            'cup': { color: '#ffffff', icon: '☕', fa: 'فنجان', cat: 'object' },
+            'fork': { color: '#ffffff', icon: '🍴', fa: 'چنگال', cat: 'object' },
+            'knife': { color: '#ffffff', icon: '🔪', fa: 'چاقو', cat: 'object' },
+            'spoon': { color: '#ffffff', icon: '🥄', fa: 'قاشق', cat: 'object' },
+            'bowl': { color: '#ffffff', icon: '🥣', fa: 'کاسه', cat: 'object' },
+            'banana': { color: '#ffff00', icon: '🍌', fa: 'موز', cat: 'food' },
+            'apple': { color: '#ff4444', icon: '🍎', fa: 'سیب', cat: 'food' },
+            'orange': { color: '#ff6b35', icon: '🍊', fa: 'پرتقال', cat: 'food' },
+            'book': { color: '#aa00ff', icon: '📖', fa: 'کتاب', cat: 'object' },
+            'clock': { color: '#ffffff', icon: '⏰', fa: 'ساعت', cat: 'object' },
+            'vase': { color: '#ff69b4', icon: '🏺', fa: 'گلدان', cat: 'object' },
+            'scissors': { color: '#ffffff', icon: '✂', fa: 'قیچی', cat: 'object' },
+            'teddy bear': { color: '#8b7355', icon: '🧸', fa: 'عروسک', cat: 'object' },
+            'toothbrush': { color: '#ffffff', icon: '🪥', fa: 'مسواک', cat: 'object' },
+            'tv': { color: '#00aaff', icon: '📺', fa: 'تلویزیون', cat: 'device' },
+            'laptop': { color: '#00aaff', icon: '💻', fa: 'لپ‌تاپ', cat: 'device' },
+            'mouse': { color: '#00aaff', icon: '🖱', fa: 'ماوس', cat: 'device' },
+            'remote': { color: '#00aaff', icon: '📱', fa: 'کنترل', cat: 'device' },
+            'keyboard': { color: '#00aaff', icon: '⌨', fa: 'صفحه‌کلید', cat: 'device' },
+            'cell phone': { color: '#00aaff', icon: '📱', fa: 'موبایل', cat: 'device' },
+            'microwave': { color: '#ff6b35', icon: '🔥', fa: 'مایکروویو', cat: 'appliance' },
+            'oven': { color: '#ff6b35', icon: '🔥', fa: 'فر', cat: 'appliance' },
+            'toaster': { color: '#ff6b35', icon: '🍞', fa: 'تستر', cat: 'appliance' },
+            'sink': { color: '#00aaff', icon: '🚰', fa: 'سینک', cat: 'appliance' },
+            'refrigerator': { color: '#00aaff', icon: '🧊', fa: 'یخچال', cat: 'appliance' },
+            'bed': { color: '#8b7355', icon: '🛏', fa: 'تخت', cat: 'furniture' },
+            'toilet': { color: '#ffffff', icon: '🚽', fa: 'توالت', cat: 'furniture' },
+            'chair': { color: '#8b7355', icon: '🪑', fa: 'صندلی', cat: 'furniture' },
+            'couch': { color: '#8b7355', icon: '🛋', fa: 'کاناپه', cat: 'furniture' },
+            'potted plant': { color: '#00ff88', icon: '🪴', fa: 'گلدان', cat: 'object' },
+            'dining table': { color: '#8b7355', icon: '🍽', fa: 'میز غذا', cat: 'furniture' }
+        };
 
         /* ═══════════════════════════════════════
            📹 دوربین
@@ -541,6 +581,7 @@
         ═══════════════════════════════════════ */
         let model = null;
         let lastDetections = [];
+        let objectIds = new Map(); // برای ردیابی اشیا
 
         async function loadModel() {
             try {
@@ -570,7 +611,8 @@
                 try {
                     const predictions = await model.detect(video);
                     lastDetections = predictions;
-                    drawDetections(predictions);
+                    assignObjectIds(predictions);
+                    drawAdvancedHUD(predictions);
                     updateObjectList(predictions);
                 } catch (err) {
                     console.error('Detection error:', err);
@@ -588,11 +630,82 @@
             requestAnimationFrame(startDetection);
         }
 
-        function drawDetections(predictions) {
+        /* ═══════════════════════════════════════
+           🆔 ردیابی اشیا (Object Tracking)
+        ═══════════════════════════════════════ */
+        function assignObjectIds(predictions) {
+            const newIds = new Map();
+            
+            predictions.forEach((pred, idx) => {
+                const [x, y, w, h] = pred.bbox;
+                const centerX = x + w / 2;
+                const centerY = y + h / 2;
+                
+                // پیدا کردن نزدیک‌ترین ID قبلی
+                let bestId = null;
+                let minDist = Infinity;
+                
+                objectIds.forEach((oldPos, oldId) => {
+                    if (oldPos.class === pred.class) {
+                        const dist = Math.sqrt(
+                            Math.pow(centerX - oldPos.x, 2) + 
+                            Math.pow(centerY - oldPos.y, 2)
+                        );
+                        if (dist < minDist && dist < 200) {
+                            minDist = dist;
+                            bestId = oldId;
+                        }
+                    }
+                });
+                
+                if (!bestId) {
+                    bestId = `ID-${String(objectIds.size + idx + 1).padStart(3, '0')}`;
+                }
+                
+                newIds.set(bestId, { x: centerX, y: centerY, class: pred.class });
+                pred.trackingId = bestId;
+            });
+            
+            objectIds = newIds;
+        }
+
+        /* ═══════════════════════════════════════
+           🎨 رسم HUD پیشرفته
+        ═══════════════════════════════════════ */
+        function drawAdvancedHUD(predictions) {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
             const scaleX = canvas.width / video.videoWidth;
             const scaleY = canvas.height / video.videoHeight;
+
+            // خطوط اتصال از مرکز به اشیا
+            if (predictions.length > 0) {
+                ctx.strokeStyle = 'rgba(0, 255, 136, 0.15)';
+                ctx.lineWidth = 1;
+                ctx.setLineDash([5, 5]);
+                
+                const centerX = canvas.width / 2;
+                const centerY = canvas.height / 2;
+                
+                predictions.forEach(pred => {
+                    const [x, y, w, h] = pred.bbox;
+                    const targetX = (x + w / 2) * scaleX;
+                    const targetY = (y + h / 2) * scaleY;
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(centerX, centerY);
+                    ctx.lineTo(targetX, targetY);
+                    ctx.stroke();
+                });
+                
+                ctx.setLineDash([]);
+                
+                // نقطه مرکز
+                ctx.fillStyle = 'rgba(0, 255, 136, 0.3)';
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, 5, 0, Math.PI * 2);
+                ctx.fill();
+            }
 
             predictions.forEach(pred => {
                 const [x, y, w, h] = pred.bbox;
@@ -601,74 +714,166 @@
                 const sw = w * scaleX;
                 const sh = h * scaleY;
 
+                const category = objectCategories[pred.class] || { 
+                    color: '#00ff88', icon: '📦', fa: pred.class, cat: 'object' 
+                };
+                const color = category.color;
                 const confidence = pred.score;
-                let color = '#ffff00';
-                if (confidence > 0.8) color = '#00ff88';
-                else if (confidence < 0.5) color = '#ff6666';
+                const trackingId = pred.trackingId || 'ID-???';
 
+                // ═══ کادر خارجی با گلو ═══
+                ctx.shadowColor = color;
+                ctx.shadowBlur = 15;
                 ctx.strokeStyle = color;
                 ctx.lineWidth = 2;
                 ctx.strokeRect(sx, sy, sw, sh);
-
-                ctx.shadowColor = color;
-                ctx.shadowBlur = 10;
-                ctx.strokeRect(sx, sy, sw, sh);
                 ctx.shadowBlur = 0;
 
-                const cornerSize = 15;
-                ctx.lineWidth = 3;
+                // ═══ کادر داخلی (هولوگرام) ═══
+                ctx.strokeStyle = color;
+                ctx.globalAlpha = 0.3;
+                ctx.lineWidth = 1;
+                ctx.setLineDash([8, 4]);
+                ctx.strokeRect(sx + 5, sy + 5, sw - 10, sh - 10);
+                ctx.setLineDash([]);
+                ctx.globalAlpha = 1;
+
+                // ═══ گوشه‌های ضخیم تاکیدی ═══
+                const cornerSize = Math.min(25, sw / 4, sh / 4);
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 4;
+                ctx.lineCap = 'round';
+                
+                // بالا-چپ
                 ctx.beginPath();
                 ctx.moveTo(sx, sy + cornerSize);
                 ctx.lineTo(sx, sy);
                 ctx.lineTo(sx + cornerSize, sy);
                 ctx.stroke();
+                
+                // بالا-راست
                 ctx.beginPath();
                 ctx.moveTo(sx + sw - cornerSize, sy);
                 ctx.lineTo(sx + sw, sy);
                 ctx.lineTo(sx + sw, sy + cornerSize);
                 ctx.stroke();
+                
+                // پایین-چپ
                 ctx.beginPath();
                 ctx.moveTo(sx, sy + sh - cornerSize);
                 ctx.lineTo(sx, sy + sh);
                 ctx.lineTo(sx + cornerSize, sy + sh);
                 ctx.stroke();
+                
+                // پایین-راست
                 ctx.beginPath();
                 ctx.moveTo(sx + sw - cornerSize, sy + sh);
                 ctx.lineTo(sx + sw, sy + sh);
                 ctx.lineTo(sx + sw, sy + sh - cornerSize);
                 ctx.stroke();
 
-                const label = `${translateObject(pred.class)} ${Math.round(confidence * 100)}%`;
-                ctx.font = 'bold 14px Courier New';
-                const textWidth = ctx.measureText(label).width;
-                
-                ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-                ctx.fillRect(sx, sy - 22, textWidth + 10, 22);
-                
+                // ═══ برچسب اطلاعات (بالای کادر) ═══
+                drawInfoLabel(sx, sy - 45, trackingId, category.icon, category.fa, confidence, color);
+
+                // ═══ نقاط گوشه (Targeting Points) ═══
                 ctx.fillStyle = color;
-                ctx.fillText(label, sx + 5, sy - 6);
+                const pointSize = 3;
+                [[sx, sy], [sx + sw, sy], [sx, sy + sh], [sx + sw, sy + sh]].forEach(([px, py]) => {
+                    ctx.beginPath();
+                    ctx.arc(px, py, pointSize, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+
+                // ═══ خطوط مرکزی کراس‌هیر ═══
+                const centerX = sx + sw / 2;
+                const centerY = sy + sh / 2;
+                ctx.strokeStyle = color;
+                ctx.globalAlpha = 0.4;
+                ctx.lineWidth = 1;
+                
+                // خط افقی
+                ctx.beginPath();
+                ctx.moveTo(sx + 10, centerY);
+                ctx.lineTo(centerX - 8, centerY);
+                ctx.moveTo(centerX + 8, centerY);
+                ctx.lineTo(sx + sw - 10, centerY);
+                ctx.stroke();
+                
+                // خط عمودی
+                ctx.beginPath();
+                ctx.moveTo(centerX, sy + 10);
+                ctx.lineTo(centerX, centerY - 8);
+                ctx.moveTo(centerX, centerY + 8);
+                ctx.lineTo(centerX, sy + sh - 10);
+                ctx.stroke();
+                
+                ctx.globalAlpha = 1;
+
+                // ═══ درصد اطمینان (پایین کادر) ═══
+                const barWidth = sw - 20;
+                const barHeight = 4;
+                const barX = sx + 10;
+                const barY = sy + sh + 8;
+                
+                // پس‌زمینه نوار
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+                ctx.fillRect(barX, barY, barWidth, barHeight);
+                
+                // نوار اطمینان
+                ctx.fillStyle = color;
+                ctx.fillRect(barX, barY, barWidth * confidence, barHeight);
+                
+                // متن درصد
+                ctx.fillStyle = color;
+                ctx.font = 'bold 10px Courier New';
+                ctx.textAlign = 'center';
+                ctx.fillText(`${Math.round(confidence * 100)}%`, centerX, barY + barHeight + 12);
+                ctx.textAlign = 'left';
             });
         }
 
-        function translateObject(name) {
-            const translations = {
-                'person': '👤 انسان',
-                'car': '🚗 ماشین',
-                'motorcycle': '🏍 موتور',
-                'dog': '🐕 سگ',
-                'cat': '🐱 گربه',
-                'chair': '🪑 صندلی',
-                'table': '🪵 میز',
-                'cell phone': '📱 موبایل',
-                'laptop': '💻 لپ‌تاپ',
-                'tv': '📺 تلویزیون',
-                'bottle': '🍼 بطری',
-                'book': '📖 کتاب',
-                'clock': '⏰ ساعت',
-                'cup': '☕ فنجان',
-                'vase': '🏺 گلدان'
-            };
-            return translations[name] || name;
+        /* ═══════════════════════════════════════
+           🏷 رسم برچسب اطلاعات
+        ═══════════════════════════════════════ */
+        function drawInfoLabel(x, y, id, icon, name, confidence, color) {
+            ctx.font = 'bold 12px Courier New';
+            const text = `${icon} ${name}`;
+            const idText = id;
+            
+            const textWidth = ctx.measureText(text).width;
+            const idWidth = ctx.measureText(idText).width;
+            const totalWidth = Math.max(textWidth, idWidth) + 24;
+            const totalHeight = 40;
+            
+            // تنظیم موقعیت اگه از صفحه بیرون زد
+            if (x + totalWidth > canvas.width) x = canvas.width - totalWidth - 5;
+            if (y < 5) y = 5;
+            
+            // ═══ پس‌زمینه برچسب ═══
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+            ctx.fillRect(x, y, totalWidth, totalHeight);
+            
+            // ═══ حاشیه ═══
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2;
+            ctx.shadowColor = color;
+            ctx.shadowBlur = 8;
+            ctx.strokeRect(x, y, totalWidth, totalHeight);
+            ctx.shadowBlur = 0;
+            
+            // ═══ نوار رنگی سمت راست ═══
+            ctx.fillStyle = color;
+            ctx.fillRect(x + totalWidth - 4, y, 4, totalHeight);
+            
+            // ═══ ردیف اول: آیکون + نام ═══
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 13px Courier New';
+            ctx.fillText(text, x + 8, y + 16);
+            
+            // ═══ ردیف دوم: ID + درصد ═══
+            ctx.fillStyle = color;
+            ctx.font = '10px Courier New';
+            ctx.fillText(`${id} • ${Math.round(confidence * 100)}%`, x + 8, y + 32);
         }
 
         function updateObjectList(predictions) {
@@ -682,14 +887,15 @@
 
             const counts = {};
             predictions.forEach(p => {
-                const name = translateObject(p.class);
-                if (!counts[name]) counts[name] = { count: 0, maxScore: 0 };
+                const cat = objectCategories[p.class] || { icon: '📦', fa: p.class };
+                const name = `${cat.icon} ${cat.fa}`;
+                if (!counts[name]) counts[name] = { count: 0, maxScore: 0, color: cat.color };
                 counts[name].count++;
                 counts[name].maxScore = Math.max(counts[name].maxScore, p.score);
             });
 
             list.innerHTML = Object.entries(counts).map(([name, data]) => `
-                <div class="object-item">
+                <div class="object-item" style="border-left-color:${data.color}">
                     <span>${name} ${data.count > 1 ? `(${data.count}x)` : ''}</span>
                     <span>${Math.round(data.maxScore * 100)}%</span>
                 </div>
@@ -708,19 +914,17 @@
             const apiKey = document.getElementById('apiKey').value.trim();
             const selectedModel = document.getElementById('modelSelect').value;
             const responsePanel = document.getElementById('responsePanel');
-            const responseContent = document.getElementById('responseContent');
 
             if (!apiKey) {
                 if (isManual) {
                     alert('⚠️ لطفاً کلید API رو وارد کنید.');
                 } else {
                     stopRecording();
-                    alert('⚠️ کلید API رو وارد کنید تا حالت رکورد فعال بشه.');
+                    alert('⚠️ کلید API رو وارد کنید.');
                 }
                 return;
             }
 
-            // گرفتن فریم
             const tempCanvas = document.createElement('canvas');
             tempCanvas.width = video.videoWidth;
             tempCanvas.height = video.videoHeight;
@@ -728,7 +932,6 @@
             tempCtx.drawImage(video, 0, 0);
             const imageData = tempCanvas.toDataURL('image/jpeg', 0.8);
 
-            // پرامپت بهینه
             const detectedObjects = lastDetections.map(d => `${d.class} (${Math.round(d.score * 100)}%)`).join(', ');
             const prompt = `این تصویر را تحلیل کن. 
 ۱. صحنه کلی رو توصیف کن
@@ -739,15 +942,13 @@
 
             const requestBody = {
                 model: selectedModel,
-                messages: [
-                    {
-                        role: "user",
-                        content: [
-                            { type: "text", text: prompt },
-                            { type: "image_url", image_url: { url: imageData } }
-                        ]
-                    }
-                ],
+                messages: [{
+                    role: "user",
+                    content: [
+                        { type: "text", text: prompt },
+                        { type: "image_url", image_url: { url: imageData } }
+                    ]
+                }],
                 max_tokens: 300
             };
 
@@ -763,9 +964,7 @@
                     body: JSON.stringify(requestBody)
                 });
 
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${await response.text()}`);
-                }
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
                 const result = await response.json();
                 
@@ -773,32 +972,24 @@
                     const content = result.choices[0].message.content;
                     const timestamp = new Date().toLocaleTimeString('fa-IR');
                     
-                    // اضافه به تاریخچه
                     addToHistory(content, timestamp, detectedObjects);
-                    
-                    // نمایش پنل پاسخ
                     responsePanel.classList.add('show');
                     
-                    // آپدیت شمارنده
                     recordCount++;
                     document.getElementById('recCount').textContent = recordCount;
-                    
-                    console.log(`✅ تحلیل ${recordCount}:`, content);
                 }
             } catch (err) {
                 console.error('❌ OpenRouter Error:', err);
                 if (!isManual) {
-                    // اگه خطا بود، ادامه نده
                     stopRecording();
-                    alert('❌ خطا در حالت رکورد: ' + err.message);
+                    alert('❌ خطا: ' + err.message);
                 }
             }
         }
 
         function addToHistory(content, timestamp, objects) {
             history.unshift({ content, timestamp, objects, id: Date.now() });
-            if (history.length > 10) history.pop(); // فقط ۱۰ تا آخر
-            
+            if (history.length > 10) history.pop();
             updateHistoryPanel();
         }
 
@@ -829,9 +1020,6 @@
             updateHistoryPanel();
         }
 
-        /* ═══════════════════════════════════════
-           🔴 حالت رکورد
-        ═══════════════════════════════════════ */
         function startRecording() {
             const apiKey = document.getElementById('apiKey').value.trim();
             if (!apiKey) {
@@ -852,15 +1040,10 @@
             document.getElementById('modeLabel').textContent = '● RECORDING MODE';
             document.getElementById('statusDot').classList.add('recording');
 
-            // اولین تحلیل فوری
             analyzeFrame(false);
-
-            // شروع تایمر
             recordInterval = setInterval(() => {
                 if (isRecording) analyzeFrame(false);
             }, intervalSec * 1000);
-
-            console.log(`🔴 حالت رکورد فعال شد - هر ${intervalSec} ثانیه`);
         }
 
         function stopRecording() {
@@ -872,8 +1055,6 @@
             document.getElementById('recordCounter').classList.remove('show');
             document.getElementById('modeLabel').textContent = 'STANDBY MODE';
             document.getElementById('statusDot').classList.remove('recording');
-
-            console.log('⏹ حالت رکورد متوقف شد');
         }
 
         /* ═══════════════════════════════════════
@@ -884,10 +1065,7 @@
             else startRecording();
         });
 
-        document.getElementById('captureBtn').addEventListener('click', () => {
-            analyzeFrame(true);
-        });
-
+        document.getElementById('captureBtn').addEventListener('click', () => analyzeFrame(true));
         document.getElementById('historyBtn').addEventListener('click', () => {
             document.getElementById('responsePanel').classList.toggle('show');
         });

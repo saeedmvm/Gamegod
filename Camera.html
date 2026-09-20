@@ -2,83 +2,277 @@
 <html lang="fa" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>دسترسی به دوربین</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Gamegod Scanner</title>
     <style>
-        body {
-            font-family: Tahoma, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 20px;
-            background: #1e1e2e;
-            color: #fff;
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #000;
+            font-family: 'Courier New', monospace;
+            color: #00ff88;
         }
-        video {
-            width: 640px;
-            max-width: 100%;
-            border-radius: 12px;
-            border: 2px solid #444;
+
+        #video {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            object-fit: cover;
+            z-index: 1;
         }
-        button {
-            margin: 10px 5px;
-            padding: 10px 25px;
+
+        /* افکت اسکن‌لاین */
+        .scan-lines {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(
+                0deg,
+                rgba(0, 255, 136, 0.03),
+                rgba(0, 255, 136, 0.03) 1px,
+                transparent 1px,
+                transparent 3px
+            );
+            pointer-events: none;
+            z-index: 2;
+            animation: flicker 0.15s infinite;
+        }
+
+        @keyframes flicker {
+            0%, 100% { opacity: 0.9; }
+            50% { opacity: 1; }
+        }
+
+        /* قاب اسکنر */
+        .scanner-frame {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 250px;
+            height: 250px;
+            border: 2px solid #00ff88;
+            box-shadow: 0 0 20px #00ff88;
+            z-index: 3;
+        }
+
+        /* خط اسکن متحرک */
+        .scan-line {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, #00ff88, transparent);
+            box-shadow: 0 0 10px #00ff88;
+            animation: scan 2s linear infinite;
+        }
+
+        @keyframes scan {
+            0% { top: 0; }
+            100% { top: 100%; }
+        }
+
+        /* گوشه‌های قاب */
+        .corner {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            border-color: #fff;
+            border-style: solid;
+        }
+        .corner.tl { top: -3px; left: -3px; border-width: 4px 0 0 4px; }
+        .corner.tr { top: -3px; right: -3px; border-width: 4px 4px 0 0; }
+        .corner.bl { bottom: -3px; left: -3px; border-width: 0 0 4px 4px; }
+        .corner.br { bottom: -3px; right: -3px; border-width: 0 4px 4px 0; }
+
+        /* HUD بالا */
+        .hud-top {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            z-index: 4;
+            text-shadow: 0 0 10px #00ff88;
+            font-size: 18px;
+            letter-spacing: 2px;
+        }
+
+        .hud-bottom {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            z-index: 4;
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        .status-dot {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            background: #ff3333;
+            border-radius: 50%;
+            margin-left: 8px;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .btn {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 12px 30px;
+            background: rgba(0, 255, 136, 0.2);
+            border: 2px solid #00ff88;
+            color: #00ff88;
             font-size: 16px;
             cursor: pointer;
-            border: none;
-            border-radius: 8px;
-            background: #4a90d9;
-            color: white;
+            z-index: 5;
+            backdrop-filter: blur(5px);
+            font-family: inherit;
         }
-        button:hover { background: #357abd; }
-        canvas { display: none; }
-        #photo { margin-top: 15px; max-width: 640px; border-radius: 12px; }
+
+        .btn:active {
+            background: rgba(0, 255, 136, 0.4);
+        }
+
+        .hidden { display: none !important; }
+
+        /* حالت تمام‌صفحه واقعی */
+        :-webkit-full-screen { background: #000; }
+        :-moz-full-screen { background: #000; }
+        :fullscreen { background: #000; }
     </style>
 </head>
 <body>
-    <h2>📷 دسترسی به دوربین</h2>
-    <video id="video" autoplay playsinline></video>
-    <div>
-        <button id="startBtn">شروع دوربین</button>
-        <button id="captureBtn">عکس گرفتن</button>
-        <button id="stopBtn">توقف</button>
+
+    <video id="video" autoplay playsinline muted></video>
+    <div class="scan-lines"></div>
+
+    <div class="scanner-frame">
+        <div class="scan-line"></div>
+        <div class="corner tl"></div>
+        <div class="corner tr"></div>
+        <div class="corner bl"></div>
+        <div class="corner br"></div>
     </div>
-    <canvas id="canvas"></canvas>
-    <img id="photo" alt="">
+
+    <div class="hud-top">
+        ◈ GAMEGOD SCANNER ◈<br>
+        <small>ENVIRONMENT ANALYSIS MODE</small>
+    </div>
+
+    <div class="hud-bottom">
+        <span id="status">● LIVE</span><span class="status-dot"></span>
+        <br>
+        <span id="coords">LAT: --.---- LON: --.----</span>
+        <br>
+        <span id="time"></span>
+    </div>
+
+    <button class="btn" id="fsBtn">⊞ تمام‌صفحه</button>
 
     <script>
-        const video = document.getElementById('video');
-        const canvas = document.getElementById('canvas');
-        const photo = document.getElementById('photo');
-        let stream = null;
+        /* ═══════════════════════════════════════
+           🔒 مخفی‌سازی نام فایل از URL
+           این بخش وقتی صفحه لود میشه، آدرس رو تمیز میکنه
+        ═══════════════════════════════════════ */
+        (function cleanURL() {
+            const path = window.location.pathname;
+            const fileMatch = path.match(/\/[^\/]+\.html$/i);
+            if (fileMatch) {
+                const cleanPath = path.replace(/\/[^\/]+\.html$/i, '/');
+                // آدرس رو با replaceState عوض میکنیم بدون رفرش
+                window.history.replaceState(null, '', cleanPath);
+            }
+        })();
 
-        // شروع دوربین
-        document.getElementById('startBtn').addEventListener('click', async () => {
+        /* ═══════════════════════════════════════
+           📹 دسترسی به دوربین
+        ═══════════════════════════════════════ */
+        const video = document.getElementById('video');
+
+        async function startCamera() {
             try {
-                stream = await navigator.mediaDevices.getUserMedia({
-                    video: { width: 1280, height: 720 },
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        facingMode: 'environment',   // دوربین پشت
+                        width: { ideal: 1920 },
+                        height: { ideal: 1080 }
+                    },
                     audio: false
                 });
                 video.srcObject = stream;
+                console.log('✅ دوربین فعال شد');
             } catch (err) {
-                alert('خطا در دسترسی به دوربین: ' + err.message);
+                alert('❌ خطا در دسترسی به دوربین: ' + err.message);
+                console.error(err);
             }
+        }
+
+        startCamera();
+
+        /* ═══════════════════════════════════════
+           ⊞ تمام‌صفحه (Fullscreen)
+        ═══════════════════════════════════════ */
+        const fsBtn = document.getElementById('fsBtn');
+
+        fsBtn.addEventListener('click', () => {
+            const el = document.documentElement;
+            if (el.requestFullscreen) el.requestFullscreen();
+            else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+            else if (el.msRequestFullscreen) el.msRequestFullscreen();
         });
 
-        // عکس گرفتن
-        document.getElementById('captureBtn').addEventListener('click', () => {
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            canvas.getContext('2d').drawImage(video, 0, 0);
-            photo.src = canvas.toDataURL('image/png');
-        });
+        /* ═══════════════════════════════════════
+           📍 HUD - موقعیت جغرافیایی و ساعت
+        ═══════════════════════════════════════ */
+        const coordsEl = document.getElementById('coords');
+        const timeEl = document.getElementById('time');
 
-        // توقف دوربین
-        document.getElementById('stopBtn').addEventListener('click', () => {
-            if (stream) {
-                stream.getTracks().forEach(track => track.stop());
-                video.srcObject = null;
-            }
-        });
+        // ساعت زنده
+        function updateTime() {
+            const now = new Date();
+            const t = now.toTimeString().split(' ')[0];
+            timeEl.textContent = '⏱ ' + t;
+        }
+        setInterval(updateTime, 1000);
+        updateTime();
+
+        // موقعیت جغرافیایی (اختیاری)
+        if (navigator.geolocation) {
+            navigator.geolocation.watchPosition(pos => {
+                const lat = pos.coords.latitude.toFixed(4);
+                const lon = pos.coords.longitude.toFixed(4);
+                coordsEl.textContent = `LAT: ${lat} LON: ${lon}`;
+            }, err => {
+                coordsEl.textContent = 'GPS: غیرفعال';
+            });
+        }
+
+        /* ═══════════════════════════════════════
+           🚫 جلوگیری از راست‌کلیک و منوی مرورگر
+        ═══════════════════════════════════════ */
+        document.addEventListener('contextmenu', e => e.preventDefault());
     </script>
 </body>
 </html>

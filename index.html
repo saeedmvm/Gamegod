@@ -19,7 +19,7 @@
             overflow: hidden;
             background: #000;
             font-family: 'Courier New', monospace;
-            color: #00ff88;
+            color: #00aaff; /* 🔵 آبی */
         }
 
         #video {
@@ -43,7 +43,6 @@
             pointer-events: none;
         }
 
-        /* گرید پس‌زمینه */
         .grid-overlay {
             position: fixed;
             top: 0;
@@ -51,8 +50,8 @@
             width: 100%;
             height: 100%;
             background-image:
-                linear-gradient(rgba(0, 255, 136, 0.05) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(0, 255, 136, 0.05) 1px, transparent 1px);
+                linear-gradient(rgba(255, 51, 51, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 51, 51, 0.05) 1px, transparent 1px);
             background-size: 50px 50px;
             pointer-events: none;
             z-index: 2;
@@ -66,8 +65,8 @@
             height: 100%;
             background: repeating-linear-gradient(
                 0deg,
-                rgba(0, 255, 136, 0.015),
-                rgba(0, 255, 136, 0.015) 1px,
+                rgba(0, 170, 255, 0.015),
+                rgba(0, 170, 255, 0.015) 1px,
                 transparent 1px,
                 transparent 3px
             );
@@ -82,9 +81,10 @@
             transform: translateX(-50%);
             text-align: center;
             z-index: 5;
-            text-shadow: 0 0 10px #00ff88;
+            text-shadow: 0 0 10px #00aaff;
             font-size: 16px;
             letter-spacing: 2px;
+            color: #00aaff;
         }
 
         .info-panel {
@@ -93,19 +93,20 @@
             left: 20px;
             z-index: 5;
             background: rgba(0, 0, 0, 0.6);
-            border: 1px solid #00ff88;
+            border: 1px solid #ff3333;
             padding: 12px 16px;
             font-size: 12px;
             max-width: 280px;
             backdrop-filter: blur(5px);
             border-radius: 4px;
+            color: #00aaff;
         }
 
         .info-panel h3 {
             font-size: 13px;
             margin-bottom: 8px;
-            color: #fff;
-            border-bottom: 1px solid #00ff88;
+            color: #ff3333;
+            border-bottom: 1px solid #ff3333;
             padding-bottom: 4px;
         }
 
@@ -126,9 +127,10 @@
             justify-content: space-between;
             padding: 4px 8px;
             margin: 3px 0;
-            background: rgba(0, 255, 136, 0.1);
-            border-left: 3px solid #00ff88;
+            background: rgba(255, 51, 51, 0.1);
+            border-left: 3px solid #ff3333;
             font-size: 11px;
+            color: #00aaff;
         }
 
         .hud-bottom {
@@ -140,9 +142,10 @@
             text-align: right;
             background: rgba(0, 0, 0, 0.5);
             padding: 10px 14px;
-            border: 1px solid #00ff88;
+            border: 1px solid #ff3333;
             border-radius: 4px;
             backdrop-filter: blur(5px);
+            color: #00aaff;
         }
 
         .status-dot {
@@ -155,7 +158,7 @@
             animation: blink 1s infinite;
         }
 
-        .status-dot.active { background: #00ff88; }
+        .status-dot.active { background: #00aaff; }
         .status-dot.recording { background: #ff3333; }
 
         @keyframes blink {
@@ -165,9 +168,9 @@
 
         .btn {
             padding: 10px 15px;
-            background: rgba(0, 255, 136, 0.2);
-            border: 1px solid #00ff88;
-            color: #00ff88;
+            background: rgba(255, 51, 51, 0.2);
+            border: 1px solid #ff3333;
+            color: #ff3333;
             font-size: 13px;
             cursor: pointer;
             backdrop-filter: blur(5px);
@@ -176,13 +179,13 @@
             transition: all 0.2s;
         }
 
-        .btn:active { background: rgba(0, 255, 136, 0.4); }
+        .btn:active { background: rgba(255, 51, 51, 0.4); }
         .btn.loading { opacity: 0.5; pointer-events: none; }
 
         .btn.recording {
-            background: rgba(255, 51, 51, 0.2);
-            border-color: #ff3333;
-            color: #ff6666;
+            background: rgba(255, 51, 51, 0.3);
+            border-color: #ff0000;
+            color: #ff0000;
             animation: pulse 1.5s infinite;
         }
 
@@ -210,15 +213,16 @@
             text-align: center;
             background: rgba(0, 0, 0, 0.9);
             padding: 30px 50px;
-            border: 2px solid #00ff88;
+            border: 2px solid #ff3333;
             border-radius: 8px;
+            color: #00aaff;
         }
 
         .spinner {
             width: 40px;
             height: 40px;
-            border: 3px solid rgba(0, 255, 136, 0.2);
-            border-top-color: #00ff88;
+            border: 3px solid rgba(255, 51, 51, 0.2);
+            border-top-color: #ff3333;
             border-radius: 50%;
             margin: 0 auto 15px;
             animation: spin 1s linear infinite;
@@ -232,17 +236,18 @@
             right: 20px;
             z-index: 5;
             background: rgba(0, 0, 0, 0.7);
-            border: 1px solid #00ff88;
+            border: 1px solid #ff3333;
             padding: 12px;
             font-size: 11px;
             border-radius: 4px;
             width: 300px;
+            color: #00aaff;
         }
 
         .api-config h3 {
             font-size: 12px;
             margin-bottom: 8px;
-            color: #fff;
+            color: #ff3333;
             display: flex;
             align-items: center;
             gap: 6px;
@@ -253,6 +258,7 @@
             margin-top: 8px;
             font-size: 10px;
             opacity: 0.9;
+            color: #00aaff;
         }
 
         .api-config input,
@@ -260,8 +266,8 @@
             width: 100%;
             padding: 6px 8px;
             background: rgba(0, 0, 0, 0.8);
-            border: 1px solid #00ff88;
-            color: #00ff88;
+            border: 1px solid #ff3333;
+            color: #00aaff;
             font-family: inherit;
             font-size: 11px;
             margin-top: 4px;
@@ -283,7 +289,7 @@
             left: 20px;
             z-index: 5;
             background: rgba(0, 0, 0, 0.7);
-            border: 1px solid #00ff88;
+            border: 1px solid #ff3333;
             padding: 12px;
             font-size: 11px;
             border-radius: 4px;
@@ -292,13 +298,14 @@
             overflow-y: auto;
             backdrop-filter: blur(5px);
             display: none;
+            color: #00aaff;
         }
 
         .response-panel.show { display: block; }
 
         .response-panel h4 {
             font-size: 12px;
-            color: #fff;
+            color: #ff3333;
             margin-bottom: 8px;
             display: flex;
             justify-content: space-between;
@@ -312,13 +319,13 @@
         .close-btn {
             background: none;
             border: none;
-            color: #ff6666;
+            color: #ff3333;
             cursor: pointer;
             font-size: 16px;
         }
 
         .response-item {
-            border-bottom: 1px solid rgba(0, 255, 136, 0.2);
+            border-bottom: 1px solid rgba(255, 51, 51, 0.2);
             padding: 8px 0;
             margin-bottom: 8px;
         }
@@ -335,12 +342,13 @@
             white-space: pre-wrap;
             line-height: 1.5;
             font-size: 11px;
+            color: #00aaff;
         }
 
         .record-settings {
             margin-top: 10px;
             padding-top: 10px;
-            border-top: 1px solid #00ff88;
+            border-top: 1px solid #ff3333;
         }
 
         .interval-control {
@@ -362,8 +370,8 @@
             transform: translateY(-50%);
             z-index: 5;
             background: rgba(255, 51, 51, 0.15);
-            border: 1px solid #ff3333;
-            color: #ff6666;
+            border: 1px solid #ff0000;
+            color: #ff3333;
             padding: 8px 12px;
             border-radius: 4px;
             font-size: 12px;
@@ -378,7 +386,7 @@
 
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: rgba(0,0,0,0.3); }
-        ::-webkit-scrollbar-thumb { background: #00ff88; }
+        ::-webkit-scrollbar-thumb { background: #ff3333; }
 
         @media (max-width: 768px) {
             .api-config { width: 250px; right: 10px; }
@@ -484,64 +492,75 @@
         })();
 
         /* ═══════════════════════════════════════
-           🎨 رنگ‌بندی هوشمند بر اساس دسته‌بندی
+           🎨 رنگ‌های اصلی تم
         ═══════════════════════════════════════ */
-        const objectCategories = {
-            'person': { color: '#00aaff', icon: '👤', fa: 'انسان', cat: 'human' },
-            'bicycle': { color: '#ff6b35', icon: '🚲', fa: 'دوچرخه', cat: 'vehicle' },
-            'car': { color: '#ff4444', icon: '🚗', fa: 'ماشین', cat: 'vehicle' },
-            'motorcycle': { color: '#ff4444', icon: '🏍', fa: 'موتور', cat: 'vehicle' },
-            'airplane': { color: '#aa00ff', icon: '✈', fa: 'هواپیما', cat: 'vehicle' },
-            'bus': { color: '#ff4444', icon: '🚌', fa: 'اتوبوس', cat: 'vehicle' },
-            'train': { color: '#ff4444', icon: '🚂', fa: 'قطار', cat: 'vehicle' },
-            'truck': { color: '#ff4444', icon: '🚚', fa: 'کامیون', cat: 'vehicle' },
-            'boat': { color: '#00aaff', icon: '🚤', fa: 'قایق', cat: 'vehicle' },
-            'traffic light': { color: '#ffff00', icon: '🚦', fa: 'چراغ راهنمایی', cat: 'signal' },
-            'fire hydrant': { color: '#ff6b35', icon: '🚒', fa: 'شیر آتش‌نشانی', cat: 'object' },
-            'stop sign': { color: '#ff0000', icon: '🛑', fa: 'تابلو ایست', cat: 'signal' },
-            'bench': { color: '#8b7355', icon: '🪑', fa: 'نیمکت', cat: 'furniture' },
-            'bird': { color: '#ffaa00', icon: '🐦', fa: 'پرنده', cat: 'animal' },
-            'cat': { color: '#ffaa00', icon: '🐱', fa: 'گربه', cat: 'animal' },
-            'dog': { color: '#ffaa00', icon: '🐕', fa: 'سگ', cat: 'animal' },
-            'horse': { color: '#ffaa00', icon: '🐎', fa: 'اسب', cat: 'animal' },
-            'sheep': { color: '#ffaa00', icon: '🐑', fa: 'گوسفند', cat: 'animal' },
-            'cow': { color: '#ffaa00', icon: '🐄', fa: 'گاو', cat: 'animal' },
-            'umbrella': { color: '#00ff88', icon: '☂', fa: 'چتر', cat: 'object' },
-            'handbag': { color: '#ff69b4', icon: '👜', fa: 'کیف', cat: 'object' },
-            'suitcase': { color: '#8b7355', icon: '🧳', fa: 'چمدان', cat: 'object' },
-            'bottle': { color: '#00ff88', icon: '🍼', fa: 'بطری', cat: 'object' },
-            'wine glass': { color: '#ffffff', icon: '🍷', fa: 'لیوان', cat: 'object' },
-            'cup': { color: '#ffffff', icon: '☕', fa: 'فنجان', cat: 'object' },
-            'fork': { color: '#ffffff', icon: '🍴', fa: 'چنگال', cat: 'object' },
-            'knife': { color: '#ffffff', icon: '🔪', fa: 'چاقو', cat: 'object' },
-            'spoon': { color: '#ffffff', icon: '🥄', fa: 'قاشق', cat: 'object' },
-            'bowl': { color: '#ffffff', icon: '🥣', fa: 'کاسه', cat: 'object' },
-            'banana': { color: '#ffff00', icon: '🍌', fa: 'موز', cat: 'food' },
-            'apple': { color: '#ff4444', icon: '🍎', fa: 'سیب', cat: 'food' },
-            'orange': { color: '#ff6b35', icon: '🍊', fa: 'پرتقال', cat: 'food' },
-            'book': { color: '#aa00ff', icon: '📖', fa: 'کتاب', cat: 'object' },
-            'clock': { color: '#ffffff', icon: '⏰', fa: 'ساعت', cat: 'object' },
-            'vase': { color: '#ff69b4', icon: '🏺', fa: 'گلدان', cat: 'object' },
-            'scissors': { color: '#ffffff', icon: '✂', fa: 'قیچی', cat: 'object' },
-            'teddy bear': { color: '#8b7355', icon: '🧸', fa: 'عروسک', cat: 'object' },
-            'toothbrush': { color: '#ffffff', icon: '🪥', fa: 'مسواک', cat: 'object' },
-            'tv': { color: '#00aaff', icon: '📺', fa: 'تلویزیون', cat: 'device' },
-            'laptop': { color: '#00aaff', icon: '💻', fa: 'لپ‌تاپ', cat: 'device' },
-            'mouse': { color: '#00aaff', icon: '🖱', fa: 'ماوس', cat: 'device' },
-            'remote': { color: '#00aaff', icon: '📱', fa: 'کنترل', cat: 'device' },
-            'keyboard': { color: '#00aaff', icon: '⌨', fa: 'صفحه‌کلید', cat: 'device' },
-            'cell phone': { color: '#00aaff', icon: '📱', fa: 'موبایل', cat: 'device' },
-            'microwave': { color: '#ff6b35', icon: '🔥', fa: 'مایکروویو', cat: 'appliance' },
-            'oven': { color: '#ff6b35', icon: '🔥', fa: 'فر', cat: 'appliance' },
-            'toaster': { color: '#ff6b35', icon: '🍞', fa: 'تستر', cat: 'appliance' },
-            'sink': { color: '#00aaff', icon: '🚰', fa: 'سینک', cat: 'appliance' },
-            'refrigerator': { color: '#00aaff', icon: '🧊', fa: 'یخچال', cat: 'appliance' },
-            'bed': { color: '#8b7355', icon: '🛏', fa: 'تخت', cat: 'furniture' },
-            'toilet': { color: '#ffffff', icon: '🚽', fa: 'توالت', cat: 'furniture' },
-            'chair': { color: '#8b7355', icon: '🪑', fa: 'صندلی', cat: 'furniture' },
-            'couch': { color: '#8b7355', icon: '🛋', fa: 'کاناپه', cat: 'furniture' },
-            'potted plant': { color: '#00ff88', icon: '🪴', fa: 'گلدان', cat: 'object' },
-            'dining table': { color: '#8b7355', icon: '🍽', fa: 'میز غذا', cat: 'furniture' }
+        const COLORS = {
+            BOX: '#ff3333',        // 🔴 قرمز برای کادرها
+            TEXT: '#00aaff',       // 🔵 آبی برای نوشته‌ها
+            ACCENT: '#ff0000',     // 🔴 قرمز پررنگ
+            GLOW: '#ff3333',       // ✨ گلو قرمز
+            TEXT_GLOW: '#00aaff'   // ✨ گلو آبی
+        };
+
+        /* ═══════════════════════════════════════
+           📦 آیکون و نام فارسی اشیا
+        ═══════════════════════════════════════ */
+        const objectInfo = {
+            'person': { icon: '👤', fa: 'انسان' },
+            'bicycle': { icon: '🚲', fa: 'دوچرخه' },
+            'car': { icon: '🚗', fa: 'ماشین' },
+            'motorcycle': { icon: '🏍', fa: 'موتور' },
+            'airplane': { icon: '✈', fa: 'هواپیما' },
+            'bus': { icon: '🚌', fa: 'اتوبوس' },
+            'train': { icon: '🚂', fa: 'قطار' },
+            'truck': { icon: '🚚', fa: 'کامیون' },
+            'boat': { icon: '🚤', fa: 'قایق' },
+            'traffic light': { icon: '🚦', fa: 'چراغ راهنمایی' },
+            'fire hydrant': { icon: '🚒', fa: 'شیر آتش‌نشانی' },
+            'stop sign': { icon: '🛑', fa: 'تابلو ایست' },
+            'bench': { icon: '🪑', fa: 'نیمکت' },
+            'bird': { icon: '🐦', fa: 'پرنده' },
+            'cat': { icon: '🐱', fa: 'گربه' },
+            'dog': { icon: '🐕', fa: 'سگ' },
+            'horse': { icon: '🐎', fa: 'اسب' },
+            'sheep': { icon: '🐑', fa: 'گوسفند' },
+            'cow': { icon: '🐄', fa: 'گاو' },
+            'umbrella': { icon: '☂', fa: 'چتر' },
+            'handbag': { icon: '👜', fa: 'کیف' },
+            'suitcase': { icon: '🧳', fa: 'چمدان' },
+            'bottle': { icon: '🍼', fa: 'بطری' },
+            'wine glass': { icon: '🍷', fa: 'لیوان' },
+            'cup': { icon: '☕', fa: 'فنجان' },
+            'fork': { icon: '🍴', fa: 'چنگال' },
+            'knife': { icon: '🔪', fa: 'چاقو' },
+            'spoon': { icon: '🥄', fa: 'قاشق' },
+            'bowl': { icon: '🥣', fa: 'کاسه' },
+            'banana': { icon: '🍌', fa: 'موز' },
+            'apple': { icon: '🍎', fa: 'سیب' },
+            'orange': { icon: '🍊', fa: 'پرتقال' },
+            'book': { icon: '📖', fa: 'کتاب' },
+            'clock': { icon: '⏰', fa: 'ساعت' },
+            'vase': { icon: '🏺', fa: 'گلدان' },
+            'scissors': { icon: '✂', fa: 'قیچی' },
+            'teddy bear': { icon: '🧸', fa: 'عروسک' },
+            'toothbrush': { icon: '🪥', fa: 'مسواک' },
+            'tv': { icon: '📺', fa: 'تلویزیون' },
+            'laptop': { icon: '💻', fa: 'لپ‌تاپ' },
+            'mouse': { icon: '🖱', fa: 'ماوس' },
+            'remote': { icon: '📱', fa: 'کنترل' },
+            'keyboard': { icon: '⌨', fa: 'صفحه‌کلید' },
+            'cell phone': { icon: '📱', fa: 'موبایل' },
+            'microwave': { icon: '🔥', fa: 'مایکروویو' },
+            'oven': { icon: '🔥', fa: 'فر' },
+            'toaster': { icon: '🍞', fa: 'تستر' },
+            'sink': { icon: '🚰', fa: 'سینک' },
+            'refrigerator': { icon: '🧊', fa: 'یخچال' },
+            'bed': { icon: '🛏', fa: 'تخت' },
+            'toilet': { icon: '🚽', fa: 'توالت' },
+            'chair': { icon: '🪑', fa: 'صندلی' },
+            'couch': { icon: '🛋', fa: 'کاناپه' },
+            'potted plant': { icon: '🪴', fa: 'گلدان' },
+            'dining table': { icon: '🍽', fa: 'میز غذا' }
         };
 
         /* ═══════════════════════════════════════
@@ -581,7 +600,7 @@
         ═══════════════════════════════════════ */
         let model = null;
         let lastDetections = [];
-        let objectIds = new Map(); // برای ردیابی اشیا
+        let objectIds = new Map();
 
         async function loadModel() {
             try {
@@ -631,7 +650,7 @@
         }
 
         /* ═══════════════════════════════════════
-           🆔 ردیابی اشیا (Object Tracking)
+           🆔 ردیابی اشیا
         ═══════════════════════════════════════ */
         function assignObjectIds(predictions) {
             const newIds = new Map();
@@ -641,7 +660,6 @@
                 const centerX = x + w / 2;
                 const centerY = y + h / 2;
                 
-                // پیدا کردن نزدیک‌ترین ID قبلی
                 let bestId = null;
                 let minDist = Infinity;
                 
@@ -670,7 +688,7 @@
         }
 
         /* ═══════════════════════════════════════
-           🎨 رسم HUD پیشرفته
+           🎨 رسم HUD با تم قرمز-آبی
         ═══════════════════════════════════════ */
         function drawAdvancedHUD(predictions) {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -678,9 +696,9 @@
             const scaleX = canvas.width / video.videoWidth;
             const scaleY = canvas.height / video.videoHeight;
 
-            // خطوط اتصال از مرکز به اشیا
+            // ═══ خطوط اتصال از مرکز (قرمز) ═══
             if (predictions.length > 0) {
-                ctx.strokeStyle = 'rgba(0, 255, 136, 0.15)';
+                ctx.strokeStyle = 'rgba(255, 51, 51, 0.2)';
                 ctx.lineWidth = 1;
                 ctx.setLineDash([5, 5]);
                 
@@ -700,11 +718,14 @@
                 
                 ctx.setLineDash([]);
                 
-                // نقطه مرکز
-                ctx.fillStyle = 'rgba(0, 255, 136, 0.3)';
+                // نقطه مرکز (آبی)
+                ctx.fillStyle = 'rgba(0, 170, 255, 0.5)';
+                ctx.shadowColor = '#00aaff';
+                ctx.shadowBlur = 10;
                 ctx.beginPath();
-                ctx.arc(centerX, centerY, 5, 0, Math.PI * 2);
+                ctx.arc(centerX, centerY, 6, 0, Math.PI * 2);
                 ctx.fill();
+                ctx.shadowBlur = 0;
             }
 
             predictions.forEach(pred => {
@@ -714,23 +735,22 @@
                 const sw = w * scaleX;
                 const sh = h * scaleY;
 
-                const category = objectCategories[pred.class] || { 
-                    color: '#00ff88', icon: '📦', fa: pred.class, cat: 'object' 
+                const info = objectInfo[pred.class] || { 
+                    icon: '📦', fa: pred.class 
                 };
-                const color = category.color;
                 const confidence = pred.score;
                 const trackingId = pred.trackingId || 'ID-???';
 
-                // ═══ کادر خارجی با گلو ═══
-                ctx.shadowColor = color;
+                // ═══ کادر خارجی قرمز با گلو ═══
+                ctx.shadowColor = COLORS.BOX;
                 ctx.shadowBlur = 15;
-                ctx.strokeStyle = color;
+                ctx.strokeStyle = COLORS.BOX;
                 ctx.lineWidth = 2;
                 ctx.strokeRect(sx, sy, sw, sh);
                 ctx.shadowBlur = 0;
 
-                // ═══ کادر داخلی (هولوگرام) ═══
-                ctx.strokeStyle = color;
+                // ═══ کادر داخلی نقطه‌چین (قرمز کم‌رنگ) ═══
+                ctx.strokeStyle = COLORS.BOX;
                 ctx.globalAlpha = 0.3;
                 ctx.lineWidth = 1;
                 ctx.setLineDash([8, 4]);
@@ -738,11 +758,13 @@
                 ctx.setLineDash([]);
                 ctx.globalAlpha = 1;
 
-                // ═══ گوشه‌های ضخیم تاکیدی ═══
+                // ═══ گوشه‌های ضخیم تاکیدی (قرمز) ═══
                 const cornerSize = Math.min(25, sw / 4, sh / 4);
-                ctx.strokeStyle = color;
+                ctx.strokeStyle = COLORS.ACCENT;
                 ctx.lineWidth = 4;
                 ctx.lineCap = 'round';
+                ctx.shadowColor = COLORS.BOX;
+                ctx.shadowBlur = 10;
                 
                 // بالا-چپ
                 ctx.beginPath();
@@ -771,24 +793,29 @@
                 ctx.lineTo(sx + sw, sy + sh);
                 ctx.lineTo(sx + sw, sy + sh - cornerSize);
                 ctx.stroke();
+                
+                ctx.shadowBlur = 0;
 
-                // ═══ برچسب اطلاعات (بالای کادر) ═══
-                drawInfoLabel(sx, sy - 45, trackingId, category.icon, category.fa, confidence, color);
+                // ═══ برچسب اطلاعات ═══
+                drawInfoLabel(sx, sy - 45, trackingId, info.icon, info.fa, confidence);
 
-                // ═══ نقاط گوشه (Targeting Points) ═══
-                ctx.fillStyle = color;
+                // ═══ نقاط گوشه (آبی) ═══
+                ctx.fillStyle = COLORS.TEXT;
+                ctx.shadowColor = COLORS.TEXT;
+                ctx.shadowBlur = 8;
                 const pointSize = 3;
                 [[sx, sy], [sx + sw, sy], [sx, sy + sh], [sx + sw, sy + sh]].forEach(([px, py]) => {
                     ctx.beginPath();
                     ctx.arc(px, py, pointSize, 0, Math.PI * 2);
                     ctx.fill();
                 });
+                ctx.shadowBlur = 0;
 
-                // ═══ خطوط مرکزی کراس‌هیر ═══
+                // ═══ خطوط مرکزی کراس‌هیر (آبی) ═══
                 const centerX = sx + sw / 2;
                 const centerY = sy + sh / 2;
-                ctx.strokeStyle = color;
-                ctx.globalAlpha = 0.4;
+                ctx.strokeStyle = COLORS.TEXT;
+                ctx.globalAlpha = 0.5;
                 ctx.lineWidth = 1;
                 
                 // خط افقی
@@ -809,7 +836,7 @@
                 
                 ctx.globalAlpha = 1;
 
-                // ═══ درصد اطمینان (پایین کادر) ═══
+                // ═══ نوار اطمینان (قرمز) ═══
                 const barWidth = sw - 20;
                 const barHeight = 4;
                 const barX = sx + 10;
@@ -819,61 +846,82 @@
                 ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
                 ctx.fillRect(barX, barY, barWidth, barHeight);
                 
-                // نوار اطمینان
-                ctx.fillStyle = color;
+                // نوار اطمینان قرمز
+                ctx.fillStyle = COLORS.BOX;
+                ctx.shadowColor = COLORS.BOX;
+                ctx.shadowBlur = 5;
                 ctx.fillRect(barX, barY, barWidth * confidence, barHeight);
+                ctx.shadowBlur = 0;
                 
-                // متن درصد
-                ctx.fillStyle = color;
+                // متن درصد (آبی)
+                ctx.fillStyle = COLORS.TEXT;
+                ctx.shadowColor = COLORS.TEXT;
+                ctx.shadowBlur = 5;
                 ctx.font = 'bold 10px Courier New';
                 ctx.textAlign = 'center';
                 ctx.fillText(`${Math.round(confidence * 100)}%`, centerX, barY + barHeight + 12);
                 ctx.textAlign = 'left';
+                ctx.shadowBlur = 0;
             });
         }
 
         /* ═══════════════════════════════════════
-           🏷 رسم برچسب اطلاعات
+           🏷 رسم برچسب اطلاعات (کادر قرمز، متن آبی)
         ═══════════════════════════════════════ */
-        function drawInfoLabel(x, y, id, icon, name, confidence, color) {
-            ctx.font = 'bold 12px Courier New';
+        function drawInfoLabel(x, y, id, icon, name, confidence) {
+            ctx.font = 'bold 13px Courier New';
             const text = `${icon} ${name}`;
-            const idText = id;
+            const idText = `${id} • ${Math.round(confidence * 100)}%`;
             
             const textWidth = ctx.measureText(text).width;
             const idWidth = ctx.measureText(idText).width;
             const totalWidth = Math.max(textWidth, idWidth) + 24;
-            const totalHeight = 40;
+            const totalHeight = 42;
             
             // تنظیم موقعیت اگه از صفحه بیرون زد
             if (x + totalWidth > canvas.width) x = canvas.width - totalWidth - 5;
+            if (x < 5) x = 5;
             if (y < 5) y = 5;
             
-            // ═══ پس‌زمینه برچسب ═══
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+            // ═══ پس‌زمینه برچسب (مشکی) ═══
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';
             ctx.fillRect(x, y, totalWidth, totalHeight);
             
-            // ═══ حاشیه ═══
-            ctx.strokeStyle = color;
+            // ═══ حاشیه قرمز با گلو ═══
+            ctx.strokeStyle = COLORS.BOX;
             ctx.lineWidth = 2;
-            ctx.shadowColor = color;
-            ctx.shadowBlur = 8;
+            ctx.shadowColor = COLORS.BOX;
+            ctx.shadowBlur = 10;
             ctx.strokeRect(x, y, totalWidth, totalHeight);
             ctx.shadowBlur = 0;
             
-            // ═══ نوار رنگی سمت راست ═══
-            ctx.fillStyle = color;
+            // ═══ نوار رنگی سمت راست (آبی) ═══
+            ctx.fillStyle = COLORS.TEXT;
             ctx.fillRect(x + totalWidth - 4, y, 4, totalHeight);
             
-            // ═══ ردیف اول: آیکون + نام ═══
-            ctx.fillStyle = '#ffffff';
-            ctx.font = 'bold 13px Courier New';
-            ctx.fillText(text, x + 8, y + 16);
+            // ═══ خط جداکننده وسط ═══
+            ctx.strokeStyle = 'rgba(255, 51, 51, 0.4)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(x + 6, y + 24);
+            ctx.lineTo(x + totalWidth - 10, y + 24);
+            ctx.stroke();
             
-            // ═══ ردیف دوم: ID + درصد ═══
-            ctx.fillStyle = color;
-            ctx.font = '10px Courier New';
-            ctx.fillText(`${id} • ${Math.round(confidence * 100)}%`, x + 8, y + 32);
+            // ═══ ردیف اول: آیکون + نام (آبی) ═══
+            ctx.fillStyle = COLORS.TEXT;
+            ctx.shadowColor = COLORS.TEXT;
+            ctx.shadowBlur = 5;
+            ctx.font = 'bold 14px Courier New';
+            ctx.fillText(text, x + 8, y + 17);
+            ctx.shadowBlur = 0;
+            
+            // ═══ ردیف دوم: ID + درصد (قرمز) ═══
+            ctx.fillStyle = COLORS.BOX;
+            ctx.shadowColor = COLORS.BOX;
+            ctx.shadowBlur = 5;
+            ctx.font = 'bold 11px Courier New';
+            ctx.fillText(idText, x + 8, y + 35);
+            ctx.shadowBlur = 0;
         }
 
         function updateObjectList(predictions) {
@@ -887,15 +935,15 @@
 
             const counts = {};
             predictions.forEach(p => {
-                const cat = objectCategories[p.class] || { icon: '📦', fa: p.class };
-                const name = `${cat.icon} ${cat.fa}`;
-                if (!counts[name]) counts[name] = { count: 0, maxScore: 0, color: cat.color };
+                const info = objectInfo[p.class] || { icon: '📦', fa: p.class };
+                const name = `${info.icon} ${info.fa}`;
+                if (!counts[name]) counts[name] = { count: 0, maxScore: 0 };
                 counts[name].count++;
                 counts[name].maxScore = Math.max(counts[name].maxScore, p.score);
             });
 
             list.innerHTML = Object.entries(counts).map(([name, data]) => `
-                <div class="object-item" style="border-left-color:${data.color}">
+                <div class="object-item">
                     <span>${name} ${data.count > 1 ? `(${data.count}x)` : ''}</span>
                     <span>${Math.round(data.maxScore * 100)}%</span>
                 </div>
@@ -932,7 +980,11 @@
             tempCtx.drawImage(video, 0, 0);
             const imageData = tempCanvas.toDataURL('image/jpeg', 0.8);
 
-            const detectedObjects = lastDetections.map(d => `${d.class} (${Math.round(d.score * 100)}%)`).join(', ');
+            const detectedObjects = lastDetections.map(d => {
+                const info = objectInfo[d.class] || { fa: d.class };
+                return `${info.fa} (${Math.round(d.score * 100)}%)`;
+            }).join(', ');
+            
             const prompt = `این تصویر را تحلیل کن. 
 ۱. صحنه کلی رو توصیف کن
 ۲. تمام اشیا، افراد و جزئیات مهم رو فهرست کن
@@ -1038,6 +1090,7 @@
             document.getElementById('recordBtn').textContent = '⏹ توقف رکورد';
             document.getElementById('recordCounter').classList.add('show');
             document.getElementById('modeLabel').textContent = '● RECORDING MODE';
+            document.getElementById('modeLabel').style.color = '#ff3333';
             document.getElementById('statusDot').classList.add('recording');
 
             analyzeFrame(false);
@@ -1054,6 +1107,7 @@
             document.getElementById('recordBtn').textContent = '🔴 شروع حالت رکورد';
             document.getElementById('recordCounter').classList.remove('show');
             document.getElementById('modeLabel').textContent = 'STANDBY MODE';
+            document.getElementById('modeLabel').style.color = '#00aaff';
             document.getElementById('statusDot').classList.remove('recording');
         }
 
@@ -1081,7 +1135,6 @@
         ═══════════════════════════════════════ */
         const coordsEl = document.getElementById('coords');
         const timeEl = document.getElementById('time');
-        let currentLocation = null;
 
         function updateTime() {
             timeEl.textContent = '⏱ ' + new Date().toTimeString().split(' ')[0];
@@ -1091,8 +1144,7 @@
 
         if (navigator.geolocation) {
             navigator.geolocation.watchPosition(pos => {
-                currentLocation = { lat: pos.coords.latitude, lon: pos.coords.longitude };
-                coordsEl.textContent = `LAT: ${currentLocation.lat.toFixed(4)} LON: ${currentLocation.lon.toFixed(4)}`;
+                coordsEl.textContent = `LAT: ${pos.coords.latitude.toFixed(4)} LON: ${pos.coords.longitude.toFixed(4)}`;
             }, () => {
                 coordsEl.textContent = 'GPS: غیرفعال';
             });

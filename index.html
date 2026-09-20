@@ -5,8 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Gamegod Scanner</title>
+    <title>Gamegod AI Scanner</title>
+    
+    <!-- TensorFlow.js و مدل COCO-SSD برای تشخیص اشیا -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
+    
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -29,7 +33,18 @@
             z-index: 1;
         }
 
-        /* افکت اسکن‌لاین */
+        /* Canvas برای کشیدن باکس‌های تشخیص */
+        #canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        /* افکت اسکن‌لاین (ظریف) */
         .scan-lines {
             position: fixed;
             top: 0;
@@ -38,76 +53,13 @@
             height: 100%;
             background: repeating-linear-gradient(
                 0deg,
-                rgba(0, 255, 136, 0.03),
-                rgba(0, 255, 136, 0.03) 1px,
+                rgba(0, 255, 136, 0.02),
+                rgba(0, 255, 136, 0.02) 1px,
                 transparent 1px,
                 transparent 3px
             );
             pointer-events: none;
-            z-index: 2;
-            animation: flicker 0.15s infinite;
-        }
-
-        @keyframes flicker {
-            0%, 100% { opacity: 0.9; }
-            50% { opacity: 1; }
-        }
-
-        /* 🔄 خط اسکن تمام‌صفحه - از بالا به پایین حرکت می‌کنه */
-        .full-scan-line {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 4px;
-            background: linear-gradient(
-                180deg,
-                transparent 0%,
-                #00ff88 40%,
-                #ffffff 50%,
-                #00ff88 60%,
-                transparent 100%
-            );
-            box-shadow: 
-                0 0 20px #00ff88,
-                0 0 40px #00ff88,
-                0 0 60px rgba(0, 255, 136, 0.5);
             z-index: 3;
-            animation: fullScan 3s ease-in-out infinite;
-            pointer-events: none;
-        }
-
-        /* سایه نور بعد از عبور خط */
-        .full-scan-line::before {
-            content: '';
-            position: absolute;
-            top: -50px;
-            left: 0;
-            width: 100%;
-            height: 50px;
-            background: linear-gradient(
-                180deg,
-                rgba(0, 255, 136, 0.2) 0%,
-                rgba(0, 255, 136, 0.05) 60%,
-                transparent 100%
-            );
-        }
-
-        @keyframes fullScan {
-            0% {
-                top: -10px;
-                opacity: 0;
-            }
-            5% {
-                opacity: 1;
-            }
-            95% {
-                opacity: 1;
-            }
-            100% {
-                top: 100vh;
-                opacity: 0;
-            }
         }
 
         /* HUD بالا */
@@ -117,31 +69,84 @@
             left: 50%;
             transform: translateX(-50%);
             text-align: center;
-            z-index: 4;
+            z-index: 5;
             text-shadow: 0 0 10px #00ff88;
-            font-size: 18px;
+            font-size: 16px;
             letter-spacing: 2px;
         }
 
+        /* پنل اطلاعات */
+        .info-panel {
+            position: fixed;
+            top: 80px;
+            left: 20px;
+            z-index: 5;
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid #00ff88;
+            padding: 12px 16px;
+            font-size: 12px;
+            max-width: 280px;
+            backdrop-filter: blur(5px);
+            border-radius: 4px;
+        }
+
+        .info-panel h3 {
+            font-size: 13px;
+            margin-bottom: 8px;
+            color: #fff;
+            border-bottom: 1px solid #00ff88;
+            padding-bottom: 4px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 4px 0;
+        }
+
+        .object-list {
+            max-height: 180px;
+            overflow-y: auto;
+            margin-top: 8px;
+        }
+
+        .object-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 8px;
+            margin: 3px 0;
+            background: rgba(0, 255, 136, 0.1);
+            border-left: 3px solid #00ff88;
+            font-size: 11px;
+        }
+
+        /* پنل پایین */
         .hud-bottom {
             position: fixed;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            text-align: center;
-            z-index: 4;
-            font-size: 12px;
-            opacity: 0.8;
+            bottom: 20px;
+            right: 20px;
+            z-index: 5;
+            font-size: 11px;
+            text-align: right;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px 14px;
+            border: 1px solid #00ff88;
+            border-radius: 4px;
+            backdrop-filter: blur(5px);
         }
 
         .status-dot {
             display: inline-block;
-            width: 10px;
-            height: 10px;
+            width: 8px;
+            height: 8px;
             background: #ff3333;
             border-radius: 50%;
-            margin-left: 8px;
+            margin-right: 6px;
             animation: blink 1s infinite;
+        }
+
+        .status-dot.active {
+            background: #00ff88;
         }
 
         @keyframes blink {
@@ -151,77 +156,179 @@
 
         .btn {
             position: fixed;
-            bottom: 80px;
-            left: 50%;
-            transform: translateX(-50%);
-            padding: 12px 30px;
+            bottom: 20px;
+            left: 20px;
+            padding: 10px 20px;
             background: rgba(0, 255, 136, 0.2);
-            border: 2px solid #00ff88;
+            border: 1px solid #00ff88;
             color: #00ff88;
-            font-size: 16px;
+            font-size: 13px;
             cursor: pointer;
             z-index: 5;
             backdrop-filter: blur(5px);
             font-family: inherit;
+            margin: 4px;
+            border-radius: 4px;
         }
 
         .btn:active {
             background: rgba(0, 255, 136, 0.4);
         }
 
-        /* گوشه‌های صفحه - دکوراتیو */
-        .page-corner {
+        .btn-group {
             position: fixed;
-            width: 50px;
-            height: 50px;
-            border-color: #00ff88;
-            border-style: solid;
-            border-width: 0;
-            z-index: 4;
-            opacity: 0.6;
+            bottom: 20px;
+            left: 20px;
+            z-index: 5;
+            display: flex;
+            gap: 8px;
         }
-        .page-corner.tl { top: 15px; left: 15px; border-top-width: 3px; border-left-width: 3px; }
-        .page-corner.tr { top: 15px; right: 15px; border-top-width: 3px; border-right-width: 3px; }
-        .page-corner.bl { bottom: 15px; left: 15px; border-bottom-width: 3px; border-left-width: 3px; }
-        .page-corner.br { bottom: 15px; right: 15px; border-bottom-width: 3px; border-right-width: 3px; }
 
-        /* حالت تمام‌صفحه */
-        :-webkit-full-screen { background: #000; }
-        :fullscreen { background: #000; }
+        /* لودینگ */
+        .loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.9);
+            padding: 30px 50px;
+            border: 2px solid #00ff88;
+            border-radius: 8px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(0, 255, 136, 0.2);
+            border-top-color: #00ff88;
+            border-radius: 50%;
+            margin: 0 auto 15px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* پیام API */
+        .api-toast {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            border: 2px solid #00ff88;
+            padding: 15px 25px;
+            z-index: 100;
+            font-size: 14px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+            border-radius: 6px;
+        }
+
+        .api-toast.show {
+            opacity: 1;
+        }
+
+        /* تنظیمات API */
+        .api-config {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 5;
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid #00ff88;
+            padding: 10px;
+            font-size: 11px;
+            border-radius: 4px;
+            max-width: 250px;
+        }
+
+        .api-config input {
+            width: 100%;
+            padding: 4px 6px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid #00ff88;
+            color: #00ff88;
+            font-family: inherit;
+            font-size: 10px;
+            margin-top: 4px;
+            border-radius: 2px;
+        }
+
+        .api-config label {
+            display: block;
+            margin-top: 6px;
+            font-size: 10px;
+        }
+
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: rgba(0,0,0,0.3); }
+        ::-webkit-scrollbar-thumb { background: #00ff88; }
     </style>
 </head>
 <body>
 
     <video id="video" autoplay playsinline muted></video>
+    <canvas id="canvas"></canvas>
     <div class="scan-lines"></div>
 
-    <!-- خط اسکن تمام‌صفحه -->
-    <div class="full-scan-line"></div>
-
-    <!-- گوشه‌های دکوراتیو صفحه -->
-    <div class="page-corner tl"></div>
-    <div class="page-corner tr"></div>
-    <div class="page-corner bl"></div>
-    <div class="page-corner br"></div>
-
     <div class="hud-top">
-        ◈ GAMEGOD SCANNER ◈<br>
-        <small>ENVIRONMENT ANALYSIS MODE</small>
+        ◈ GAMEGOD AI SCANNER ◈<br>
+        <small>OBJECT RECOGNITION MODE</small>
+    </div>
+
+    <!-- لودینگ مدل AI -->
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <div>🤖 در حال بارگذاری مدل هوش مصنوعی...</div>
+    </div>
+
+    <!-- پنل اشیا شناسایی‌شده -->
+    <div class="info-panel" id="infoPanel">
+        <h3>🎯 اشیا شناسایی‌شده</h3>
+        <div class="info-row">
+            <span>تعداد:</span>
+            <span id="objCount">0</span>
+        </div>
+        <div class="info-row">
+            <span>FPS:</span>
+            <span id="fps">--</span>
+        </div>
+        <div class="object-list" id="objectList">
+            <div style="opacity:0.5; text-align:center; padding:10px;">در حال اسکن...</div>
+        </div>
+    </div>
+
+    <!-- تنظیمات API -->
+    <div class="api-config">
+        <strong>⚙️ API Connection</strong>
+        <label>Endpoint URL:</label>
+        <input type="text" id="apiUrl" placeholder="https://api.example.com/detect">
+        <label>API Key:</label>
+        <input type="password" id="apiKey" placeholder="your-api-key">
     </div>
 
     <div class="hud-bottom">
-        <span id="status">● LIVE</span><span class="status-dot"></span>
-        <br>
-        <span id="coords">LAT: --.---- LON: --.----</span>
-        <br>
+        <span class="status-dot active"></span>
+        <span id="status">● LIVE</span><br>
+        <span id="coords">LAT: --.---- LON: --.----</span><br>
         <span id="time"></span>
     </div>
 
-    <button class="btn" id="fsBtn">⊞ تمام‌صفحه</button>
+    <div class="btn-group">
+        <button class="btn" id="captureBtn">📸 ارسال به API</button>
+        <button class="btn" id="fsBtn">⊞ تمام‌صفحه</button>
+    </div>
+
+    <div class="api-toast" id="apiToast">✓ ارسال شد</div>
 
     <script>
         /* ═══════════════════════════════════════
-           🔒 مخفی‌سازی نام فایل از URL
+           🔒 مخفی‌سازی URL
         ═══════════════════════════════════════ */
         (function cleanURL() {
             const path = window.location.pathname;
@@ -233,62 +340,374 @@
         })();
 
         /* ═══════════════════════════════════════
-           📹 دسترسی به دوربین
+           📹 دوربین
         ═══════════════════════════════════════ */
         const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
 
         async function startCamera() {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({
                     video: {
                         facingMode: 'environment',
-                        width: { ideal: 1920 },
-                        height: { ideal: 1080 }
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
                     },
                     audio: false
                 });
                 video.srcObject = stream;
+                await new Promise(resolve => video.onloadedmetadata = resolve);
+                
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                
+                // تنظیم سایز canvas با video
+                function resizeCanvas() {
+                    canvas.width = window.innerWidth;
+                    canvas.height = window.innerHeight;
+                }
+                resizeCanvas();
+                window.addEventListener('resize', resizeCanvas);
+                
             } catch (err) {
                 alert('❌ خطا در دسترسی به دوربین: ' + err.message);
             }
         }
 
-        startCamera();
+        /* ═══════════════════════════════════════
+           🤖 بارگذاری مدل COCO-SSD
+        ═══════════════════════════════════════ */
+        let model = null;
+        let lastDetections = [];
+
+        async function loadModel() {
+            try {
+                model = await cocoSsd.load({ base: 'lite_mobilenet_v2' }); // مدل سبک برای موبایل
+                console.log('✅ مدل AI بارگذاری شد');
+                document.getElementById('loading').style.display = 'none';
+                startDetection();
+            } catch (err) {
+                console.error('❌ خطا در بارگذاری مدل:', err);
+                document.getElementById('loading').innerHTML = '❌ خطا در بارگذاری مدل AI';
+            }
+        }
 
         /* ═══════════════════════════════════════
-           ⊞ تمام‌صفحه
+           🔍 تشخیص اشیا - حلقه اصلی
+        ═══════════════════════════════════════ */
+        let frameCount = 0;
+        let fpsCounter = 0;
+        let lastFpsUpdate = Date.now();
+
+        async function startDetection() {
+            if (!model || video.readyState !== 4) {
+                requestAnimationFrame(startDetection);
+                return;
+            }
+
+            // فقط هر 2 فریم یکبار پردازش کن (بهینه‌سازی)
+            frameCount++;
+            if (frameCount % 2 === 0) {
+                try {
+                    const predictions = await model.detect(video);
+                    lastDetections = predictions;
+                    drawDetections(predictions);
+                    updateObjectList(predictions);
+                } catch (err) {
+                    console.error('Detection error:', err);
+                }
+            }
+
+            // FPS counter
+            fpsCounter++;
+            const now = Date.now();
+            if (now - lastFpsUpdate > 1000) {
+                document.getElementById('fps').textContent = fpsCounter;
+                fpsCounter = 0;
+                lastFpsUpdate = now;
+            }
+
+            requestAnimationFrame(startDetection);
+        }
+
+        /* ═══════════════════════════════════════
+           🎨 کشیدن باکس‌ها روی Canvas
+        ═══════════════════════════════════════ */
+        function drawDetections(predictions) {
+            // پاک کردن canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // مقیاس‌بندی برای تطبیق با نمایش
+            const scaleX = canvas.width / video.videoWidth;
+            const scaleY = canvas.height / video.videoHeight;
+
+            predictions.forEach(pred => {
+                const [x, y, w, h] = pred.bbox;
+                const sx = x * scaleX;
+                const sy = y * scaleY;
+                const sw = w * scaleX;
+                const sh = h * scaleY;
+
+                // رنگ بر اساس درصد اطمینان
+                const confidence = pred.score;
+                let color = '#ffff00'; // زرد - متوسط
+                if (confidence > 0.8) color = '#00ff88'; // سبز - عالی
+                else if (confidence < 0.5) color = '#ff6666'; // قرمز - ضعیف
+
+                // کشیدن باکس
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 2;
+                ctx.strokeRect(sx, sy, sw, sh);
+
+                // سایه درخشان
+                ctx.shadowColor = color;
+                ctx.shadowBlur = 10;
+                ctx.strokeRect(sx, sy, sw, sh);
+                ctx.shadowBlur = 0;
+
+                // گوشه‌های تاکیدی
+                const cornerSize = 15;
+                ctx.lineWidth = 3;
+                // بالا-چپ
+                ctx.beginPath();
+                ctx.moveTo(sx, sy + cornerSize);
+                ctx.lineTo(sx, sy);
+                ctx.lineTo(sx + cornerSize, sy);
+                ctx.stroke();
+                // بالا-راست
+                ctx.beginPath();
+                ctx.moveTo(sx + sw - cornerSize, sy);
+                ctx.lineTo(sx + sw, sy);
+                ctx.lineTo(sx + sw, sy + cornerSize);
+                ctx.stroke();
+                // پایین-چپ
+                ctx.beginPath();
+                ctx.moveTo(sx, sy + sh - cornerSize);
+                ctx.lineTo(sx, sy + sh);
+                ctx.lineTo(sx + cornerSize, sy + sh);
+                ctx.stroke();
+                // پایین-راست
+                ctx.beginPath();
+                ctx.moveTo(sx + sw - cornerSize, sy + sh);
+                ctx.lineTo(sx + sw, sy + sh);
+                ctx.lineTo(sx + sw, sy + sh - cornerSize);
+                ctx.stroke();
+
+                // برچسب نام شیء
+                const label = `${translateObject(pred.class)} ${Math.round(confidence * 100)}%`;
+                ctx.font = 'bold 14px Courier New';
+                const textWidth = ctx.measureText(label).width;
+                
+                // پس‌زمینه متن
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                ctx.fillRect(sx, sy - 22, textWidth + 10, 22);
+                
+                // متن
+                ctx.fillStyle = color;
+                ctx.fillText(label, sx + 5, sy - 6);
+            });
+        }
+
+        /* ═══════════════════════════════════════
+           🌐 ترجمه نام اشیا به فارسی
+        ═══════════════════════════════════════ */
+        function translateObject(name) {
+            const translations = {
+                'person': '👤 انسان',
+                'bicycle': '🚲 دوچرخه',
+                'car': '🚗 ماشین',
+                'motorcycle': '🏍 موتور',
+                'airplane': '✈ هواپیما',
+                'bus': '🚌 اتوبوس',
+                'train': '🚂 قطار',
+                'truck': '🚚 کامیون',
+                'boat': '🚤 قایق',
+                'traffic light': '🚦 چراغ راهنمایی',
+                'fire hydrant': '🚒 شیر آتش‌نشانی',
+                'stop sign': '🛑 تابلو ایست',
+                'bench': '🪑 نیمکت',
+                'bird': '🐦 پرنده',
+                'cat': '🐱 گربه',
+                'dog': '🐕 سگ',
+                'horse': '🐎 اسب',
+                'sheep': '🐑 گوسفند',
+                'cow': '🐄 گاو',
+                'umbrella': '☂ چتر',
+                'handbag': '👜 کیف',
+                'tie': '👔 کراوات',
+                'suitcase': '🧳 چمدان',
+                'bottle': '🍼 بطری',
+                'wine glass': '🍷 لیوان',
+                'cup': '☕ فنجان',
+                'fork': '🍴 چنگال',
+                'knife': '🔪 چاقو',
+                'spoon': '🥄 قاشق',
+                'bowl': '🥣 کاسه',
+                'banana': '🍌 موز',
+                'apple': '🍎 سیب',
+                'orange': '🍊 پرتقال',
+                'book': '📖 کتاب',
+                'clock': '⏰ ساعت',
+                'vase': '🏺 گلدان',
+                'scissors': '✂ قیچی',
+                'teddy bear': '🧸 عروسک',
+                'toothbrush': '🪥 مسواک',
+                'tv': '📺 تلویزیون',
+                'laptop': '💻 لپ‌تاپ',
+                'mouse': '🖱 ماوس',
+                'remote': '📱 کنترل',
+                'keyboard': '⌨ صفحه‌کلید',
+                'cell phone': '📱 موبایل',
+                'microwave': '🔥 مایکروویو',
+                'oven': '🔥 فر',
+                'toaster': '🍞 تستر',
+                'sink': '🚰 سینک',
+                'refrigerator': '🧊 یخچال',
+                'bed': '🛏 تخت',
+                'toilet': '🚽 توالت',
+                'chair': '🪑 صندلی',
+                'couch': '🛋 کاناپه',
+                'potted plant': '🪴 گلدان',
+                'dining table': '🍽 میز غذا'
+            };
+            return translations[name] || name;
+        }
+
+        /* ═══════════════════════════════════════
+           📋 به‌روزرسانی لیست اشیا
+        ═══════════════════════════════════════ */
+        function updateObjectList(predictions) {
+            document.getElementById('objCount').textContent = predictions.length;
+            const list = document.getElementById('objectList');
+            
+            if (predictions.length === 0) {
+                list.innerHTML = '<div style="opacity:0.5; text-align:center; padding:10px;">چیزی شناسایی نشد</div>';
+                return;
+            }
+
+            // گروه‌بندی و شمارش
+            const counts = {};
+            predictions.forEach(p => {
+                const name = translateObject(p.class);
+                if (!counts[name]) counts[name] = { count: 0, maxScore: 0 };
+                counts[name].count++;
+                counts[name].maxScore = Math.max(counts[name].maxScore, p.score);
+            });
+
+            list.innerHTML = Object.entries(counts).map(([name, data]) => `
+                <div class="object-item">
+                    <span>${name} ${data.count > 1 ? `(${data.count}x)` : ''}</span>
+                    <span>${Math.round(data.maxScore * 100)}%</span>
+                </div>
+            `).join('');
+        }
+
+        /* ═══════════════════════════════════════
+           🌐 ارسال به API سفارشی
+        ═══════════════════════════════════════ */
+        async function sendToAPI() {
+            const apiUrl = document.getElementById('apiUrl').value.trim();
+            const apiKey = document.getElementById('apiKey').value.trim();
+            const toast = document.getElementById('apiToast');
+
+            if (!apiUrl) {
+                toast.textContent = '⚠ URL API را وارد کنید';
+                toast.classList.add('show');
+                setTimeout(() => toast.classList.remove('show'), 2000);
+                return;
+            }
+
+            // گرفتن فریم فعلی از canvas
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = video.videoWidth;
+            tempCanvas.height = video.videoHeight;
+            const tempCtx = tempCanvas.getContext('2d');
+            tempCtx.drawImage(video, 0, 0);
+            const imageData = tempCanvas.toDataURL('image/jpeg', 0.8);
+
+            // ساخت payload
+            const payload = {
+                timestamp: new Date().toISOString(),
+                image: imageData,
+                detections: lastDetections.map(d => ({
+                    class: d.class,
+                    score: d.score,
+                    bbox: d.bbox
+                })),
+                location: currentLocation
+            };
+
+            try {
+                toast.textContent = '⏳ در حال ارسال...';
+                toast.classList.add('show');
+
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': apiKey ? `Bearer ${apiKey}` : undefined
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+                toast.textContent = `✓ ارسال شد: ${response.status}`;
+                console.log('📤 پاسخ API:', result);
+                
+            } catch (err) {
+                toast.textContent = `✗ خطا: ${err.message}`;
+                console.error('❌ API Error:', err);
+            }
+
+            setTimeout(() => toast.classList.remove('show'), 2500);
+        }
+
+        /* ═══════════════════════════════════════
+           ⊞ تمام‌صفحه و رویدادها
         ═══════════════════════════════════════ */
         document.getElementById('fsBtn').addEventListener('click', () => {
             const el = document.documentElement;
             if (el.requestFullscreen) el.requestFullscreen();
             else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
-            else if (el.msRequestFullscreen) el.msRequestFullscreen();
         });
 
+        document.getElementById('captureBtn').addEventListener('click', sendToAPI);
+
         /* ═══════════════════════════════════════
-           📍 HUD
+           📍 GPS و ساعت
         ═══════════════════════════════════════ */
         const coordsEl = document.getElementById('coords');
         const timeEl = document.getElementById('time');
+        let currentLocation = null;
 
         function updateTime() {
-            const now = new Date();
-            timeEl.textContent = '⏱ ' + now.toTimeString().split(' ')[0];
+            timeEl.textContent = '⏱ ' + new Date().toTimeString().split(' ')[0];
         }
         setInterval(updateTime, 1000);
         updateTime();
 
         if (navigator.geolocation) {
             navigator.geolocation.watchPosition(pos => {
-                const lat = pos.coords.latitude.toFixed(4);
-                const lon = pos.coords.longitude.toFixed(4);
-                coordsEl.textContent = `LAT: ${lat} LON: ${lon}`;
+                currentLocation = {
+                    lat: pos.coords.latitude,
+                    lon: pos.coords.longitude
+                };
+                coordsEl.textContent = `LAT: ${currentLocation.lat.toFixed(4)} LON: ${currentLocation.lon.toFixed(4)}`;
             }, () => {
                 coordsEl.textContent = 'GPS: غیرفعال';
             });
         }
 
         document.addEventListener('contextmenu', e => e.preventDefault());
+
+        /* ═══════════════════════════════════════
+           🚀 شروع برنامه
+        ═══════════════════════════════════════ */
+        (async function init() {
+            await startCamera();
+            await loadModel();
+        })();
     </script>
 </body>
 </html>

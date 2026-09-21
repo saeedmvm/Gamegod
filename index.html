@@ -2,740 +2,1144 @@
 <html lang="fa" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>Gamegod AI Scanner</title>
-    
-    <!-- TensorFlow.js و مدل COCO-SSD -->
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
-    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>زمین ۳ بعدی - چهار فصل، حیات وحش و رندر بهینه‌شده</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-
-        html, body {
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            background: #000;
-            font-family: 'Courier New', monospace;
-            color: #00ff88;
+        * { 
+            box-sizing: border-box; 
+            margin: 0; 
+            padding: 0; 
+            user-select: none; 
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+            -webkit-tap-highlight-color: transparent;
         }
-
-        #video {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            object-fit: cover;
-            z-index: 1;
+        body, html { 
+            width: 100%; 
+            height: 100%; 
+            overflow: hidden; 
+            background-color: #020408; 
+            font-family: system-ui, -apple-system, Tahoma, sans-serif;
+            touch-action: manipulation;
         }
-
-        #canvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            z-index: 2;
-            pointer-events: none;
+        #canvas-container { 
+            width: 100%; 
+            height: 100%; 
+            position: absolute; 
+            top: 0; 
+            left: 0; 
+            touch-action: none;
         }
-
-        .scan-lines {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: repeating-linear-gradient(
-                0deg,
-                rgba(0, 255, 136, 0.02),
-                rgba(0, 255, 136, 0.02) 1px,
-                transparent 1px,
-                transparent 3px
-            );
-            pointer-events: none;
-            z-index: 3;
+        
+        #loading-screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: #050811; color: #fff; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; z-index: 9999; transition: opacity 0.5s;
+            padding: 20px; text-align: center;
         }
+        .spinner { width: 50px; height: 50px; border: 5px solid #1e293b; border-top: 5px solid #00d2ff; border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        #load-status { margin-top: 20px; font-size: 14px; color: #00d2ff; line-height: 1.6; }
 
-        .hud-top {
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            text-align: center;
-            z-index: 5;
-            text-shadow: 0 0 10px #00ff88;
-            font-size: 16px;
-            letter-spacing: 2px;
-        }
-
-        .info-panel {
-            position: fixed;
-            top: 80px;
-            left: 20px;
-            z-index: 5;
-            background: rgba(0, 0, 0, 0.6);
-            border: 1px solid #00ff88;
-            padding: 12px 16px;
-            font-size: 12px;
-            max-width: 280px;
-            backdrop-filter: blur(5px);
-            border-radius: 4px;
-        }
-
-        .info-panel h3 {
-            font-size: 13px;
-            margin-bottom: 8px;
+        #season-display {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
             color: #fff;
-            border-bottom: 1px solid #00ff88;
-            padding-bottom: 4px;
-        }
-
-        .info-row {
-            display: flex;
-            justify-content: space-between;
-            margin: 4px 0;
-        }
-
-        .object-list {
-            max-height: 180px;
-            overflow-y: auto;
-            margin-top: 8px;
-        }
-
-        .object-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 4px 8px;
-            margin: 3px 0;
-            background: rgba(0, 255, 136, 0.1);
-            border-left: 3px solid #00ff88;
-            font-size: 11px;
-        }
-
-        .hud-bottom {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            z-index: 5;
-            font-size: 11px;
-            text-align: right;
-            background: rgba(0, 0, 0, 0.5);
-            padding: 10px 14px;
-            border: 1px solid #00ff88;
-            border-radius: 4px;
-            backdrop-filter: blur(5px);
-        }
-
-        .status-dot {
-            display: inline-block;
-            width: 8px;
-            height: 8px;
-            background: #ff3333;
-            border-radius: 50%;
-            margin-right: 6px;
-            animation: blink 1s infinite;
-        }
-
-        .status-dot.active { background: #00ff88; }
-
-        @keyframes blink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.3; }
-        }
-
-        .btn {
-            padding: 10px 15px;
-            background: rgba(0, 255, 136, 0.2);
-            border: 1px solid #00ff88;
-            color: #00ff88;
+            padding: 8px 14px;
+            border-radius: 10px;
             font-size: 13px;
-            cursor: pointer;
-            backdrop-filter: blur(5px);
-            font-family: inherit;
-            border-radius: 4px;
-            transition: all 0.2s;
-        }
-
-        .btn:active {
-            background: rgba(0, 255, 136, 0.4);
-        }
-
-        .btn.loading {
-            opacity: 0.5;
+            z-index: 101;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
             pointer-events: none;
         }
 
-        .btn-group {
-            position: fixed;
-            bottom: 20px;
-            left: 20px;
-            z-index: 5;
+        .top-bar {
+            position: absolute;
+            top: 10px;
+            right: 10px;
             display: flex;
+            justify-content: flex-end;
             gap: 8px;
-            flex-direction: column;
+            z-index: 101;
+            flex-wrap: wrap;
+            pointer-events: none;
         }
 
-        .loading {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 10;
-            text-align: center;
-            background: rgba(0, 0, 0, 0.9);
-            padding: 30px 50px;
-            border: 2px solid #00ff88;
+        .panel-btn {
+            pointer-events: auto;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: #fff;
+            padding: 8px 12px;
             border-radius: 8px;
-        }
-
-        .spinner {
-            width: 40px;
-            height: 40px;
-            border: 3px solid rgba(0, 255, 136, 0.2);
-            border-top-color: #00ff88;
-            border-radius: 50%;
-            margin: 0 auto 15px;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        /* پنل تنظیمات OpenRouter */
-        .api-config {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 5;
-            background: rgba(0, 0, 0, 0.7);
-            border: 1px solid #00ff88;
-            padding: 12px;
-            font-size: 11px;
-            border-radius: 4px;
-            width: 300px;
-        }
-
-        .api-config h3 {
-            font-size: 12px;
-            margin-bottom: 8px;
-            color: #fff;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .api-config label {
-            display: block;
-            margin-top: 8px;
-            font-size: 10px;
-            opacity: 0.9;
-        }
-
-        .api-config input,
-        .api-config select {
-            width: 100%;
-            padding: 6px 8px;
-            background: rgba(0, 0, 0, 0.8);
-            border: 1px solid #00ff88;
-            color: #00ff88;
-            font-family: inherit;
-            font-size: 11px;
-            margin-top: 4px;
-            border-radius: 2px;
-        }
-
-        .api-config select {
             cursor: pointer;
+            font-size: 12px;
+            transition: 0.2s;
+            white-space: nowrap;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
         }
+        .panel-btn:active { transform: scale(0.95); background: #00d2ff; color: #000; }
 
-        .api-config select option {
-            background: #000;
-        }
-
-        .model-info {
-            margin-top: 6px;
-            font-size: 9px;
-            opacity: 0.6;
-            line-height: 1.4;
-        }
-
-        /* پنل پاسخ */
-        .response-panel {
-            position: fixed;
-            bottom: 100px;
-            left: 20px;
-            z-index: 5;
-            background: rgba(0, 0, 0, 0.7);
-            border: 1px solid #00ff88;
-            padding: 12px;
-            font-size: 11px;
-            border-radius: 4px;
-            max-width: 400px;
-            max-height: 200px;
+        .ui-panel {
+            position: absolute;
+            top: 55px;
+            right: 10px;
+            width: calc(100% - 20px);
+            max-width: 320px;
+            background: rgba(15, 23, 42, 0.90);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 14px;
+            color: #fff;
+            padding: 16px;
+            z-index: 100;
+            max-height: 75vh;
             overflow-y: auto;
-            backdrop-filter: blur(5px);
             display: none;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            -webkit-overflow-scrolling: touch;
         }
+        .ui-panel.open { display: block; }
+        .ui-panel h3 { font-size: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px; }
 
-        .response-panel.show {
-            display: block;
+        .control-group { margin-bottom: 12px; }
+        .control-group label { display: block; font-size: 12px; margin-bottom: 6px; color: #cbd5e1; }
+        .control-group input[type="range"], .control-group select {
+            width: 100%; 
+            background: #1e293b; 
+            border: 1px solid #334155; 
+            color: #fff; 
+            padding: 8px; 
+            border-radius: 8px;
+            font-size: 13px;
+            outline: none;
         }
-
-        .response-panel h4 {
-            font-size: 12px;
-            color: #fff;
-            margin-bottom: 8px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        .weather-btn { 
+            padding: 10px 14px; 
+            background: #334155; 
+            border: none; 
+            color: white; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-size: 13px;
+            width: 100%;
+            margin-top: 8px;
         }
+        .weather-btn:active { background: #00d2ff; color: #000; }
 
-        .close-btn {
-            background: none;
-            border: none;
-            color: #ff6666;
-            cursor: pointer;
-            font-size: 16px;
-        }
-
-        .response-content {
-            white-space: pre-wrap;
-            line-height: 1.6;
-        }
-
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-track { background: rgba(0,0,0,0.3); }
-        ::-webkit-scrollbar-thumb { background: #00ff88; }
-
-        /* موبایل */
-        @media (max-width: 768px) {
-            .info-panel, .api-config {
-                font-size: 10px;
-            }
-            .api-config {
-                width: 250px;
-                right: 10px;
-            }
+        @media (min-width: 600px) {
+            .top-bar { right: 15px; }
+            .ui-panel { right: 15px; width: 300px; }
         }
     </style>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/simplex-noise/2.4.0/simplex-noise.min.js"></script>
 </head>
 <body>
 
-    <video id="video" autoplay playsinline muted></video>
-    <canvas id="canvas"></canvas>
-    <div class="scan-lines"></div>
-
-    <div class="hud-top">
-        ◈ GAMEGOD AI SCANNER ◈<br>
-        <small>OPENROUTER VISION MODE</small>
-    </div>
-
-    <div class="loading" id="loading">
+    <div id="loading-screen">
         <div class="spinner"></div>
-        <div>🤖 در حال بارگذاری مدل هوش مصنوعی...</div>
+        <div id="load-status">در حال تشکیل اکوسیستم بهینه‌شده...<br>لطفا چند لحظه شکیبا باشید.</div>
     </div>
 
-    <!-- پنل اشیا شناسایی‌شده -->
-    <div class="info-panel">
-        <h3>🎯 اشیا شناسایی‌شده</h3>
-        <div class="info-row">
-            <span>تعداد:</span>
-            <span id="objCount">0</span>
+    <div id="season-display">🌱 فصل: <span id="season-name">بهار</span></div>
+
+    <div id="canvas-container"></div>
+
+    <div class="top-bar">
+        <button class="panel-btn" onclick="togglePanel('god-panel')">⚙️ تنظیمات</button>
+        <button class="panel-btn" onclick="togglePanel('cloud-panel')">☁️ ابرها</button>
+        <button class="panel-btn" onclick="togglePanel('eco-panel')">🌱 اکوسیستم</button>
+        <button class="panel-btn" onclick="togglePanel('wildlife-panel')">🐺 حیات‌وحش</button>
+    </div>
+
+    <div id="god-panel" class="ui-panel">
+        <h3>تنظیمات شبیه‌سازی</h3><br>
+        <div class="control-group">
+            <label>فصل فعلی:</label>
+            <select id="season-selector" onchange="changeSeasonManual(this.value)">
+                <option value="0">بهار 🌱</option>
+                <option value="1">تابستان ☀️</option>
+                <option value="2">پاییز 🍂</option>
+                <option value="3">زمستان ❄️</option>
+            </select>
         </div>
-        <div class="info-row">
-            <span>FPS:</span>
-            <span id="fps">--</span>
+        <div class="control-group">
+            <label>انتخاب کاراکتر:</label>
+            <select id="human-selector" onchange="selectHuman(this.value)">
+                <option value="">-- انتخاب کنید --</option>
+            </select>
         </div>
-        <div class="object-list" id="objectList">
-            <div style="opacity:0.5; text-align:center; padding:10px;">در حال اسکن...</div>
+        <div class="control-group">
+            <label>سرعت حرکت (<span id="speed-value">1.0</span>):</label>
+            <input type="range" min="1" max="30" value="10" oninput="updateSpeed(this.value)">
+        </div>
+        <button class="weather-btn" onclick="resetSelection()">ریست دوربین</button>
+    </div>
+
+    <div id="cloud-panel" class="ui-panel">
+        <h3>تنظیمات ابرها و بارش</h3><br>
+        <div class="control-group">
+            <label>تعداد جبهه‌های ابر (<span id="cloud-count-value">45</span>):</label>
+            <input type="range" id="cloud-count" min="10" max="100" value="45" oninput="updateCloudCount(this.value)">
+        </div>
+        <div class="control-group">
+            <label>سرعت وزش باد (<span id="cloud-speed-value">1.0</span>):</label>
+            <input type="range" min="0" max="50" value="10" oninput="updateCloudSpeed(this.value)">
+        </div>
+        <div class="control-group">
+            <label>شدت بارندگی (<span id="precip-rate-value">1.0</span>):</label>
+            <input type="range" min="0" max="30" value="10" oninput="updatePrecipRate(this.value)">
         </div>
     </div>
 
-    <!-- ⚙️ تنظیمات OpenRouter -->
-    <div class="api-config">
-        <h3>🔑 OpenRouter API</h3>
-        
-        <label>🔐 API Key (sk-or-...):</label>
-        <input type="password" id="apiKey" placeholder="sk-or-v1-xxxx...">
-        
-        <label>🤖 مدل هوش مصنوعی:</label>
-        <select id="modelSelect">
-            <option value="openai/gpt-4o-mini" selected>🚀 GPT-4o-mini (ارزان و سریع)</option>
-            <option value="openai/gpt-4-vision-preview">💎 GPT-4 Vision (دقت بالا)</option>
-            <option value="anthropic/claude-3-5-sonnet">🧠 Claude 3.5 Sonnet</option>
-            <option value="google/gemini-flash-1.5">⚡ Gemini Flash 1.5 (رایگان)</option>
-            <option value="meta-llama/llama-3.2-11b-vision">🦙 Llama 3.2 Vision (رایگان)</option>
-        </select>
-        
-        <div class="model-info">
-            💡 برای کلید رایگان از <a href="https://openrouter.ai/keys" style="color:#00ff88">openrouter.ai/keys</a> بگیرید
+    <div id="eco-panel" class="ui-panel">
+        <h3>تنظیمات اکوسیستم زنده</h3><br>
+        <div class="control-group">
+            <label>سرعت رویش و رشد گیاهان (<span id="growth-rate-val">1.0</span>):</label>
+            <input type="range" min="0" max="50" value="10" oninput="updateGrowthRate(this.value)">
+        </div>
+        <div class="control-group">
+            <label>تعداد کل گیاهان فعال: <span id="total-plants-count">3000</span></label>
         </div>
     </div>
 
-    <!-- پنل پاسخ -->
-    <div class="response-panel" id="responsePanel">
-        <h4>
-            📤 پاسخ OpenRouter
-            <button class="close-btn" onclick="this.parentElement.parentElement.classList.remove('show')">✕</button>
-        </h4>
-        <div class="response-content" id="responseContent"></div>
-    </div>
-
-    <div class="hud-bottom">
-        <span class="status-dot active"></span>
-        <span id="status">● LIVE</span><br>
-        <span id="coords">LAT: --.---- LON: --.----</span><br>
-        <span id="time"></span>
-    </div>
-
-    <div class="btn-group">
-        <button class="btn" id="captureBtn">🧠 تحلیل با OpenRouter</button>
-        <button class="btn" id="fsBtn">⊞ تمام‌صفحه</button>
+    <div id="wildlife-panel" class="ui-panel">
+        <h3>مدیریت حیات وحش</h3><br>
+        <div class="control-group">
+            <label>تعداد گوزن‌ها: <span id="deer-count">0</span></label>
+            <label>تعداد گرگ‌ها: <span id="wolf-count">0</span></label>
+            <label>تعداد خرس‌های قطبی: <span id="bear-count">0</span></label>
+        </div>
+        <button class="weather-btn" onclick="spawnAnimalGroup('deer', 10)">➕ افزودن ۱۰ گوزن</button>
+        <button class="weather-btn" onclick="spawnAnimalGroup('wolf', 5)">➕ افزودن ۵ گرگ</button>
+        <button class="weather-btn" onclick="spawnAnimalGroup('bear', 3)">➕ افزودن ۳ خرس قطبی</button>
     </div>
 
     <script>
-        /* ═══════════════════════════════════════
-           🔒 مخفی‌سازی URL
-        ═══════════════════════════════════════ */
-        (function cleanURL() {
-            const path = window.location.pathname;
-            const fileMatch = path.match(/\/[^\/]+\.html$/i);
-            if (fileMatch) {
-                const cleanPath = path.replace(/\/[^\/]+\.html$/i, '/');
-                window.history.replaceState(null, '', cleanPath);
-            }
-        })();
+        let scene, camera, renderer, controls;
+        let earthGroup, cloudsGroup, earthMesh;
+        const earthRadius = 5;
+        const simplex = new SimplexNoise();
 
-        /* ═══════════════════════════════════════
-           📹 دوربین
-        ═══════════════════════════════════════ */
-        const video = document.getElementById('video');
-        const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d');
+        let humans = [];
+        let selectedHuman = null;
+        let moveSpeed = 1.0, HUMAN_SCALE = 0.025;
+        let cloudSettings = { count: 45, speed: 1.0, morphSpeed: 1.0, precipRate: 1.0 };
+        let cloudClusters = [];
 
-        async function startCamera() {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({
-                    video: {
-                        facingMode: 'environment',
-                        width: { ideal: 1280 },
-                        height: { ideal: 720 }
-                    },
-                    audio: false
-                });
-                video.srcObject = stream;
-                await new Promise(resolve => video.onloadedmetadata = resolve);
-                
-                function resizeCanvas() {
-                    canvas.width = window.innerWidth;
-                    canvas.height = window.innerHeight;
-                }
-                resizeCanvas();
-                window.addEventListener('resize', resizeCanvas);
-                
-            } catch (err) {
-                alert('❌ خطا در دسترسی به دوربین: ' + err.message);
-            }
-        }
+        // آرایه‌های بهینه‌شده به روش InstancedMesh
+        let instancedPlants = { pine: null, broadleaf: null, bush: null };
+        let plantData = [];
+        const MAX_PLANTS = 6000;
+        let currentPlantCount = 0;
+        let growthSpeedMultiplier = 1.0;
 
-        /* ═══════════════════════════════════════
-           🤖 بارگذاری مدل
-        ═══════════════════════════════════════ */
-        let model = null;
-        let lastDetections = [];
+        let animals = [];
 
-        async function loadModel() {
-            try {
-                model = await cocoSsd.load({ base: 'lite_mobilenet_v2' });
-                document.getElementById('loading').style.display = 'none';
-                startDetection();
-            } catch (err) {
-                document.getElementById('loading').innerHTML = '❌ خطا در بارگذاری مدل AI';
-            }
-        }
+        const seasons = [
+            { name: "بهار", icon: "🌱", snowLat: 60 },
+            { name: "تابستان", icon: "☀️", snowLat: 75 },
+            { name: "پاییز", icon: "🍂", snowLat: 50 },
+            { name: "زمستان", icon: "❄️", snowLat: 38 }
+        ];
+        let currentSeasonIndex = 0;
+        let seasonTimer = 0;
+        const SEASON_DURATION = 2500;
 
-        /* ═══════════════════════════════════════
-           🔍 تشخیص اشیا
-        ═══════════════════════════════════════ */
-        let frameCount = 0;
-        let fpsCounter = 0;
-        let lastFpsUpdate = Date.now();
-
-        async function startDetection() {
-            if (!model || video.readyState !== 4) {
-                requestAnimationFrame(startDetection);
-                return;
-            }
-
-            frameCount++;
-            if (frameCount % 2 === 0) {
-                try {
-                    const predictions = await model.detect(video);
-                    lastDetections = predictions;
-                    drawDetections(predictions);
-                    updateObjectList(predictions);
-                } catch (err) {
-                    console.error('Detection error:', err);
-                }
-            }
-
-            fpsCounter++;
-            const now = Date.now();
-            if (now - lastFpsUpdate > 1000) {
-                document.getElementById('fps').textContent = fpsCounter;
-                fpsCounter = 0;
-                lastFpsUpdate = now;
-            }
-
-            requestAnimationFrame(startDetection);
-        }
-
-        /* ═══════════════════════════════════════
-           🎨 کشیدن باکس‌ها
-        ═══════════════════════════════════════ */
-        function drawDetections(predictions) {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            const scaleX = canvas.width / video.videoWidth;
-            const scaleY = canvas.height / video.videoHeight;
-
-            predictions.forEach(pred => {
-                const [x, y, w, h] = pred.bbox;
-                const sx = x * scaleX;
-                const sy = y * scaleY;
-                const sw = w * scaleX;
-                const sh = h * scaleY;
-
-                const confidence = pred.score;
-                let color = '#ffff00';
-                if (confidence > 0.8) color = '#00ff88';
-                else if (confidence < 0.5) color = '#ff6666';
-
-                ctx.strokeStyle = color;
-                ctx.lineWidth = 2;
-                ctx.strokeRect(sx, sy, sw, sh);
-
-                ctx.shadowColor = color;
-                ctx.shadowBlur = 10;
-                ctx.strokeRect(sx, sy, sw, sh);
-                ctx.shadowBlur = 0;
-
-                const cornerSize = 15;
-                ctx.lineWidth = 3;
-                ctx.beginPath();
-                ctx.moveTo(sx, sy + cornerSize);
-                ctx.lineTo(sx, sy);
-                ctx.lineTo(sx + cornerSize, sy);
-                ctx.stroke();
-                ctx.beginPath();
-                ctx.moveTo(sx + sw - cornerSize, sy);
-                ctx.lineTo(sx + sw, sy);
-                ctx.lineTo(sx + sw, sy + cornerSize);
-                ctx.stroke();
-                ctx.beginPath();
-                ctx.moveTo(sx, sy + sh - cornerSize);
-                ctx.lineTo(sx, sy + sh);
-                ctx.lineTo(sx + cornerSize, sy + sh);
-                ctx.stroke();
-                ctx.beginPath();
-                ctx.moveTo(sx + sw - cornerSize, sy + sh);
-                ctx.lineTo(sx + sw, sy + sh);
-                ctx.lineTo(sx + sw, sy + sh - cornerSize);
-                ctx.stroke();
-
-                const label = `${translateObject(pred.class)} ${Math.round(confidence * 100)}%`;
-                ctx.font = 'bold 14px Courier New';
-                const textWidth = ctx.measureText(label).width;
-                
-                ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-                ctx.fillRect(sx, sy - 22, textWidth + 10, 22);
-                
-                ctx.fillStyle = color;
-                ctx.fillText(label, sx + 5, sy - 6);
-            });
-        }
-
-        function translateObject(name) {
-            const translations = {
-                'person': '👤 انسان',
-                'car': '🚗 ماشین',
-                'motorcycle': '🏍 موتور',
-                'dog': '🐕 سگ',
-                'cat': '🐱 گربه',
-                'chair': '🪑 صندلی',
-                'table': '🪵 میز',
-                'cell phone': '📱 موبایل',
-                'laptop': '💻 لپ‌تاپ',
-                'tv': '📺 تلویزیون',
-                'bottle': '🍼 بطری',
-                'book': '📖 کتاب',
-                'clock': '⏰ ساعت',
-                'cup': '☕ فنجان',
-                'vase': '🏺 گلدان'
-            };
-            return translations[name] || name;
-        }
-
-        function updateObjectList(predictions) {
-            document.getElementById('objCount').textContent = predictions.length;
-            const list = document.getElementById('objectList');
+        function init() {
+            const container = document.getElementById('canvas-container');
             
-            if (predictions.length === 0) {
-                list.innerHTML = '<div style="opacity:0.5; text-align:center; padding:10px;">چیزی شناسایی نشد</div>';
-                return;
-            }
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.001, 1000);
+            camera.position.set(0, 0, 14);
 
-            const counts = {};
-            predictions.forEach(p => {
-                const name = translateObject(p.class);
-                if (!counts[name]) counts[name] = { count: 0, maxScore: 0 };
-                counts[name].count++;
-                counts[name].maxScore = Math.max(counts[name].maxScore, p.score);
-            });
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: "high-performance" });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.25;
+            container.appendChild(renderer.domElement);
 
-            list.innerHTML = Object.entries(counts).map(([name, data]) => `
-                <div class="object-item">
-                    <span>${name} ${data.count > 1 ? `(${data.count}x)` : ''}</span>
-                    <span>${Math.round(data.maxScore * 100)}%</span>
-                </div>
-            `).join('');
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.minDistance = 5.02;
+
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+            scene.add(ambientLight);
+
+            const sunLight = new THREE.DirectionalLight(0xfffdf0, 2.0);
+            sunLight.position.set(15, 12, 10);
+            scene.add(sunLight);
+
+            const fillLight = new THREE.DirectionalLight(0x335577, 0.6);
+            fillLight.position.set(-15, -10, -12);
+            scene.add(fillLight);
+
+            earthGroup = new THREE.Group();
+            scene.add(earthGroup);
+
+            setTimeout(() => {
+                generate1024ExtremeEarth();
+                createLiveDynamicClouds();
+                initInstancedEcosystem();
+                buildInitialTreesOnLand();
+                spawnHuman("آدمک AI", 20, 50, 0x00d2ff);
+                spawnHuman("کاربر ۱", -10, 20, 0xff0055);
+
+                spawnInitialWildlife();
+
+                const loadScreen = document.getElementById('loading-screen');
+                if (loadScreen) {
+                    loadScreen.style.opacity = '0';
+                    setTimeout(() => loadScreen.remove(), 500);
+                }
+            }, 100);
+
+            window.addEventListener('resize', onWindowResize);
+            animate();
         }
 
-        /* ═══════════════════════════════════════
-           🌐 ارسال به OpenRouter
-        ═══════════════════════════════════════ */
-        async function sendToOpenRouter() {
-            const apiKey = document.getElementById('apiKey').value.trim();
-            const selectedModel = document.getElementById('modelSelect').value;
-            const captureBtn = document.getElementById('captureBtn');
-            const responsePanel = document.getElementById('responsePanel');
-            const responseContent = document.getElementById('responseContent');
+        function getUltraElevation(x, y, z) {
+            let baseLand = 0.5000 * simplex.noise3D(x * 0.35, y * 0.35, z * 0.35);
+            baseLand += 0.2500 * simplex.noise3D(x * 0.95, y * 0.95, z * 0.95);
 
-            if (!apiKey) {
-                alert('⚠️ لطفاً کلید API رو وارد کنید.\nبرای گرفتن کلید رایگان: openrouter.ai/keys');
-                return;
+            let e = baseLand;
+
+            if (baseLand > 0.02) {
+                let ridgeNoise = Math.abs(simplex.noise3D(x * 2.2, y * 2.2, z * 2.2));
+                ridgeNoise = 1.0 - ridgeNoise;
+                ridgeNoise = Math.pow(ridgeNoise, 2.5) * 0.35;
+
+                let peakNoise = simplex.noise3D(x * 5.5, y * 5.5, z * 5.5);
+                peakNoise = Math.max(0, peakNoise) * 0.18;
+
+                let hills = 0.0625 * simplex.noise3D(x * 6.0, y * 6.0, z * 6.0);
+                hills += 0.0312 * simplex.noise3D(x * 15.0, y * 15.0, z * 15.0);
+
+                let landFactor = Math.min(1.0, (baseLand - 0.02) * 5.0);
+                e += (ridgeNoise + peakNoise + hills) * landFactor;
+            } else {
+                e += 0.1250 * simplex.noise3D(x * 2.50, y * 2.50, z * 2.50);
             }
 
-            // گرفتن فریم از دوربین
-            const tempCanvas = document.createElement('canvas');
-            tempCanvas.width = video.videoWidth;
-            tempCanvas.height = video.videoHeight;
-            const tempCtx = tempCanvas.getContext('2d');
-            tempCtx.drawImage(video, 0, 0);
-            const imageData = tempCanvas.toDataURL('image/jpeg', 0.9);
+            e += 0.0078 * simplex.noise3D(x * 80.0, y * 80.0, z * 80.0);
+            return e;
+        }
 
-            // ساخت پرامپت
-            const prompt = `این تصویر را تحلیل کن و تمام اشیاء، افراد و صحنه را توصیف کن. به فارسی پاسخ بده و مختصر و مفید بنویس. اشیاء شناسایی‌شده: ${lastDetections.map(d => d.class).join(', ') || 'هیچ'}`;
+        function generate1024ExtremeEarth() {
+            const geo = new THREE.SphereGeometry(earthRadius, 1024, 1024);
+            const pos = geo.attributes.position;
+            const colors = [];
 
-            // ساخت درخواست مطابق با فرمت OpenRouter
-            const requestBody = {
-                model: selectedModel,
-                messages: [
-                    {
-                        role: "user",
-                        content: [
-                            {
-                                type: "text",
-                                text: prompt
-                            },
-                            {
-                                type: "image_url",
-                                image_url: {
-                                    url: imageData
+            const cDeepOcean   = new THREE.Color(0x051329);
+            const cShallow     = new THREE.Color(0x115e85);
+            const cBeach       = new THREE.Color(0xbd955c);
+            const cGrass       = new THREE.Color(0x38823b);
+            const cForest      = new THREE.Color(0x13401b);
+            const cHighLand    = new THREE.Color(0x524331);
+            const cDarkRock    = new THREE.Color(0x2d2623);
+            const cSnow        = new THREE.Color(0xf0f5ff);
+
+            for (let i = 0; i < pos.count; i++) {
+                let vx = pos.getX(i);
+                let vy = pos.getY(i);
+                let vz = pos.getZ(i);
+
+                let dir = new THREE.Vector3(vx, vy, vz).normalize();
+                let elevation = getUltraElevation(dir.x, dir.y, dir.z);
+
+                let color = new THREE.Color();
+
+                if (elevation < 0.02) {
+                    let factor = Math.max(0, (elevation + 0.5) / 0.52);
+                    color.lerpColors(cDeepOcean, cShallow, factor);
+                } else {
+                    let landHeight = earthRadius + (elevation - 0.02) * 0.45;
+                    dir.multiplyScalar(landHeight);
+                    pos.setXYZ(i, dir.x, dir.y, dir.z);
+
+                    let microNoise = simplex.noise3D(dir.x * 250, dir.y * 250, dir.z * 250) * 0.05;
+
+                    if (elevation < 0.06) {
+                        color.copy(cBeach);
+                    } else if (elevation < 0.20) {
+                        let factor = (elevation - 0.06) / 0.14;
+                        color.lerpColors(cGrass, cForest, factor);
+                    } else if (elevation < 0.35) {
+                        let factor = (elevation - 0.20) / 0.15;
+                        color.lerpColors(cForest, cHighLand, factor);
+                    } else if (elevation < 0.52) {
+                        let factor = (elevation - 0.35) / 0.17;
+                        color.lerpColors(cHighLand, cDarkRock, factor);
+                    } else {
+                        let factor = Math.min(1, (elevation - 0.52) / 0.15);
+                        color.lerpColors(cDarkRock, cSnow, factor);
+                    }
+
+                    color.r = THREE.MathUtils.clamp(color.r + microNoise, 0, 1);
+                    color.g = THREE.MathUtils.clamp(color.g + microNoise, 0, 1);
+                    color.b = THREE.MathUtils.clamp(color.b + microNoise, 0, 1);
+                }
+
+                colors.push(color.r, color.g, color.b);
+            }
+
+            geo.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+            geo.computeVertexNormals();
+
+            const mat = new THREE.MeshStandardMaterial({
+                vertexColors: true,
+                roughness: 0.8,
+                metalness: 0.01,
+                flatShading: false
+            });
+
+            earthMesh = new THREE.Mesh(geo, mat);
+            earthGroup.add(earthMesh);
+        }
+
+        function createLiveDynamicClouds() {
+            if (cloudsGroup) earthGroup.remove(cloudsGroup);
+            cloudsGroup = new THREE.Group();
+            cloudClusters = [];
+
+            for (let i = 0; i < cloudSettings.count; i++) {
+                spawnCloudCluster();
+            }
+            earthGroup.add(cloudsGroup);
+        }
+
+        function spawnCloudCluster() {
+            const lat = (Math.random() - 0.5) * 140;
+            const lon = (Math.random() - 0.5) * 360;
+            const phi = (90 - lat) * (Math.PI / 180);
+            const theta = (lon + 180) * (Math.PI / 180);
+
+            const centerR = earthRadius * (1.045 + Math.random() * 0.015);
+            const centerPos = new THREE.Vector3(
+                -(centerR * Math.sin(phi) * Math.cos(theta)),
+                (centerR * Math.cos(phi)),
+                (centerR * Math.sin(phi) * Math.sin(theta))
+            );
+
+            const dir = centerPos.clone().normalize();
+            const elevation = getUltraElevation(dir.x, dir.y, dir.z);
+            const isLand = elevation > 0.02;
+
+            const clusterGroup = new THREE.Group();
+            clusterGroup.position.copy(centerPos);
+            
+            const normal = centerPos.clone().normalize();
+            clusterGroup.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), normal);
+
+            const cloudMat = new THREE.MeshStandardMaterial({
+                color: 0xffffff,
+                roughness: 0.85,
+                metalness: 0.0,
+                transparent: true,
+                opacity: 0.0,
+                flatShading: false
+            });
+
+            const animatedBlobs = [];
+            const blobCount = 10 + Math.floor(Math.random() * 10);
+
+            for (let j = 0; j < blobCount; j++) {
+                const radius = 0.12 + Math.random() * 0.22;
+                const blobGeo = new THREE.SphereGeometry(radius, 16, 16);
+                const origPositions = blobGeo.attributes.position.clone();
+                const blobMesh = new THREE.Mesh(blobGeo, cloudMat);
+                
+                const offsetX = (Math.random() - 0.5) * 0.85;
+                const offsetY = (Math.random() - 0.5) * 0.08;
+                const offsetZ = (Math.random() - 0.5) * 0.85;
+
+                blobMesh.position.set(offsetX, offsetY, offsetZ);
+                const baseScale = new THREE.Vector3(
+                    1.2 + Math.random() * 0.6,
+                    0.4 + Math.random() * 0.3,
+                    1.2 + Math.random() * 0.6
+                );
+                blobMesh.scale.copy(baseScale);
+                clusterGroup.add(blobMesh);
+
+                animatedBlobs.push({
+                    mesh: blobMesh,
+                    origPositions: origPositions,
+                    radius: radius,
+                    baseScale: baseScale,
+                    phaseOffset: Math.random() * 1000
+                });
+            }
+
+            const currentSnowBoundary = seasons[currentSeasonIndex].snowLat;
+            const isColdZone = Math.abs(lat) >= currentSnowBoundary || elevation > 0.40;
+            const isSnow = isColdZone && isLand;
+
+            const precipGeo = new THREE.BufferGeometry();
+            const precipCount = isSnow ? 260 : 150;
+            const precipPos = [];
+            
+            for (let p = 0; p < precipCount; p++) {
+                precipPos.push(
+                    (Math.random() - 0.5) * 0.9,
+                    -Math.random() * 0.35,
+                    (Math.random() - 0.5) * 0.9
+                );
+            }
+            precipGeo.setAttribute('position', new THREE.Float32BufferAttribute(precipPos, 3));
+
+            const precipMat = new THREE.PointsMaterial({
+                color: isSnow ? 0xffffff : 0x60a5fa,
+                size: isSnow ? 0.035 : 0.015,
+                transparent: true,
+                opacity: 0,
+                blending: THREE.AdditiveBlending
+            });
+
+            const precipParticles = new THREE.Points(precipGeo, precipMat);
+            clusterGroup.add(precipParticles);
+
+            cloudsGroup.add(clusterGroup);
+
+            cloudClusters.push({
+                group: clusterGroup,
+                material: cloudMat,
+                precipMat: precipMat,
+                precipParticles: precipParticles,
+                blobs: animatedBlobs,
+                isSnow: isSnow,
+                isLand: isLand,
+                centerDir: dir,
+                lat: lat,
+                life: Math.random() * 0.3,
+                lifeSpeed: 0.0005 + Math.random() * 0.0008,
+                maxOpacity: 0.85 + Math.random() * 0.1
+            });
+        }
+
+        // ==================== بهینه‌سازی رندر اکوسیستم (Instanced Mesh) ====================
+
+        function initInstancedEcosystem() {
+            const trunkMat = new THREE.MeshLambertMaterial({ color: 0x3d2612 });
+            const pineMat = new THREE.MeshLambertMaterial({ color: 0x13401b });
+            const broadMat = new THREE.MeshLambertMaterial({ color: 0x2e6f21 });
+            const bushMat = new THREE.MeshLambertMaterial({ color: 0x4a8505 });
+
+            // ۱. کاج (Pine)
+            const pineGeo = createCombinedPlantGeo('pine');
+            instancedPlants.pine = new THREE.InstancedMesh(pineGeo, [trunkMat, pineMat], MAX_PLANTS);
+            instancedPlants.pine.count = 0;
+
+            // ۲. پهن‌برگ (Broadleaf)
+            const broadGeo = createCombinedPlantGeo('broadleaf');
+            instancedPlants.broadleaf = new THREE.InstancedMesh(broadGeo, [trunkMat, broadMat], MAX_PLANTS);
+            instancedPlants.broadleaf.count = 0;
+
+            // ۳. بوته (Bush)
+            const bushGeo = new THREE.SphereGeometry(0.02, 6, 6);
+            bushGeo.scale(1.2, 0.8, 1.2);
+            bushGeo.translate(0, 0.015, 0);
+            instancedPlants.bush = new THREE.InstancedMesh(bushGeo, bushMat, MAX_PLANTS);
+            instancedPlants.bush.count = 0;
+
+            earthGroup.add(instancedPlants.pine);
+            earthGroup.add(instancedPlants.broadleaf);
+            earthGroup.add(instancedPlants.bush);
+        }
+
+        function createCombinedPlantGeo(type) {
+            if (type === 'pine') {
+                const trunk = new THREE.CylinderGeometry(0.003, 0.006, 0.05, 5);
+                trunk.translate(0, 0.025, 0);
+                const leaves = new THREE.ConeGeometry(0.022, 0.08, 5);
+                leaves.translate(0, 0.065, 0);
+
+                const geo = mergeGeometries([trunk, leaves]);
+                return geo;
+            } else {
+                const trunk = new THREE.CylinderGeometry(0.004, 0.007, 0.06, 5);
+                trunk.translate(0, 0.03, 0);
+                const leaves = new THREE.SphereGeometry(0.028, 7, 7);
+                leaves.scale(1, 1.2, 1);
+                leaves.translate(0, 0.07, 0);
+
+                const geo = mergeGeometries([trunk, leaves]);
+                return geo;
+            }
+        }
+
+        function mergeGeometries(geos) {
+            const merged = new THREE.BufferGeometry();
+            let posArr = [], normArr = [], groupOffset = 0;
+
+            geos.forEach((g, materialIndex) => {
+                const p = g.attributes.position.array;
+                const n = g.attributes.normal.array;
+                for (let i = 0; i < p.length; i++) posArr.push(p[i]);
+                for (let i = 0; i < n.length; i++) normArr.push(n[i]);
+
+                const vertCount = p.length / 3;
+                merged.addGroup(groupOffset, vertCount, materialIndex);
+                groupOffset += vertCount;
+            });
+
+            merged.setAttribute('position', new THREE.Float32BufferAttribute(posArr, 3));
+            merged.setAttribute('normal', new THREE.Float32BufferAttribute(normArr, 3));
+            return merged;
+        }
+
+        function buildInitialTreesOnLand() {
+            const initialCount = 3000;
+            let added = 0, attempts = 0;
+
+            while (added < initialCount && attempts < 35000) {
+                attempts++;
+                const lat = (Math.random() - 0.5) * 150;
+                const lon = (Math.random() - 0.5) * 360;
+
+                if (spawnSinglePlant(lat, lon, true)) {
+                    added++;
+                }
+            }
+            updatePlantCountUI();
+        }
+
+        function spawnSinglePlant(lat, lon, instantFullSize = false) {
+            if (currentPlantCount >= MAX_PLANTS) return false;
+
+            const phi = (90 - lat) * (Math.PI / 180);
+            const theta = (lon + 180) * (Math.PI / 180);
+
+            const dir = new THREE.Vector3(
+                -(Math.sin(phi) * Math.cos(theta)),
+                Math.cos(phi),
+                Math.sin(phi) * Math.sin(theta)
+            ).normalize();
+
+            const elevation = getUltraElevation(dir.x, dir.y, dir.z);
+
+            if (elevation > 0.07 && elevation < 0.38) {
+                let type = 'broadleaf';
+                if (elevation > 0.22 || Math.abs(lat) > 40) {
+                    type = 'pine';
+                } else if (Math.random() < 0.3) {
+                    type = 'bush';
+                }
+
+                const r = earthRadius + (elevation - 0.02) * 0.45;
+                const pos = dir.clone().multiplyScalar(r);
+                const quat = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir);
+
+                const targetScale = 0.8 + Math.random() * 0.5;
+                const currentScale = instantFullSize ? targetScale : 0.01;
+
+                const imesh = instancedPlants[type];
+                const instanceIdx = imesh.count;
+
+                const dummy = new THREE.Object3D();
+                dummy.position.copy(pos);
+                dummy.quaternion.copy(quat);
+                dummy.scale.setScalar(currentScale);
+                dummy.updateMatrix();
+
+                imesh.setMatrixAt(instanceIdx, dummy.matrix);
+                imesh.count++;
+                imesh.instanceMatrix.needsUpdate = true;
+
+                plantData.push({
+                    type: type,
+                    instanceIdx: instanceIdx,
+                    currentScale: currentScale,
+                    targetScale: targetScale,
+                    growthSpeed: (0.002 + Math.random() * 0.004),
+                    lat: lat,
+                    lon: lon,
+                    pos: pos,
+                    quat: quat
+                });
+
+                currentPlantCount++;
+                return true;
+            }
+            return false;
+        }
+
+        function updateEcosystemCycle() {
+            let updated = false;
+            const dummy = new THREE.Object3D();
+
+            for (let i = 0; i < plantData.length; i++) {
+                let p = plantData[i];
+                if (p.currentScale < p.targetScale) {
+                    p.currentScale += p.growthSpeed * growthSpeedMultiplier;
+                    if (p.currentScale > p.targetScale) p.currentScale = p.targetScale;
+
+                    dummy.position.copy(p.pos);
+                    dummy.quaternion.copy(p.quat);
+                    dummy.scale.setScalar(p.currentScale);
+                    dummy.updateMatrix();
+
+                    const imesh = instancedPlants[p.type];
+                    imesh.setMatrixAt(p.instanceIdx, dummy.matrix);
+                    updated = true;
+                }
+            }
+
+            if (updated) {
+                if (instancedPlants.pine) instancedPlants.pine.instanceMatrix.needsUpdate = true;
+                if (instancedPlants.broadleaf) instancedPlants.broadleaf.instanceMatrix.needsUpdate = true;
+                if (instancedPlants.bush) instancedPlants.bush.instanceMatrix.needsUpdate = true;
+            }
+
+            if (Math.random() < 0.25 * growthSpeedMultiplier && currentPlantCount < MAX_PLANTS) {
+                let parent = plantData[Math.floor(Math.random() * plantData.length)];
+                if (parent && parent.currentScale >= parent.targetScale * 0.8) {
+                    let newLat = parent.lat + (Math.random() - 0.5) * 3.0;
+                    let newLon = parent.lon + (Math.random() - 0.5) * 3.0;
+                    if (spawnSinglePlant(newLat, newLon, false)) {
+                        updatePlantCountUI();
+                    }
+                }
+            }
+        }
+
+        function updatePlantCountUI() {
+            const ui = document.getElementById('total-plants-count');
+            if (ui) ui.innerText = currentPlantCount;
+        }
+
+        // ==================== حیات‌وحش و سایر بخش‌ها ====================
+
+        function createAnimalMesh(type) {
+            const group = new THREE.Group();
+            
+            if (type === 'deer') {
+                const bodyMat = new THREE.MeshStandardMaterial({ color: 0x8b5a2b, roughness: 0.6 });
+                const body = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.05, 0.12), bodyMat);
+                body.position.y = 0.05;
+                group.add(body);
+
+                const head = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.03, 0.05), bodyMat);
+                head.position.set(0, 0.08, 0.05);
+                group.add(head);
+
+                const hornMat = new THREE.MeshStandardMaterial({ color: 0x3d2612 });
+                const horn1 = new THREE.Mesh(new THREE.CylinderGeometry(0.002, 0.002, 0.04), hornMat);
+                horn1.position.set(-0.015, 0.11, 0.04);
+                horn1.rotation.z = -0.3;
+                const horn2 = horn1.clone();
+                horn2.position.x = 0.015;
+                horn2.rotation.z = 0.3;
+                group.add(horn1, horn2);
+
+            } else if (type === 'wolf') {
+                const bodyMat = new THREE.MeshStandardMaterial({ color: 0x5a6577, roughness: 0.5 });
+                const body = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.04, 0.10), bodyMat);
+                body.position.y = 0.04;
+                group.add(body);
+
+                const head = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.03, 0.04), bodyMat);
+                head.position.set(0, 0.06, 0.04);
+                group.add(head);
+
+            } else if (type === 'bear') {
+                const bodyMat = new THREE.MeshStandardMaterial({ color: 0xf0f4f8, roughness: 0.7 });
+                const body = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.08, 0.15), bodyMat);
+                body.position.y = 0.07;
+                group.add(body);
+
+                const head = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.05, 0.06), bodyMat);
+                head.position.set(0, 0.10, 0.07);
+                group.add(head);
+            }
+
+            group.scale.setScalar(0.25);
+            return group;
+        }
+
+        function spawnSingleAnimal(type, lat, lon) {
+            const phi = (90 - lat) * (Math.PI / 180);
+            const theta = (lon + 180) * (Math.PI / 180);
+
+            const dir = new THREE.Vector3(
+                -(Math.sin(phi) * Math.cos(theta)),
+                Math.cos(phi),
+                Math.sin(phi) * Math.sin(theta)
+            ).normalize();
+
+            const elevation = getUltraElevation(dir.x, dir.y, dir.z);
+            if (elevation <= 0.02) return false;
+
+            const r = earthRadius + (elevation - 0.02) * 0.45;
+            const mesh = createAnimalMesh(type);
+            mesh.position.copy(dir.clone().multiplyScalar(r));
+            mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir);
+
+            earthGroup.add(mesh);
+
+            animals.push({
+                mesh: mesh,
+                type: type,
+                lat: lat,
+                lon: lon,
+                targetLat: lat + (Math.random() - 0.5) * 5,
+                targetLon: lon + (Math.random() - 0.5) * 5,
+                speed: type === 'wolf' ? 0.08 : (type === 'deer' ? 0.06 : 0.03)
+            });
+
+            updateWildlifeUI();
+            return true;
+        }
+
+        function spawnAnimalGroup(type, count) {
+            let added = 0;
+            for (let i = 0; i < count * 5 && added < count; i++) {
+                let lat = (Math.random() - 0.5) * 120;
+                let lon = (Math.random() - 0.5) * 360;
+
+                if (type === 'bear') lat = 65 + Math.random() * 20;
+                if (type === 'deer') lat = (Math.random() - 0.5) * 80;
+
+                if (spawnSingleAnimal(type, lat, lon)) added++;
+            }
+        }
+
+        function spawnInitialWildlife() {
+            spawnAnimalGroup('deer', 35);
+            spawnAnimalGroup('wolf', 15);
+            spawnAnimalGroup('bear', 10);
+        }
+
+        function updateWildlifeIntelligence() {
+            for (let i = 0; i < animals.length; i++) {
+                let a = animals[i];
+
+                if (Math.random() < 0.01) {
+                    if (a.type === 'deer' && currentSeasonIndex === 3 && a.lat > 35) {
+                        a.targetLat = a.lat - 8;
+                    } else {
+                        a.targetLat = a.lat + (Math.random() - 0.5) * 6;
+                    }
+                    a.targetLon = a.lon + (Math.random() - 0.5) * 6;
+                }
+
+                if (a.type === 'wolf' && Math.random() < 0.05) {
+                    for (let j = 0; j < animals.length; j++) {
+                        let target = animals[j];
+                        if (target.type === 'deer') {
+                            let dist = Math.hypot(a.lat - target.lat, a.lon - target.lon);
+                            if (dist < 10) {
+                                a.targetLat = target.lat;
+                                a.targetLon = target.lon;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                let latDiff = a.targetLat - a.lat;
+                let lonDiff = a.targetLon - a.lon;
+
+                if (Math.abs(latDiff) > 0.05 || Math.abs(lonDiff) > 0.05) {
+                    a.lat += latDiff * 0.01 * a.speed;
+                    a.lon += lonDiff * 0.01 * a.speed;
+
+                    const phi = (90 - a.lat) * (Math.PI / 180);
+                    const theta = (a.lon + 180) * (Math.PI / 180);
+
+                    const dir = new THREE.Vector3(
+                        -(Math.sin(phi) * Math.cos(theta)),
+                        Math.cos(phi),
+                        Math.sin(phi) * Math.sin(theta)
+                    ).normalize();
+
+                    const elevation = getUltraElevation(dir.x, dir.y, dir.z);
+                    if (elevation > 0.02) {
+                        const r = earthRadius + (elevation - 0.02) * 0.45;
+                        a.mesh.position.copy(dir.multiplyScalar(r));
+                        a.mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir);
+                    }
+                }
+            }
+        }
+
+        function updateWildlifeUI() {
+            let deer = 0, wolf = 0, bear = 0;
+            animals.forEach(a => {
+                if (a.type === 'deer') deer++;
+                if (a.type === 'wolf') wolf++;
+                if (a.type === 'bear') bear++;
+            });
+            if (document.getElementById('deer-count')) document.getElementById('deer-count').innerText = deer;
+            if (document.getElementById('wolf-count')) document.getElementById('wolf-count').innerText = wolf;
+            if (document.getElementById('bear-count')) document.getElementById('bear-count').innerText = bear;
+        }
+
+        function updateSeasonCycle() {
+            seasonTimer++;
+            if (seasonTimer >= SEASON_DURATION) {
+                seasonTimer = 0;
+                currentSeasonIndex = (currentSeasonIndex + 1) % seasons.length;
+                updateSeasonUI();
+            }
+        }
+
+        function updateSeasonUI() {
+            const s = seasons[currentSeasonIndex];
+            document.getElementById('season-name').innerText = s.name + " " + s.icon;
+            document.getElementById('season-selector').value = currentSeasonIndex;
+        }
+
+        function changeSeasonManual(idx) {
+            currentSeasonIndex = parseInt(idx);
+            seasonTimer = 0;
+            updateSeasonUI();
+        }
+
+        function spawnHuman(name, lat, lon, colorHex) {
+            const group = new THREE.Group();
+            const mat = new THREE.MeshStandardMaterial({ color: colorHex, roughness: 0.3 });
+
+            const head = new THREE.Mesh(new THREE.SphereGeometry(0.08, 12, 12), mat);
+            head.position.y = 0.28;
+            group.add(head);
+
+            const body = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.2, 10), mat);
+            body.position.y = 0.14;
+            group.add(body);
+
+            group.scale.set(HUMAN_SCALE, HUMAN_SCALE, HUMAN_SCALE);
+            group.userData = { name, lat, lon, targetLat: lat, targetLon: lon };
+            
+            updateHumanPosition(group);
+            earthGroup.add(group);
+            humans.push(group);
+
+            const opt = document.createElement('option');
+            opt.value = humans.length - 1;
+            opt.innerText = name;
+            document.getElementById('human-selector').appendChild(opt);
+        }
+
+        function updateHumanPosition(human) {
+            const d = human.userData;
+            const phi = (90 - d.lat) * (Math.PI / 180);
+            const theta = (d.lon + 180) * (Math.PI / 180);
+
+            const dir = new THREE.Vector3(
+                -(Math.sin(phi) * Math.cos(theta)),
+                Math.cos(phi),
+                Math.sin(phi) * Math.sin(theta)
+            ).normalize();
+
+            const elevation = getUltraElevation(dir.x, dir.y, dir.z);
+            const r = earthRadius + (elevation > 0.02 ? (elevation - 0.02) * 0.45 : 0);
+
+            human.position.copy(dir.multiplyScalar(r));
+            human.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const time = Date.now() * 0.001;
+
+            if (cloudsGroup) {
+                cloudsGroup.rotation.y += cloudSettings.speed * 0.0004;
+            }
+
+            updateSeasonCycle();
+            updateEcosystemCycle();
+            updateWildlifeIntelligence();
+
+            cloudClusters.forEach((c, idx) => {
+                c.life += c.lifeSpeed;
+                
+                let currentOpacity = 0;
+                let precipOpacity = 0;
+
+                if (c.life < 0.25) {
+                    currentOpacity = (c.life / 0.25) * c.maxOpacity;
+                    precipOpacity = 0;
+                } else if (c.life < 0.7) {
+                    currentOpacity = c.maxOpacity;
+                    let precipFactor = Math.sin(((c.life - 0.25) / 0.45) * Math.PI);
+                    precipOpacity = precipFactor * 0.75 * cloudSettings.precipRate;
+
+                    let darkFactor = 1.0 - (precipFactor * 0.25);
+                    c.material.color.setRGB(darkFactor, darkFactor, darkFactor + 0.05);
+                } else if (c.life < 1.0) {
+                    currentOpacity = (1.0 - ((c.life - 0.7) / 0.3)) * c.maxOpacity;
+                    precipOpacity = 0;
+                    c.material.color.setHex(0xffffff);
+                } else {
+                    cloudsGroup.remove(c.group);
+                    cloudClusters.splice(idx, 1);
+                    spawnCloudCluster();
+                    return;
+                }
+
+                c.material.opacity = currentOpacity;
+                c.precipMat.opacity = precipOpacity;
+
+                if (precipOpacity > 0) {
+                    const pPositions = c.precipParticles.geometry.attributes.position;
+                    const fallSpeed = c.isSnow ? 0.003 : 0.012;
+                    
+                    for (let p = 0; p < pPositions.count; p++) {
+                        let y = pPositions.getY(p);
+                        y -= fallSpeed * cloudSettings.precipRate;
+                        if (y < -0.35) y = 0;
+                        
+                        if (c.isSnow) {
+                            let x = pPositions.getX(p) + Math.sin(time * 3 + p) * 0.0015;
+                            pPositions.setX(p, x);
+                        }
+                        pPositions.setY(p, y);
+                    }
+                    pPositions.needsUpdate = true;
+
+                    if (c.isSnow && precipOpacity > 0.15) {
+                        const posAttr = earthMesh.geometry.attributes.position;
+                        const colorAttr = earthMesh.geometry.attributes.color;
+                        const radiusSq = 0.65 * 0.65;
+
+                        for (let i = 0; i < posAttr.count; i++) {
+                            let vx = posAttr.getX(i);
+                            let vy = posAttr.getY(i);
+                            let vz = posAttr.getZ(i);
+
+                            let vDir = new THREE.Vector3(vx, vy, vz).normalize();
+                            let distSq = vDir.distanceToSquared(c.centerDir);
+
+                            if (distSq < radiusSq) {
+                                let elevation = getUltraElevation(vDir.x, vDir.y, vDir.z);
+                                if (elevation > 0.02) {
+                                    let currentR = colorAttr.getX(i);
+                                    let currentG = colorAttr.getY(i);
+                                    let currentB = colorAttr.getZ(i);
+
+                                    let factor = (1 - distSq / radiusSq) * 0.04 * cloudSettings.precipRate;
+                                    
+                                    colorAttr.setXYZ(
+                                        i,
+                                        Math.min(1.0, currentR + factor),
+                                        Math.min(1.0, currentG + factor),
+                                        Math.min(1.0, currentB + factor)
+                                    );
                                 }
                             }
-                        ]
+                        }
+                        colorAttr.needsUpdate = true;
                     }
-                ],
-                max_tokens: 500
-            };
+                }
 
-            try {
-                captureBtn.classList.add('loading');
-                captureBtn.textContent = '⏳ در حال ارسال...';
-                responsePanel.classList.remove('show');
+                c.blobs.forEach((item) => {
+                    const mesh = item.mesh;
+                    const pos = mesh.geometry.attributes.position;
+                    const orig = item.origPositions;
+                    const t = time * 0.4 + item.phaseOffset;
 
-                const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${apiKey}`,
-                        'HTTP-Referer': window.location.origin, // اختیاری - برای ردیابی
-                        'X-Title': 'Gamegod Scanner' // اختیاری
-                    },
-                    body: JSON.stringify(requestBody)
+                    for (let k = 0; k < pos.count; k++) {
+                        let ox = orig.getX(k);
+                        let oy = orig.getY(k);
+                        let oz = orig.getZ(k);
+
+                        let n = simplex.noise3D(ox * 3.5 + t * 0.2, oy * 3.5 + t * 0.2, oz * 3.5) * 0.3;
+                        let dir = new THREE.Vector3(ox, oy, oz).normalize();
+
+                        pos.setXYZ(k, ox + dir.x * n * item.radius, oy + dir.y * n * item.radius, oz + dir.z * n * item.radius);
+                    }
+                    pos.needsUpdate = true;
+
+                    const scalePulse = 1.0 + Math.sin(t * 1.5) * 0.08;
+                    mesh.scale.set(
+                        item.baseScale.x * scalePulse,
+                        item.baseScale.y * (1.0 + Math.cos(t * 2.0) * 0.05),
+                        item.baseScale.z * scalePulse
+                    );
                 });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${await response.text()}`);
-                }
-
-                const result = await response.json();
-                
-                if (result.choices && result.choices.length > 0) {
-                    responseContent.textContent = result.choices[0].message.content;
-                    responsePanel.classList.add('show');
-                } else {
-                    throw new Error('پاسخی از مدل دریافت نشد');
-                }
-
-            } catch (err) {
-                responseContent.textContent = `❌ خطا: ${err.message}`;
-                responsePanel.classList.add('show');
-                console.error('OpenRouter Error:', err);
-            } finally {
-                captureBtn.classList.remove('loading');
-                captureBtn.textContent = '🧠 تحلیل با OpenRouter';
-            }
-        }
-
-        /* ═══════════════════════════════════════
-           رویدادها
-        ═══════════════════════════════════════ */
-        document.getElementById('captureBtn').addEventListener('click', sendToOpenRouter);
-
-        document.getElementById('fsBtn').addEventListener('click', () => {
-            const el = document.documentElement;
-            if (el.requestFullscreen) el.requestFullscreen();
-            else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
-        });
-
-        /* ═══════════════════════════════════════
-           GPS و ساعت
-        ═══════════════════════════════════════ */
-        const coordsEl = document.getElementById('coords');
-        const timeEl = document.getElementById('time');
-        let currentLocation = null;
-
-        function updateTime() {
-            timeEl.textContent = '⏱ ' + new Date().toTimeString().split(' ')[0];
-        }
-        setInterval(updateTime, 1000);
-        updateTime();
-
-        if (navigator.geolocation) {
-            navigator.geolocation.watchPosition(pos => {
-                currentLocation = { lat: pos.coords.latitude, lon: pos.coords.longitude };
-                coordsEl.textContent = `LAT: ${currentLocation.lat.toFixed(4)} LON: ${currentLocation.lon.toFixed(4)}`;
-            }, () => {
-                coordsEl.textContent = 'GPS: غیرفعال';
             });
+
+            humans.forEach(h => {
+                const d = h.userData;
+                const latDiff = d.targetLat - d.lat;
+                const lonDiff = d.targetLon - d.lon;
+                if (Math.abs(latDiff) > 0.1 || Math.abs(lonDiff) > 0.1) {
+                    d.lat += latDiff * 0.02 * moveSpeed;
+                    d.lon += lonDiff * 0.02 * moveSpeed;
+                    updateHumanPosition(h);
+                }
+            });
+
+            controls.update();
+            renderer.render(scene, camera);
         }
 
-        document.addEventListener('contextmenu', e => e.preventDefault());
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
 
-        /* ═══════════════════════════════════════
-           🚀 شروع
-        ═══════════════════════════════════════ */
-        (async function init() {
-            await startCamera();
-            await loadModel();
-        })();
+        window.togglePanel = function(id) {
+            const panel = document.getElementById(id);
+            const isOpen = panel.classList.contains('open');
+            document.querySelectorAll('.ui-panel').forEach(p => p.classList.remove('open'));
+            if (!isOpen) panel.classList.add('open');
+        };
+
+        window.selectHuman = function(idxStr) {
+            if (idxStr === "") { selectedHuman = null; return; }
+            selectedHuman = humans[parseInt(idxStr)];
+        };
+
+        window.resetSelection = function() {
+            selectedHuman = null;
+            document.getElementById('human-selector').value = "";
+            camera.position.set(0, 0, 14);
+            controls.target.set(0, 0, 0);
+        };
+
+        window.updateSpeed = function(v) {
+            moveSpeed = v * 0.1;
+            document.getElementById('speed-value').innerText = moveSpeed.toFixed(1);
+        };
+
+        window.updateCloudCount = function(v) {
+            cloudSettings.count = parseInt(v);
+            document.getElementById('cloud-count-value').innerText = v;
+            createLiveDynamicClouds();
+        };
+
+        window.updateCloudSpeed = function(v) {
+            cloudSettings.speed = v * 0.1;
+            document.getElementById('cloud-speed-value').innerText = cloudSettings.speed.toFixed(1);
+        };
+
+        window.updatePrecipRate = function(v) {
+            cloudSettings.precipRate = v * 0.1;
+            document.getElementById('precip-rate-value').innerText = cloudSettings.precipRate.toFixed(1);
+        };
+
+        window.updateGrowthRate = function(v) {
+            growthSpeedMultiplier = v * 0.1;
+            document.getElementById('growth-rate-val').innerText = growthSpeedMultiplier.toFixed(1);
+        };
+
+        window.onload = init;
     </script>
 </body>
 </html>

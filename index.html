@@ -188,6 +188,14 @@ details.mo{border:1px solid var(--l);border-radius:12px;padding:8px 10px;backgro
 details.mo>summary{cursor:pointer;font-weight:700;color:var(--a);list-style:none}
 details.mo>summary::before{content:'\25B8  '}details.mo[open]>summary::before{content:'\25BE  '}
 details.mo .sec2{background:var(--p2);color:var(--a);border-radius:10px;padding:9px;font-weight:600;border:1px solid var(--l)}
+progress{width:100%;height:8px;accent-color:var(--a);border-radius:6px}
+#ex-res button{background:var(--p2);border:1px solid var(--l);border-radius:10px;padding:10px;color:var(--t);font-size:12px}
+#ms{position:fixed;inset:0;background:#000a;display:none;align-items:flex-end;justify-content:center;z-index:25;backdrop-filter:blur(3px)}
+#ms.open{display:flex}
+#ms-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+#ms-grid button{display:flex;flex-direction:column;gap:5px;align-items:center;padding:6px;border-radius:14px;background:var(--p2);border:1px solid var(--l);color:var(--t);font-size:11px;font-weight:600}
+#ms-grid button i{display:block;width:100%;height:46px;border-radius:9px;box-shadow:inset 0 0 0 1px #ffffff1a}
+#ms-grid button.on{border-color:var(--a);box-shadow:0 0 0 1px var(--a),0 6px 18px #f5b94222;color:var(--a)}
 </style>
 </head>
 <body>
@@ -289,6 +297,24 @@ details.mo .sec2{background:var(--p2);color:var(--a);border-radius:10px;padding:
  <div class="row" id="mvrow"><button id="mvl">◀ Earlier</button><button id="mvr">Later ▶</button></div>
  <div class="row"><button class="del" id="del">Delete</button><button id="cancel">Cancel</button><button class="main" id="save">Save</button></div>
 </div></div>
+<div id="ms"><div class="card"><div class="grab"></div><h2>Map style</h2>
+ <div id="ms-grid"></div>
+ <div id="ms-custom" hidden>
+  <div class="sec">Custom colors</div>
+  <label class="sl"><span>Ocean</span><input id="ms-oc" type="color" value="#0b1b2b"></label>
+  <label class="sl"><span>Land</span><input id="ms-ld" type="color" value="#1d2a3a"></label>
+ </div>
+ <div class="sec">Look</div>
+ <label class="sl"><span>Brightness</span><input id="ms-bri" type="range" min="0.3" max="1.7" step="0.05"><output id="ms-brio"></output></label>
+ <label class="sl"><span>Saturation</span><input id="ms-sat" type="range" min="-1" max="1" step="0.05"><output id="ms-sato"></output></label>
+ <label class="sl"><span>Contrast</span><input id="ms-con" type="range" min="-1" max="1" step="0.05"><output id="ms-cono"></output></label>
+ <label class="sl"><span>Hue shift</span><input id="ms-hue" type="range" min="0" max="360" step="5"><output id="ms-hueo"></output></label>
+ <div class="sec">Country borders</div>
+ <label class="c"><input id="ms-bd" type="checkbox" checked>Show borders</label>
+ <label class="sl"><span>Border color</span><input id="ms-bdc" type="color" value="#ffffff"></label>
+ <label class="sl"><span>Border width</span><input id="ms-bdw" type="range" min="0" max="3" step="0.1"><output id="ms-bdwo"></output></label>
+ <div class="row"><button id="ms-reset" style="background:var(--p2);border:1px solid var(--l);border-radius:12px;padding:11px;color:var(--t)">Reset look</button><button class="main" id="ms-ok">Done</button></div>
+</div></div>
 <div id="ups"><div class="card"><div class="grab"></div><h2>Add media</h2>
  <div class="upg">
   <button data-u="gal"><svg class="i"><use href="#i-gallery"/></svg><b>Gallery</b><small>Photos &amp; videos</small></button>
@@ -322,11 +348,24 @@ details.mo .sec2{background:var(--p2);color:var(--a);border-radius:10px;padding:
 </div></div>
 <div id="pm"><div class="card"><h2>Project</h2>
  <div class="row"><button id="pm-new">New</button><button id="pm-save">Save</button><button id="pm-open">Open…</button></div>
- <h2>Export video</h2>
- <select id="ex-fmt" aria-label="Format"><option value="mp4">MP4 (H.264)</option><option value="webm">WebM</option></select>
- <select id="ex-q" aria-label="Quality"><option value="screen">Screen size</option><option value="720">HD 720p</option><option value="1080" selected>Full HD 1080p</option><option value="2160">4K (needs a strong GPU)</option></select>
- <button class="main" id="ex-go">Record &amp; export</button>
- <div class="cap">Export plays the video in real time. Keep this tab open and in front until it finishes.</div>
+ <h2>Export</h2>
+ <div class="sec">Video</div>
+ <div class="row"><select id="ex-fmt" aria-label="Format"><option value="mp4">MP4 (H.264)</option><option value="webm">WebM</option></select>
+ <select id="ex-fps" aria-label="Frame rate"><option value="24">24 fps</option><option value="30" selected>30 fps</option><option value="60">60 fps</option></select></div>
+ <div class="row"><select id="ex-q" aria-label="Resolution"><option value="screen">Screen size</option><option value="480">480p</option><option value="720">HD 720p</option><option value="1080" selected>Full HD 1080p</option><option value="1440">2K 1440p</option><option value="2160">4K 2160p</option></select>
+ <select id="ex-ql" aria-label="Quality"><option value="low">Quality: Low</option><option value="med" selected>Quality: Medium</option><option value="high">Quality: High</option><option value="max">Quality: Max</option></select></div>
+ <div class="sec">Include</div>
+ <label class="c"><input id="ex-iv" type="checkbox" checked>Video file</label>
+ <div class="row"><label class="c"><input id="ex-if" type="checkbox">Image frames</label><select id="ex-ff" aria-label="Frame format"><option value="jpg">JPG (small)</option><option value="png">PNG (lossless)</option></select></div>
+ <label class="c"><input id="ex-ip" type="checkbox" checked>Project file (to edit later)</label>
+ <div class="sec">Save to</div>
+ <select id="ex-dest" aria-label="Destination"><option value="auto">Auto: folder on desktop, ZIP on phones</option><option value="folder">Folder on this device (desktop browsers)</option><option value="zip">ZIP file (contains the folder)</option><option value="file">Video file only</option></select>
+ <div class="cap" id="ex-est"></div>
+ <progress id="ex-bar" max="1" value="0" hidden></progress>
+ <div class="cap" id="ex-st"></div>
+ <button class="main" id="ex-go">Export</button>
+ <div class="row" id="ex-res" hidden><button id="ex-dz">Download ZIP</button><button id="ex-sh">Share…</button><button id="ex-dv">Video only</button></div>
+ <div class="cap">Frames are rendered one by one (frame-exact), so the result is smooth even on slow devices. Keep this tab open until it finishes.</div>
  <button id="pm-x">Close</button></div></div>
 <input type="file" id="pf" accept=".json,application/json" hidden>
 <div id="fxe"><div class="card"><h2 id="fet">Layer</h2>
@@ -406,15 +445,30 @@ const map=new maplibregl.Map({container:'map',preserveDrawingBuffer:true,attribu
  center:[40,30],zoom:2.6});
 
 function setBase(m){
- base=m;const s=m==='sat';
- map.setLayoutProperty('sat','visibility',s?'visible':'none');
- map.setPaintProperty('land','fill-color','#171d2b');
- map.setPaintProperty('land','fill-opacity',s?.001:1);
- map.setPaintProperty('bd','line-color',s?'#ffffff99':'#37415a');
- map.setPaintProperty('hl','fill-opacity',s?.6:.88);
- $('#cred').style.display=s?'':'none';
+ if(!STY[m])m='sat';
+ base=m;const S=STY[m];
+ Object.keys(STY).forEach(k=>{if(map.getLayer('b-'+k))map.setLayoutProperty('b-'+k,'visibility',k===m?'visible':'none')});
+ map.setLayoutProperty('sat','visibility','none');
+ if(S.t){
+  const id='b-'+m;
+  if(!map.getSource(id)){map.addSource(id,{type:'raster',tiles:S.t,tileSize:256,maxzoom:S.z||18});map.addLayer({id,type:'raster',source:id},'land')}
+  map.setLayoutProperty(id,'visibility','visible');applyLook();
+ }
+ const flat=!S.t;
+ map.setPaintProperty('bg','background-color',m==='solid'?mlook.ocean:(S.bg||'#06080c'));
+ map.setPaintProperty('land','fill-color',m==='solid'?mlook.land:(S.land||'#171d2b'));
+ map.setPaintProperty('land','fill-opacity',flat?1:.001);
+ map.setPaintProperty('bd','line-color',mlook.bdc||S.bd);
+ map.setPaintProperty('bd','line-width',mlook.bdw);
+ map.setLayoutProperty('bd','visibility',mlook.bd?'visible':'none');
+ map.setPaintProperty('hl','fill-opacity',S.hl);
+ $('#cred').textContent=S.cr;
+ const sel=$('#st-base');if(sel)sel.value=m;
+ drawMsGrid();
+ try{localStorage.setItem('ms_base',m)}catch(_){}
 }
-map.on('error',e=>{if(e.sourceId==='sat'&&!satFailed&&ready){satFailed=true;setBase('dark');say('Satellite tiles unavailable — using dark map.')}});
+let tileErr=0;
+map.on('error',e=>{if(e.sourceId&&String(e.sourceId).indexOf('b-')===0&&ready&&++tileErr===8)say('Map tiles are not loading. Check your internet connection or choose another map style.')});
 
 map.on('load',async()=>{
  try{
@@ -488,7 +542,7 @@ map.on('load',async()=>{
     f?selectCountry(f.properties.ADMIN):closeCs();
    }
   });
-  ready=true;setBase('sat');ph=total();idle();updatePH();say(restoredMsg||'Ready. Tap Play to preview.');
+  ready=true;setBase(base);ph=total();idle();updatePH();say(restoredMsg||'Ready. Tap Play to preview.');
  }catch(e){say('Could not load borders: '+e.message)}
 });
 map.on('rotate',()=>$('#cmp').style.transform=`rotate(${-map.getBearing()}deg)`);
@@ -765,7 +819,7 @@ $('#tools').onclick=e=>{
  if(s==='fx'){$('#fxs').classList.add('open');return}
  if(['sel','txt','arr','pen','img','war'].includes(s)){s==='img'?askUpload('img'):setTool(s);return}
  if(b.classList.contains('soon'))say('This tool is not built yet.');
- else if(s==='lay'&&ready)setBase(base==='sat'?'dark':'sat');
+ else if(s==='lay'&&ready)$('#ms').classList.add('open');
  else if(s==='dl')openPM();
  else if(s==='hlp')alert('Timeline: drag blocks to move them in time, drag a block\'s right edge to resize, drag the ruler to scrub.\n▶/❚❚ plays from the playhead and pauses; ■ stops.\n◆ Key adds a camera keyframe. Tap any block to edit it (colors, border, chroma key, conquest mode…).\nDrag the round handles on the map with your finger to move effects, text, images, shapes and arrows anywhere.\nMedia layers can follow a motion path: open the layer, then Motion path → Draw path on the map.\n☰ → Save / Open / Export (MP4 or WebM).');
 };
@@ -1083,10 +1137,21 @@ function vidCoords(l,m){
  return[[-w/2,-h/2],[w/2,-h/2],[w/2,h/2],[-w/2,h/2]].map(([x,y])=>LL([A.x+x*cs-y*sn,A.y+x*sn+y*cs]));
 }
 const vel={};
+function drawPH(id,msg){
+ const v=vel[id];if(!v)return;
+ const{cv,ctx}=v,w=cv.width,h=cv.height,g=ctx.createLinearGradient(0,0,w,h);
+ g.addColorStop(0,'#1a2233');g.addColorStop(1,'#0b0f17');
+ ctx.fillStyle=g;ctx.fillRect(0,0,w,h);
+ const c=Math.min(w,h)*.14,cx=w/2,cy=h/2-c*.25;
+ ctx.fillStyle='#ffffffcc';ctx.beginPath();ctx.moveTo(cx-c*.6,cy-c);ctx.lineTo(cx+c*1.1,cy);ctx.lineTo(cx-c*.6,cy+c);ctx.closePath();ctx.fill();
+ ctx.font='600 '+Math.round(h*.07)+'px system-ui,sans-serif';ctx.textAlign='center';ctx.fillText(msg,w/2,h*.86);
+ map.triggerRepaint();
+}
 function drawVid(id){
  const l=layers.find(x=>x.id===id),v=vel[id];
  if(!l||!v||!v.el.videoWidth||v.el.readyState<2)return;
  const{cv,ctx,el}=v;
+ v.ok=true;
  ctx.clearRect(0,0,cv.width,cv.height);ctx.drawImage(el,0,0,cv.width,cv.height);
  if(l.ck&&l.ck.on){const im=ctx.getImageData(0,0,cv.width,cv.height);chroma(im.data,l.ck);ctx.putImageData(im,0,0)}
  map.triggerRepaint();
@@ -1098,15 +1163,21 @@ function ensureVid(l){
  el.setAttribute('muted','');el.setAttribute('playsinline','');el.setAttribute('webkit-playsinline','');
  el.style.cssText='position:fixed;left:-9999px;top:0;width:4px;height:4px;opacity:0;pointer-events:none';
  if(document.body)document.body.appendChild(el);
- el.src=vids[l.id];
  const cv=document.createElement('canvas'),W=640;cv.width=W;cv.height=Math.max(2,Math.round(W/(l.asp||1.78)));
- vel[l.id]={el,cv,ctx:cv.getContext('2d',{willReadFrequently:true})};
- const first=()=>{if(el.videoWidth&&el.readyState>=2){drawVid(l.id);return true}return false};
- el.addEventListener('loadeddata',first);el.addEventListener('canplay',first);el.addEventListener('seeked',()=>drawVid(l.id));
- Promise.resolve(el.play()).then(()=>{if(!vidOn.has(l.id)){el.pause();try{el.currentTime=.01}catch(_){}}}).catch(()=>{});
- let tries=0;const iv=setInterval(()=>{if(first()||++tries>40)clearInterval(iv)},250);
+ vel[l.id]={el,cv,ctx:cv.getContext('2d',{willReadFrequently:true}),ok:false};
+ drawPH(l.id,'Loading video…');
  map.addSource(id,{type:'canvas',canvas:cv,coordinates:vidCoords(l),animate:true});
  map.addLayer({id,type:'raster',source:id,layout:{visibility:'none'}},'fxl-fill');
+ const first=()=>{if(el.videoWidth&&el.readyState>=2){drawVid(l.id);return true}return false};
+ el.addEventListener('loadedmetadata',()=>{
+  const cur=layers.find(x=>x.id===l.id);
+  if(cur&&el.videoWidth){const a=el.videoWidth/el.videoHeight;if(Math.abs(a-(cur.asp||0))>.01){cur.asp=a;cv.height=Math.max(2,Math.round(cv.width/a));drawPH(l.id,'Loading video…');try{map.getSource(id).setCoordinates(vidCoords(cur))}catch(_){}}}
+ });
+ el.addEventListener('loadeddata',first);el.addEventListener('canplay',first);el.addEventListener('seeked',()=>drawVid(l.id));
+ el.addEventListener('error',()=>drawPH(l.id,'Cannot decode this video'));
+ el.src=vids[l.id];try{el.load()}catch(_){}
+ Promise.resolve(el.play()).then(()=>{if(!vidOn.has(l.id)){el.pause();try{el.currentTime=.01}catch(_){}}}).catch(()=>{});
+ let tries=0;const iv=setInterval(()=>{if(first()||(vel[l.id]&&vel[l.id].ok))clearInterval(iv);else if(++tries>48){clearInterval(iv);if(vel[l.id]&&!vel[l.id].ok)drawPH(l.id,'Video not loading')}},250);
 }
 function addFx(){
  if(!clips.length){say('Add a country group first.');setTool('sel');return}
@@ -1130,13 +1201,66 @@ $('#fxi').onchange=async e=>{
  fxSrc=c.toDataURL('image/png');setTool('fx');
  say(fxKind==='uimgp'?'Tap the start, then the end of the path.':'Tap where the badge goes.');
 };
+/* videos the browser cannot play (HEVC/H.265, 10-bit, odd containers): detect the codec and convert on demand */
+async function sniffCodec(f){
+ try{
+  const dec=new TextDecoder('latin1'),part=async(a,b)=>dec.decode(new Uint8Array(await f.slice(a,b).arrayBuffer()));
+  const t=await part(0,Math.min(f.size,4e6))+(f.size>4e6?await part(Math.max(4e6,f.size-4e6),f.size):'');
+  if(/hvc1|hev1/.test(t))return'HEVC (H.265)';
+  if(/av01/.test(t))return'AV1';
+  if(/vp09/.test(t))return'VP9';
+  if(/avc1/.test(t))return'H.264';
+  return'';
+ }catch(_){return''}
+}
+let ffm=null;
+async function loadFFmpeg(){
+ if(ffm)return ffm;
+ const BF='https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/dist/umd',BC='https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd';
+ if(!window.FFmpegWASM)await new Promise((res,rej)=>{const sc=document.createElement('script');sc.src=BF+'/ffmpeg.js';sc.onload=res;sc.onerror=()=>rej(new Error('could not download the converter, check your internet'));document.head.appendChild(sc)});
+ const blobURL=async(u,t)=>URL.createObjectURL(new Blob([await (await fetch(u)).arrayBuffer()],{type:t}));
+ const ff=new FFmpegWASM.FFmpeg();
+ ff.on('progress',({progress})=>say('Converting… '+Math.round(Math.max(0,Math.min(1,progress))*100)+'%'));
+ await ff.load({coreURL:await blobURL(BC+'/ffmpeg-core.js','text/javascript'),wasmURL:await blobURL(BC+'/ffmpeg-core.wasm','application/wasm'),classWorkerURL:await blobURL(BF+'/814.ffmpeg.js','text/javascript')});
+ return ffm=ff;
+}
+async function convertVideo(file){
+ say('Downloading the converter (about 30 MB, once)…');
+ const ff=await loadFFmpeg(),ext=(/\.[A-Za-z0-9]+$/.exec(file.name||'')||['.mp4'])[0],inN='in'+ext;
+ say('Reading the video…');
+ await ff.writeFile(inN,new Uint8Array(await file.arrayBuffer()));
+ say('Converting… 0%');
+ const code=await ff.exec(['-i',inN,'-vf',"scale=w='min(960,iw)':h=-2,fps=30",'-c:v','libx264','-pix_fmt','yuv420p','-profile:v','main','-preset','ultrafast','-crf','27','-an','-movflags','+faststart','out.mp4']);
+ if(code!==0)throw new Error('the converter could not read this file');
+ const data=await ff.readFile('out.mp4');
+ try{await ff.deleteFile(inN);await ff.deleteFile('out.mp4')}catch(_){}
+ const nf=new File([data],((file.name||'video').replace(/\.[A-Za-z0-9]+$/,''))+'_h264.mp4',{type:'video/mp4'});nf._conv=true;return nf;
+}
 $('#fxv').onchange=e=>{
  const f=e.target.files[0];e.target.value='';if(!f)return;
- fxFile=f;const url=URL.createObjectURL(f),v=document.createElement('video');
- v.preload='metadata';
- v.onloadedmetadata=()=>{fxSrc=url;fxAsp=v.videoWidth/v.videoHeight||1.78;setTool('fx');say('Tap where the video goes.')};
- v.onerror=()=>say('This video format cannot be read by the browser.');
- v.src=url;
+ fxFile=f;fxSrc=URL.createObjectURL(f);fxAsp=1.78;
+ setTool('fx');say('Video added. Tap the map where it should appear.');
+ const v=document.createElement('video');
+ v.muted=true;v.defaultMuted=true;v.playsInline=true;v.preload='metadata';
+ v.setAttribute('muted','');v.setAttribute('playsinline','');
+ v.style.cssText='position:fixed;left:-9999px;top:0;width:2px;height:2px;opacity:0;pointer-events:none';
+ if(document.body)document.body.appendChild(v);
+ v.onloadedmetadata=()=>{
+  if(v.videoWidth)fxAsp=v.videoWidth/v.videoHeight;
+  say('Video ready ('+v.videoWidth+'×'+v.videoHeight+', '+(isFinite(v.duration)?v.duration.toFixed(1):'?')+' s). Tap the map where it should appear.');
+  v.remove();
+ };
+ v.onerror=async()=>{
+  v.remove();fxSrc=null;fxFile=null;setTool('sel');
+  const codec=await sniffCodec(f);
+  if(f._conv){say('Even the converted video cannot be played here. Try another browser.');return}
+  const why='Your browser cannot play this video'+(codec?' ('+codec+')':'')+'.';
+  say(why);
+  if(!confirm(why+'\n\nConvert it to a compatible MP4 (H.264) now?\nA ~30 MB converter is downloaded once and conversion can take a few minutes on a phone.'))return;
+  try{const nf=await convertVideo(f);say('Converted. Adding the video…');$('#fxv').onchange({target:{files:[nf],value:''}})}
+  catch(err){say('Conversion failed: '+(err&&err.message||err)+'. You can also convert the video to MP4 (H.264) in another app.')}
+ };
+ v.src=fxSrc;v.load();
 };
 
 /* layer editor (effects, text, image, shape, arrow, war, video) */
@@ -1264,7 +1388,7 @@ async function saveProject(){
  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(st)],{type:'application/json'}));
  a.download=($('#pn').value||'project')+'.mapstudio.json';a.click();say('Project saved.');
 }
-const openPM=()=>$('#pm').classList.add('open'),closePM=()=>$('#pm').classList.remove('open');
+const openPM=()=>{$('#pm').classList.add('open');exEst()},closePM=()=>$('#pm').classList.remove('open');
 $('#pm-x').onclick=closePM;
 $('#pm').onclick=e=>{if(e.target.id==='pm')closePM()};
 $('#pm-save').onclick=()=>{closePM();saveProject()};
@@ -1281,62 +1405,236 @@ $('#pm-new').onclick=async()=>{
 };
 $('#seg').onclick=e=>{const r=e.target.dataset.r;if(r)setRatio(r)};
 
-/* export: MP4 (MediaRecorder or WebCodecs + mp4-muxer) or WebM, up to 4K */
-async function startRec(cv,fmt,W,H){
- const br=W*H>2.2e6?20e6:8e6;
+/* export: frame-exact rendering, MP4 (WebCodecs) / WebM, image frames, project file, saved into a folder or a ZIP */
+const crcT=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})();
+function crc32(u){let c=0xFFFFFFFF;for(let i=0;i<u.length;i++)c=crcT[(c^u[i])&255]^(c>>>8);return(c^0xFFFFFFFF)>>>0}
+class Zip{
+ constructor(){this.parts=[];this.cd=[];this.off=0}
+ async add(path,blob){
+  const data=new Uint8Array(await blob.arrayBuffer()),name=new TextEncoder().encode(path),crc=crc32(data),h=new DataView(new ArrayBuffer(30));
+  h.setUint32(0,0x04034b50,true);h.setUint16(4,20,true);h.setUint16(6,0x0800,true);h.setUint16(12,0x21,true);
+  h.setUint32(14,crc,true);h.setUint32(18,data.length,true);h.setUint32(22,data.length,true);h.setUint16(26,name.length,true);
+  this.parts.push(h.buffer,name,data);this.cd.push({name,crc,size:data.length,off:this.off});this.off+=30+name.length+data.length;
+ }
+ blob(){
+  let cs=0;const cp=[];
+  for(const e of this.cd){
+   const d=new DataView(new ArrayBuffer(46));
+   d.setUint32(0,0x02014b50,true);d.setUint16(4,20,true);d.setUint16(6,20,true);d.setUint16(8,0x0800,true);d.setUint16(14,0x21,true);
+   d.setUint32(16,e.crc,true);d.setUint32(20,e.size,true);d.setUint32(24,e.size,true);d.setUint16(28,e.name.length,true);d.setUint32(42,e.off,true);
+   cp.push(d.buffer,e.name);cs+=46+e.name.length;
+  }
+  const z=new DataView(new ArrayBuffer(22));
+  z.setUint32(0,0x06054b50,true);z.setUint16(8,this.cd.length,true);z.setUint16(10,this.cd.length,true);z.setUint32(12,cs,true);z.setUint32(16,this.off,true);
+  return new Blob([...this.parts,...cp,z.buffer],{type:'application/zip'});
+ }
+}
+async function fsWrite(dirH,path,blob){
+ const ps=path.split('/');let d=dirH;
+ for(let i=0;i<ps.length-1;i++)d=await d.getDirectoryHandle(ps[i],{create:true});
+ const fh=await d.getFileHandle(ps[ps.length-1],{create:true}),w=await fh.createWritable();
+ await w.write(blob);await w.close();
+}
+function dl(blob,fn){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=fn;document.body&&document.body.appendChild(a);a.click();setTimeout(()=>{try{a.remove()}catch(_){}},1000)}
+let exBusy=false,exAbort=false,exRes=null;
+const QMUL={low:.5,med:1,high:1.8,max:3},RES={480:854,720:1280,1080:1920,1440:2560,2160:3840};
+const safeName=t=>((t||'map').replace(/[^\w\u0600-\u06FF\- ]+/g,'').trim().replace(/\s+/g,'_'))||'map';
+const stamp=()=>{const d=new Date(),q=n=>String(n).padStart(2,'0');return d.getFullYear()+q(d.getMonth()+1)+q(d.getDate())+'-'+q(d.getHours())+q(d.getMinutes())};
+function exDims(res){
+ const fr=$('#frame'),cw=fr.clientWidth||16,ch=fr.clientHeight||9,a=cw/ch;
+ if(res==='screen'){const pr=window.devicePixelRatio||1;return{W:Math.round(cw*pr)&~1,H:Math.round(ch*pr)&~1}}
+ const L=RES[res];return a>=1?{W:L&~1,H:Math.round(L/a)&~1}:{H:L&~1,W:Math.round(L*a)&~1};
+}
+const exOpts=()=>({fmt:$('#ex-fmt').value,fps:+$('#ex-fps').value,res:$('#ex-q').value,ql:$('#ex-ql').value,vid:$('#ex-iv').checked,frames:$('#ex-if').checked,ff:$('#ex-ff').value,proj:$('#ex-ip').checked,dest:$('#ex-dest').value});
+const exBitrate=(W,H,fps,ql)=>Math.round(Math.min(80e6,Math.max(1.5e6,W*H*fps*.07*QMUL[ql])));
+function exEst(){
+ const o=exOpts(),d=exDims(o.res),n=Math.ceil(total()*o.fps);
+ let t=d.W+'×'+d.H+' · '+n+' frames';
+ if(o.vid)t+=' · video ≈ '+Math.round(exBitrate(d.W,d.H,o.fps,o.ql)/8*total()/1e6)+' MB';
+ if(o.frames)t+=' · frames ≈ '+Math.round(n*d.W*d.H*(o.ff==='png'?2.2:.3)/1e6)+' MB';
+ $('#ex-est').textContent=t;
+}
+async function settle(){
+ await new Promise(r=>{map.once('render',r);map.triggerRepaint()});
+ for(let k=0;k<50&&!map.areTilesLoaded();k++)await sleep(40);
+ await new Promise(r=>requestAnimationFrame(()=>r()));
+}
+async function syncVids(T){
+ for(const l of layers){
+  if(l.type!=='vid'||!vis(l,T))continue;
+  const v=vel[l.id];if(!v)continue;const el=v.el;
+  if(!(isFinite(el.duration)&&el.duration>0)||el.readyState<2)await sleep(60);
+  const dur=isFinite(el.duration)&&el.duration>0?el.duration:0,want=dur?(((T-l.ts)%dur)+dur)%dur:Math.max(0,T-l.ts);
+  if(Math.abs(el.currentTime-want)>.02){
+   await new Promise(res=>{const fin=()=>{el.removeEventListener('seeked',fin);res()};el.addEventListener('seeked',fin);setTimeout(fin,700);try{el.currentTime=want}catch(_){res()}});
+  }
+  drawVid(l.id);
+ }
+}
+function paintOverlay(x,W,H){
+ if(overlay){const s=W*.06;x.save();x.font='700 '+s+'px system-ui,Tahoma,sans-serif';x.textAlign='center';x.fillStyle='#fff';x.shadowColor='#000';x.shadowBlur=s/2;x.fillText(overlay,W/2,H*.9);x.restore()}
+ drawTrans(x,W,H,curTr);
+}
+async function offlinePass(W,H,fps,tot,cb){
+ const cv=document.createElement('canvas');cv.width=W;cv.height=H;const x=cv.getContext('2d'),n=Math.ceil(tot*fps);
+ for(let i=0;i<n&&!exAbort;i++){
+  const T=Math.min(tot-.001,i/fps);
+  map.jumpTo(poseAt(T));renderAt(T);await syncVids(T);await settle();
+  x.drawImage(map.getCanvas(),0,0,W,H);paintOverlay(x,W,H);
+  await cb(cv,i);
+  $('#ex-bar').value=(i+1)/n;$('#ex-st').textContent='Rendering frame '+(i+1)+' / '+n;
+ }
+}
+async function recordRealtime(W,H,fmt,fps,br){
+ const mc=map.getCanvas(),cv=document.createElement('canvas');cv.width=W;cv.height=H;const x=cv.getContext('2d');let on=true;
+ (function loop(){if(!on)return;x.drawImage(mc,0,0,W,H);paintOverlay(x,W,H);requestAnimationFrame(loop)})();
  const mp4=window.MediaRecorder&&['video/mp4;codecs=avc1.640028','video/mp4;codecs=avc1','video/mp4'].find(m=>MediaRecorder.isTypeSupported(m));
- const webm=['video/webm;codecs=vp9','video/webm'].find(m=>MediaRecorder.isTypeSupported(m));
- const viaMR=(mime,ext)=>{
-  const mr=new MediaRecorder(cv.captureStream(30),{mimeType:mime,videoBitsPerSecond:br}),ch=[];
-  mr.ondataavailable=e=>ch.push(e.data);mr.start();
-  return{ext,hook:null,stop:()=>new Promise(r=>{mr.onstop=()=>r(new Blob(ch,{type:mime.split(';')[0]}));mr.stop()})};
- };
- if(fmt==='mp4'){
-  if(mp4)return viaMR(mp4,'mp4');
-  if(typeof VideoEncoder!=='undefined'&&typeof Mp4Muxer!=='undefined'){
-   const cfg={codec:W*H>2.2e6?'avc1.640033':'avc1.640028',width:W,height:H,bitrate:br,framerate:30};
+ const webm=window.MediaRecorder&&['video/webm;codecs=vp9','video/webm'].find(m=>MediaRecorder.isTypeSupported(m));
+ const mime=(fmt==='mp4'&&mp4)||webm||mp4;
+ if(!mime){on=false;throw new Error('This browser cannot record video.')}
+ const ext=mime.startsWith('video/mp4')?'mp4':'webm',mr=new MediaRecorder(cv.captureStream(fps),{mimeType:mime,videoBitsPerSecond:br}),ch=[];
+ mr.ondataavailable=e=>ch.push(e.data);mr.start();
+ await play(0);await sleep(300);
+ const blob=await new Promise(r=>{mr.onstop=()=>r(new Blob(ch,{type:mime.split(';')[0]}));mr.stop()});
+ on=false;return{blob,ext};
+}
+async function projectBlob(){
+ const st=projState(),vd={};let size=0;
+ for(const l of layers){if(l.type!=='vid'||!vidFiles[l.id])continue;const f=vidFiles[l.id];if(size+f.size>40e6)continue;size+=f.size;vd[l.id]=await rd(f)}
+ st.vd=vd;return new Blob([JSON.stringify(st)],{type:'application/json'});
+}
+async function exportProject(){
+ if(exBusy){exAbort=true;$('#ex-st').textContent='Cancelling…';return}
+ if(playing||!ready||!clips.length){$('#ex-st').textContent='Add at least one clip first.';return}
+ const o=exOpts(),st=t=>{$('#ex-st').textContent=t};
+ if(!o.vid&&!o.frames&&!o.proj){st('Choose what to export.');return}
+ const fsOK=typeof window.showDirectoryPicker==='function';
+ let dest=o.dest==='auto'?(fsOK?'folder':'zip'):o.dest;
+ if(dest==='folder'&&!fsOK){dest='zip';st('This browser cannot write into a folder, so a ZIP will be created instead.')}
+ if(dest==='file'){o.frames=false;o.proj=false;o.vid=true}
+ const name=safeName($('#pn').value)+'_'+stamp();
+ let dirH=null;
+ if(dest==='folder'){
+  try{const root=await window.showDirectoryPicker({mode:'readwrite'});dirH=await(await root.getDirectoryHandle('MapReel',{create:true})).getDirectoryHandle(name,{create:true})}
+  catch(e){st('No folder was chosen.');return}
+ }
+ exBusy=true;exAbort=false;exRes=null;$('#ex-res').hidden=true;
+ $('#ex-go').textContent='Cancel';$('#ex-bar').hidden=false;$('#ex-bar').value=0;
+ closeCs();const oldHdl=showHdl;showHdl=false;hdlKey='';showHandles();
+ const oldPR=window.devicePixelRatio||1,fr=$('#frame'),hi=o.res!=='screen'&&map.setPixelRatio;
+ const zip=new Zip(),sink={write:(p,b)=>dest==='folder'?fsWrite(dirH,p,b):zip.add(name+'/'+p,b)};
+ try{
+  await prep();
+  if(hi){const long=Math.max(fr.clientWidth,fr.clientHeight);map.setPixelRatio(Math.min(6,RES[o.res]/long));map.resize();await sleep(600)}
+  const mc=map.getCanvas(),W=mc.width&~1,H=mc.height&~1,tot=total(),n=Math.ceil(tot*o.fps),br=exBitrate(W,H,o.fps,o.ql);
+  if(dest==='zip'&&o.frames&&n*W*H*(o.ff==='png'?2.2:.3)>7e8)throw new Error('Too many frames for a ZIP in memory. Use JPG, lower resolution or fps, or save to a folder on desktop.');
+  let enc=null,mux=null,vblob=null,vext=o.fmt;
+  if(o.vid&&o.fmt==='mp4'&&typeof VideoEncoder!=='undefined'&&typeof Mp4Muxer!=='undefined'){
+   const codec=W*H*o.fps>3840*2160*31?'avc1.640033':(W*H*o.fps>1920*1080*31?'avc1.64002A':'avc1.640028');
+   const cfg={codec,width:W,height:H,bitrate:br,framerate:o.fps};
    let ok=false;try{ok=(await VideoEncoder.isConfigSupported(cfg)).supported}catch(_){}
+   if(!ok){try{cfg.codec='avc1.640033';ok=(await VideoEncoder.isConfigSupported(cfg)).supported}catch(_){}}
    if(ok){
-    const mux=new Mp4Muxer.Muxer({target:new Mp4Muxer.ArrayBufferTarget(),video:{codec:'avc',width:W,height:H},fastStart:'in-memory'});
-    const enc=new VideoEncoder({output:(c,m)=>mux.addVideoChunk(c,m),error:e=>say('Encoder error: '+e.message)});
-    enc.configure(cfg);
-    const t0=performance.now();let n=0,last=-99;
-    return{ext:'mp4',
-     hook(){const now=performance.now();if(now-last<33||enc.encodeQueueSize>6)return;last=now;const f=new VideoFrame(cv,{timestamp:Math.round((now-t0)*1000)});enc.encode(f,{keyFrame:n++%60===0});f.close()},
-     stop:async()=>{await enc.flush();mux.finalize();return new Blob([mux.target.buffer],{type:'video/mp4'})}};
+    mux=new Mp4Muxer.Muxer({target:new Mp4Muxer.ArrayBufferTarget(),video:{codec:'avc',width:W,height:H},fastStart:'in-memory'});
+    enc=new VideoEncoder({output:(c,m)=>mux.addVideoChunk(c,m),error:e=>{exAbort=true;st('Encoder error: '+e.message)}});enc.configure(cfg);
    }
   }
-  say('MP4 is not supported in this browser, so the video is exported as WebM.');
+  if(enc||o.frames){
+   st('Rendering '+W+'×'+H+' @ '+o.fps+' fps…');
+   await offlinePass(W,H,o.fps,tot,async(cv,i)=>{
+    if(enc){while(enc.encodeQueueSize>8)await sleep(8);const f=new VideoFrame(cv,{timestamp:Math.round(i*1e6/o.fps),duration:Math.round(1e6/o.fps)});enc.encode(f,{keyFrame:i%(o.fps*2)===0});f.close()}
+    if(o.frames){const b=await new Promise(r=>cv.toBlob(r,o.ff==='png'?'image/png':'image/jpeg',.93));await sink.write('frames/frame_'+String(i+1).padStart(6,'0')+'.'+(o.ff==='png'?'png':'jpg'),b)}
+   });
+   if(exAbort)throw new Error('Cancelled');
+   if(enc){await enc.flush();mux.finalize();vblob=new Blob([mux.target.buffer],{type:'video/mp4'})}
+  }
+  if(o.vid&&!enc){
+   st('Recording in real time… keep this tab open and in front.');
+   const r=await recordRealtime(W,H,o.fmt,o.fps,br);vblob=r.blob;vext=r.ext;
+   if(exAbort)throw new Error('Cancelled');
+  }
+  if(dest==='file'){
+   dl(vblob,name+'.'+vext);exRes={video:vblob,vext,name};
+   st('Saved '+name+'.'+vext+' ('+W+'×'+H+', '+(vblob.size/1e6).toFixed(1)+' MB).');
+  }else{
+   if(vblob)await sink.write('video.'+vext,vblob);
+   if(o.proj)await sink.write('project.json',await projectBlob());
+   if(dest==='folder')st('Saved in MapReel/'+name+'/ inside the folder you chose ('+W+'×'+H+').');
+   else{const zb=zip.blob();exRes={zip:zb,video:vblob,vext,name};dl(zb,name+'.zip');st('ZIP created: '+name+'.zip contains the folder “'+name+'” ('+(zb.size/1e6).toFixed(1)+' MB). Extract it to get the folder.')}
+  }
+  $('#ex-res').hidden=!exRes;
+  if(exRes){$('#ex-dz').style.display=exRes.zip?'':'none';$('#ex-dv').style.display=exRes.video?'':'none'}
+ }catch(e){st(e&&e.message==='Cancelled'?'Export cancelled.':'Export failed: '+(e&&e.message||e))}
+ finally{
+  exBusy=false;$('#ex-go').textContent='Export';$('#ex-bar').hidden=true;
+  if(hi){map.setPixelRatio(oldPR);map.resize()}
+  showHdl=oldHdl;hdlKey='';seek(ph);
  }
- return viaMR(webm||'video/webm','webm');
 }
-async function exportVideo(fmt,q){
- if(playing||!ready||!clips.length){say('Add at least one clip first.');return}
- closePM();say('Preparing…');await prep();
- const old=window.devicePixelRatio||1,fr=$('#frame'),hi=q!=='screen'&&map.setPixelRatio;
- let on=true;
- try{
-  if(hi){const tgt={720:1280,1080:1920,2160:3840}[q],long=Math.max(fr.clientWidth,fr.clientHeight);map.setPixelRatio(Math.min(4,tgt/long));map.resize();await sleep(500)}
-  const mc=map.getCanvas(),W=mc.width&~1,H=mc.height&~1,cv=document.createElement('canvas');cv.width=W;cv.height=H;
-  const x=cv.getContext('2d');let rec=null;
-  (function loop(){
-   if(!on)return;
-   x.drawImage(mc,0,0,W,H);
-   if(overlay){const s=W*.06;x.save();x.font='700 '+s+'px system-ui,Tahoma,sans-serif';x.textAlign='center';x.fillStyle='#fff';x.shadowColor='#000';x.shadowBlur=s/2;x.fillText(overlay,W/2,H*.9);x.restore()}
-   drawTrans(x,W,H,curTr);
-   if(rec&&rec.hook)rec.hook();
-   requestAnimationFrame(loop);
-  })();
-  rec=await startRec(cv,fmt,W,H);
-  say('Recording '+W+'×'+H+'… keep this tab open.');
-  await play(0);await sleep(300);
-  const blob=await rec.stop();on=false;
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=($('#pn').value||'map')+'.'+rec.ext;a.click();
-  say('Saved as '+rec.ext.toUpperCase()+' ('+W+'×'+H+').');
- }catch(e){say('Export failed: '+e.message)}
- finally{on=false;if(hi){map.setPixelRatio(old);map.resize()}}
+$('#ex-go').onclick=exportProject;
+$('#ex-dz').onclick=()=>exRes&&exRes.zip&&dl(exRes.zip,exRes.name+'.zip');
+$('#ex-dv').onclick=()=>exRes&&exRes.video&&dl(exRes.video,exRes.name+'.'+exRes.vext);
+$('#ex-sh').onclick=async()=>{
+ if(!exRes)return;
+ const files=[];
+ if(exRes.video)files.push(new File([exRes.video],exRes.name+'.'+exRes.vext,{type:exRes.video.type||'video/mp4'}));
+ else if(exRes.zip)files.push(new File([exRes.zip],exRes.name+'.zip',{type:'application/zip'}));
+ try{if(navigator.canShare&&navigator.canShare({files}))await navigator.share({files,title:exRes.name});else $('#ex-st').textContent='Sharing files is not supported in this browser.'}catch(_){}
+};
+['ex-fmt','ex-fps','ex-q','ex-ql','ex-iv','ex-if','ex-ff','ex-ip','ex-dest'].forEach(id=>{$('#'+id).onchange=exEst});
+
+/* map styles */
+const ESRI=p=>'https://server.arcgisonline.com/ArcGIS/rest/services/'+p+'/MapServer/tile/{z}/{y}/{x}';
+const CARTO=p=>['a','b','c','d'].map(x=>'https://'+x+'.basemaps.cartocdn.com/'+p+'/{z}/{x}/{y}.png');
+const STY={
+ sat:{n:'Satellite',t:[ESRI('World_Imagery')],z:12,cr:'Imagery © Esri · Natural Earth',bd:'#ffffff99',hl:.6,sw:'linear-gradient(135deg,#1f4d2e,#2b6a8f)'},
+ relief:{n:'Relief',t:[ESRI('World_Shaded_Relief')],z:13,cr:'© Esri · Natural Earth',bd:'#2a354a99',hl:.55,sw:'linear-gradient(135deg,#d9d2bf,#8aa07a)'},
+ topo:{n:'Topographic',t:[ESRI('World_Topo_Map')],z:18,cr:'© Esri · Natural Earth',bd:'#3a465c99',hl:.55,sw:'linear-gradient(135deg,#e7efd6,#9cc7e0)'},
+ natgeo:{n:'Nat Geo',t:[ESRI('NatGeo_World_Map')],z:16,cr:'© Esri, National Geographic',bd:'#3a2a1a99',hl:.55,sw:'linear-gradient(135deg,#e8dcc0,#a58a62)'},
+ ocean:{n:'Ocean',t:[ESRI('Ocean/World_Ocean_Base')],z:10,cr:'© Esri, GEBCO',bd:'#ffffff88',hl:.6,sw:'linear-gradient(135deg,#0b3a5c,#58a8c9)'},
+ street:{n:'Streets',t:[ESRI('World_Street_Map')],z:19,cr:'© Esri',bd:'#44526a99',hl:.5,sw:'linear-gradient(135deg,#f1ecdf,#c7d8ea)'},
+ voy:{n:'Voyager',t:CARTO('rastertiles/voyager_nolabels'),z:18,cr:'© CARTO, OpenStreetMap',bd:'#4a556899',hl:.55,sw:'linear-gradient(135deg,#f3eee3,#bcd8e6)'},
+ clight:{n:'Light',t:CARTO('light_nolabels'),z:18,cr:'© CARTO, OpenStreetMap',bd:'#55607099',hl:.6,sw:'linear-gradient(135deg,#f6f7f9,#cdd4de)'},
+ cdark:{n:'Dark matter',t:CARTO('dark_nolabels'),z:18,cr:'© CARTO, OpenStreetMap',bd:'#8a96ad99',hl:.7,sw:'linear-gradient(135deg,#0d0f12,#2b303a)'},
+ dgray:{n:'Dark gray',t:[ESRI('Canvas/World_Dark_Gray_Base')],z:16,cr:'© Esri',bd:'#9aa5b899',hl:.7,sw:'linear-gradient(135deg,#1b1e22,#3a4048)'},
+ dark:{n:'Flat dark',t:null,bg:'#06080c',land:'#171d2b',bd:'#37415a',hl:.88,cr:'Natural Earth',sw:'linear-gradient(135deg,#0a0d14,#1b2436)'},
+ solid:{n:'Custom colors',t:null,bd:'#ffffffaa',hl:.8,cr:'Natural Earth',sw:'linear-gradient(135deg,#0b1b2b,#3b6f9a)'}
+};
+const mlook={bri:1,sat:0,con:0,hue:0,bd:true,bdc:'',bdw:.7,ocean:'#0b1b2b',land:'#1d2a3a'};
+try{Object.assign(mlook,JSON.parse(localStorage.getItem('ms_look')||'{}'));const sb=localStorage.getItem('ms_base');if(sb&&STY[sb])base=sb}catch(_){}
+function applyLook(){
+ const id='b-'+base;if(!map.getLayer(id))return;const b=mlook.bri;
+ map.setPaintProperty(id,'raster-brightness-max',b<=1?b:1);
+ map.setPaintProperty(id,'raster-brightness-min',b>1?(b-1)*.5:0);
+ map.setPaintProperty(id,'raster-saturation',mlook.sat);
+ map.setPaintProperty(id,'raster-contrast',mlook.con);
+ map.setPaintProperty(id,'raster-hue-rotate',mlook.hue);
 }
-$('#ex-go').onclick=()=>exportVideo($('#ex-fmt').value,$('#ex-q').value);
+function drawMsGrid(){
+ const g=$('#ms-grid');if(!g)return;
+ g.innerHTML=Object.keys(STY).map(k=>'<button data-k="'+k+'" class="'+(k===base?'on':'')+'"><i style="background:'+STY[k].sw+'"></i><span>'+STY[k].n+'</span></button>').join('');
+ $('#ms-custom').hidden=base!=='solid';
+}
+const saveLook=()=>{try{localStorage.setItem('ms_look',JSON.stringify(mlook))}catch(_){}};
+const msOut=()=>['bri','sat','con','hue','bdw'].forEach(k=>{$('#ms-'+k+'o').textContent=$('#ms-'+k).value});
+function msFill(){
+ $('#ms-bri').value=mlook.bri;$('#ms-sat').value=mlook.sat;$('#ms-con').value=mlook.con;$('#ms-hue').value=mlook.hue;
+ $('#ms-bd').checked=mlook.bd;$('#ms-bdc').value=mlook.bdc||'#ffffff';$('#ms-bdw').value=mlook.bdw;
+ $('#ms-oc').value=mlook.ocean;$('#ms-ld').value=mlook.land;msOut();
+}
+$('#ms-grid').onclick=e=>{const b=e.target.closest('button[data-k]');if(b&&ready)setBase(b.dataset.k)};
+[['ms-bri','bri'],['ms-sat','sat'],['ms-con','con'],['ms-hue','hue'],['ms-bdw','bdw']].forEach(([id,k])=>{
+ $('#'+id).oninput=e=>{mlook[k]=+e.target.value;msOut();if(ready){if(k==='bdw')setBase(base);else applyLook()}saveLook()};
+});
+$('#ms-bd').onchange=e=>{mlook.bd=e.target.checked;if(ready)setBase(base);saveLook()};
+$('#ms-bdc').oninput=e=>{mlook.bdc=e.target.value;if(ready)setBase(base);saveLook()};
+$('#ms-oc').oninput=e=>{mlook.ocean=e.target.value;if(ready&&base==='solid')setBase('solid');saveLook()};
+$('#ms-ld').oninput=e=>{mlook.land=e.target.value;if(ready&&base==='solid')setBase('solid');saveLook()};
+$('#ms-reset').onclick=()=>{Object.assign(mlook,{bri:1,sat:0,con:0,hue:0,bd:true,bdc:'',bdw:.7});msFill();if(ready)setBase(base);saveLook()};
+$('#ms-ok').onclick=()=>$('#ms').classList.remove('open');
+$('#ms').onclick=e=>{if(e.target.id==='ms')$('#ms').classList.remove('open')};
+$('#st-base').innerHTML=Object.keys(STY).map(k=>'<option value="'+k+'">'+STY[k].n+'</option>').join('');
+msFill();drawMsGrid();
 
 /* upload sources: gallery / camera / video recorder / files */
 let upKind='img';
@@ -1621,7 +1919,7 @@ function enhanceColor(el){
  t.value=full;
 }
 drawRecent();
-['col','cf','cb','fe-col','fe-body','fe-bc','fe-ckc'].forEach(id=>enhanceColor($('#'+id)));
+['col','cf','cb','fe-col','fe-body','fe-bc','fe-ckc','ms-bdc','ms-oc','ms-ld'].forEach(id=>enhanceColor($('#'+id)));
 try{const a=JSON.parse(localStorage.getItem('mapstudio_auto')||'null');if(a&&a.v===2&&a.clips&&a.clips.length){applyProject(a);restoredMsg='Restored your last session (use ☰ → New for a blank project).'}}catch(_){}
 draw();
 </script>

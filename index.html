@@ -1,1080 +1,245 @@
-<!DOCTYPE html>
-<html lang="fa" dir="rtl">
+<!doctype html>
+<html lang="en" dir="ltr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>زمین ۳ بعدی - چهار فصل و حیات وحش پویا</title>
-    <style>
-        * { 
-            box-sizing: border-box; 
-            margin: 0; 
-            padding: 0; 
-            user-select: none; 
-            -webkit-user-select: none;
-            -webkit-touch-callout: none;
-            -webkit-tap-highlight-color: transparent;
-        }
-        body, html { 
-            width: 100%; 
-            height: 100%; 
-            overflow: hidden; 
-            background-color: #020408; 
-            font-family: system-ui, -apple-system, Tahoma, sans-serif;
-            touch-action: manipulation;
-        }
-        #canvas-container { 
-            width: 100%; 
-            height: 100%; 
-            position: absolute; 
-            top: 0; 
-            left: 0; 
-            touch-action: none;
-        }
-        
-        #loading-screen {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: #050811; color: #fff; display: flex; flex-direction: column;
-            justify-content: center; align-items: center; z-index: 9999; transition: opacity 0.5s;
-            padding: 20px; text-align: center;
-        }
-        .spinner { width: 50px; height: 50px; border: 5px solid #1e293b; border-top: 5px solid #00d2ff; border-radius: 50%; animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        #load-status { margin-top: 20px; font-size: 14px; color: #00d2ff; line-height: 1.6; }
-
-        #season-display {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            background: rgba(15, 23, 42, 0.85);
-            backdrop-filter: blur(8px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: #fff;
-            padding: 8px 14px;
-            border-radius: 10px;
-            font-size: 13px;
-            z-index: 101;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-            pointer-events: none;
-        }
-
-        .top-bar {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            display: flex;
-            justify-content: flex-end;
-            gap: 8px;
-            z-index: 101;
-            flex-wrap: wrap;
-            pointer-events: none;
-        }
-
-        .panel-btn {
-            pointer-events: auto;
-            background: rgba(15, 23, 42, 0.85);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            border: 1px solid rgba(255,255,255,0.2);
-            color: #fff;
-            padding: 8px 12px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 12px;
-            transition: 0.2s;
-            white-space: nowrap;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-        }
-        .panel-btn:active { transform: scale(0.95); background: #00d2ff; color: #000; }
-
-        .ui-panel {
-            position: absolute;
-            top: 55px;
-            right: 10px;
-            width: calc(100% - 20px);
-            max-width: 320px;
-            background: rgba(15, 23, 42, 0.90);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 14px;
-            color: #fff;
-            padding: 16px;
-            z-index: 100;
-            max-height: 75vh;
-            overflow-y: auto;
-            display: none;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-            -webkit-overflow-scrolling: touch;
-        }
-        .ui-panel.open { display: block; }
-        .ui-panel h3 { font-size: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px; }
-
-        .control-group { margin-bottom: 12px; }
-        .control-group label { display: block; font-size: 12px; margin-bottom: 6px; color: #cbd5e1; }
-        .control-group input[type="range"], .control-group select {
-            width: 100%; 
-            background: #1e293b; 
-            border: 1px solid #334155; 
-            color: #fff; 
-            padding: 8px; 
-            border-radius: 8px;
-            font-size: 13px;
-            outline: none;
-        }
-        .weather-btn { 
-            padding: 10px 14px; 
-            background: #334155; 
-            border: none; 
-            color: white; 
-            border-radius: 8px; 
-            cursor: pointer; 
-            font-size: 13px;
-            width: 100%;
-            margin-top: 8px;
-        }
-        .weather-btn:active { background: #00d2ff; color: #000; }
-
-        @media (min-width: 600px) {
-            .top-bar { right: 15px; }
-            .ui-panel { right: 15px; width: 300px; }
-        }
-    </style>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/simplex-noise/2.4.0/simplex-noise.min.js"></script>
-</head>
-<body>
-
-    <div id="loading-screen">
-        <div class="spinner"></div>
-        <div id="load-status">در حال تشکیل حیات‌وحش و اکوسیستم هوشمند...<br>لطفا چند لحظه شکیبا باشید.</div>
-    </div>
-
-    <div id="season-display">🌱 فصل: <span id="season-name">بهار</span></div>
-
-    <div id="canvas-container"></div>
-
-    <div class="top-bar">
-        <button class="panel-btn" onclick="togglePanel('god-panel')">⚙️ تنظیمات</button>
-        <button class="panel-btn" onclick="togglePanel('cloud-panel')">☁️ ابرها</button>
-        <button class="panel-btn" onclick="togglePanel('eco-panel')">🌱 اکوسیستم</button>
-        <button class="panel-btn" onclick="togglePanel('wildlife-panel')">🐺 حیات‌وحش</button>
-    </div>
-
-    <div id="god-panel" class="ui-panel">
-        <h3>تنظیمات شبیه‌سازی</h3><br>
-        <div class="control-group">
-            <label>فصل فعلی:</label>
-            <select id="season-selector" onchange="changeSeasonManual(this.value)">
-                <option value="0">بهار 🌱</option>
-                <option value="1">تابستان ☀️</option>
-                <option value="2">پاییز 🍂</option>
-                <option value="3">زمستان ❄️</option>
-            </select>
-        </div>
-        <div class="control-group">
-            <label>انتخاب کاراکتر:</label>
-            <select id="human-selector" onchange="selectHuman(this.value)">
-                <option value="">-- انتخاب کنید --</option>
-            </select>
-        </div>
-        <div class="control-group">
-            <label>سرعت حرکت (<span id="speed-value">1.0</span>):</label>
-            <input type="range" min="1" max="30" value="10" oninput="updateSpeed(this.value)">
-        </div>
-        <button class="weather-btn" onclick="resetSelection()">ریست دوربین</button>
-    </div>
-
-    <div id="cloud-panel" class="ui-panel">
-        <h3>تنظیمات ابرها و بارش</h3><br>
-        <div class="control-group">
-            <label>تعداد جبهه‌های ابر (<span id="cloud-count-value">45</span>):</label>
-            <input type="range" id="cloud-count" min="10" max="100" value="45" oninput="updateCloudCount(this.value)">
-        </div>
-        <div class="control-group">
-            <label>سرعت وزش باد (<span id="cloud-speed-value">1.0</span>):</label>
-            <input type="range" min="0" max="50" value="10" oninput="updateCloudSpeed(this.value)">
-        </div>
-        <div class="control-group">
-            <label>شدت بارندگی (<span id="precip-rate-value">1.0</span>):</label>
-            <input type="range" min="0" max="30" value="10" oninput="updatePrecipRate(this.value)">
-        </div>
-    </div>
-
-    <div id="eco-panel" class="ui-panel">
-        <h3>تنظیمات اکوسیستم زنده</h3><br>
-        <div class="control-group">
-            <label>سرعت رویش و رشد گیاهان (<span id="growth-rate-val">1.0</span>):</label>
-            <input type="range" min="0" max="50" value="10" oninput="updateGrowthRate(this.value)">
-        </div>
-        <div class="control-group">
-            <label>تعداد کل گیاهان فعال: <span id="total-plants-count">3000</span></label>
-        </div>
-    </div>
-
-    <div id="wildlife-panel" class="ui-panel">
-        <h3>مدیریت حیات وحش</h3><br>
-        <div class="control-group">
-            <label>تعداد گوزن‌ها: <span id="deer-count">0</span></label>
-            <label>تعداد گرگ‌ها: <span id="wolf-count">0</span></label>
-            <label>تعداد خرس‌های قطبی: <span id="bear-count">0</span></label>
-        </div>
-        <button class="weather-btn" onclick="spawnAnimalGroup('deer', 10)">➕ افزودن ۱۰ گوزن</button>
-        <button class="weather-btn" onclick="spawnAnimalGroup('wolf', 5)">➕ افزودن ۵ گرگ</button>
-        <button class="weather-btn" onclick="spawnAnimalGroup('bear', 3)">➕ افزودن ۳ خرس قطبی</button>
-    </div>
-
-    <script>
-        let scene, camera, renderer, controls;
-        let earthGroup, cloudsGroup, earthMesh;
-        const earthRadius = 5;
-        const simplex = new SimplexNoise();
-
-        let humans = [];
-        let selectedHuman = null;
-        let moveSpeed = 1.0, HUMAN_SCALE = 0.025;
-        let cloudSettings = { count: 45, speed: 1.0, morphSpeed: 1.0, precipRate: 1.0 };
-        let cloudClusters = [];
-
-        let dynamicPlants = [];
-        let growthSpeedMultiplier = 1.0;
-        let trunkMaterial, pineMaterial, broadMaterial, bushMaterial;
-
-        // آرایه حیوانات
-        let animals = [];
-
-        const seasons = [
-            { name: "بهار", icon: "🌱", snowLat: 60 },
-            { name: "تابستان", icon: "☀️", snowLat: 75 },
-            { name: "پاییز", icon: "🍂", snowLat: 50 },
-            { name: "زمستان", icon: "❄️", snowLat: 38 }
-        ];
-        let currentSeasonIndex = 0;
-        let seasonTimer = 0;
-        const SEASON_DURATION = 2500;
-
-        function init() {
-            const container = document.getElementById('canvas-container');
-            
-            scene = new THREE.Scene();
-            camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.001, 1000);
-            camera.position.set(0, 0, 14);
-
-            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: "high-performance" });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-            renderer.toneMapping = THREE.ACESFilmicToneMapping;
-            renderer.toneMappingExposure = 1.25;
-            container.appendChild(renderer.domElement);
-
-            controls = new THREE.OrbitControls(camera, renderer.domElement);
-            controls.enableDamping = true;
-            controls.dampingFactor = 0.05;
-            controls.minDistance = 5.02;
-
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
-            scene.add(ambientLight);
-
-            const sunLight = new THREE.DirectionalLight(0xfffdf0, 2.0);
-            sunLight.position.set(15, 12, 10);
-            scene.add(sunLight);
-
-            const fillLight = new THREE.DirectionalLight(0x335577, 0.6);
-            fillLight.position.set(-15, -10, -12);
-            scene.add(fillLight);
-
-            earthGroup = new THREE.Group();
-            scene.add(earthGroup);
-
-            setTimeout(() => {
-                generate1024ExtremeEarth();
-                createLiveDynamicClouds();
-                initEcosystemMaterials();
-                buildInitialTreesOnLand();
-                spawnHuman("آدمک AI", 20, 50, 0x00d2ff);
-                spawnHuman("کاربر ۱", -10, 20, 0xff0055);
-
-                // مقداردهی اولیه حیوانات در مناطق بومی
-                spawnInitialWildlife();
-
-                const loadScreen = document.getElementById('loading-screen');
-                if (loadScreen) {
-                    loadScreen.style.opacity = '0';
-                    setTimeout(() => loadScreen.remove(), 500);
-                }
-            }, 100);
-
-            window.addEventListener('resize', onWindowResize);
-            animate();
-        }
-
-        function getUltraElevation(x, y, z) {
-            let baseLand = 0.5000 * simplex.noise3D(x * 0.35, y * 0.35, z * 0.35);
-            baseLand += 0.2500 * simplex.noise3D(x * 0.95, y * 0.95, z * 0.95);
-
-            let e = baseLand;
-
-            if (baseLand > 0.02) {
-                let ridgeNoise = Math.abs(simplex.noise3D(x * 2.2, y * 2.2, z * 2.2));
-                ridgeNoise = 1.0 - ridgeNoise;
-                ridgeNoise = Math.pow(ridgeNoise, 2.5) * 0.35;
-
-                let peakNoise = simplex.noise3D(x * 5.5, y * 5.5, z * 5.5);
-                peakNoise = Math.max(0, peakNoise) * 0.18;
-
-                let hills = 0.0625 * simplex.noise3D(x * 6.0, y * 6.0, z * 6.0);
-                hills += 0.0312 * simplex.noise3D(x * 15.0, y * 15.0, z * 15.0);
-
-                let landFactor = Math.min(1.0, (baseLand - 0.02) * 5.0);
-                e += (ridgeNoise + peakNoise + hills) * landFactor;
-            } else {
-                e += 0.1250 * simplex.noise3D(x * 2.50, y * 2.50, z * 2.50);
-            }
-
-            e += 0.0078 * simplex.noise3D(x * 80.0, y * 80.0, z * 80.0);
-            return e;
-        }
-
-        function generate1024ExtremeEarth() {
-            const geo = new THREE.SphereGeometry(earthRadius, 1024, 1024);
-            const pos = geo.attributes.position;
-            const colors = [];
-
-            const cDeepOcean   = new THREE.Color(0x051329);
-            const cShallow     = new THREE.Color(0x115e85);
-            const cBeach       = new THREE.Color(0xbd955c);
-            const cGrass       = new THREE.Color(0x38823b);
-            const cForest      = new THREE.Color(0x13401b);
-            const cHighLand    = new THREE.Color(0x524331);
-            const cDarkRock    = new THREE.Color(0x2d2623);
-            const cSnow        = new THREE.Color(0xf0f5ff);
-
-            for (let i = 0; i < pos.count; i++) {
-                let vx = pos.getX(i);
-                let vy = pos.getY(i);
-                let vz = pos.getZ(i);
-
-                let dir = new THREE.Vector3(vx, vy, vz).normalize();
-                let elevation = getUltraElevation(dir.x, dir.y, dir.z);
-
-                let color = new THREE.Color();
-
-                if (elevation < 0.02) {
-                    let factor = Math.max(0, (elevation + 0.5) / 0.52);
-                    color.lerpColors(cDeepOcean, cShallow, factor);
-                } else {
-                    let landHeight = earthRadius + (elevation - 0.02) * 0.45;
-                    dir.multiplyScalar(landHeight);
-                    pos.setXYZ(i, dir.x, dir.y, dir.z);
-
-                    let microNoise = simplex.noise3D(dir.x * 250, dir.y * 250, dir.z * 250) * 0.05;
-
-                    if (elevation < 0.06) {
-                        color.copy(cBeach);
-                    } else if (elevation < 0.20) {
-                        let factor = (elevation - 0.06) / 0.14;
-                        color.lerpColors(cGrass, cForest, factor);
-                    } else if (elevation < 0.35) {
-                        let factor = (elevation - 0.20) / 0.15;
-                        color.lerpColors(cForest, cHighLand, factor);
-                    } else if (elevation < 0.52) {
-                        let factor = (elevation - 0.35) / 0.17;
-                        color.lerpColors(cHighLand, cDarkRock, factor);
-                    } else {
-                        let factor = Math.min(1, (elevation - 0.52) / 0.15);
-                        color.lerpColors(cDarkRock, cSnow, factor);
-                    }
-
-                    color.r = THREE.MathUtils.clamp(color.r + microNoise, 0, 1);
-                    color.g = THREE.MathUtils.clamp(color.g + microNoise, 0, 1);
-                    color.b = THREE.MathUtils.clamp(color.b + microNoise, 0, 1);
-                }
-
-                colors.push(color.r, color.g, color.b);
-            }
-
-            geo.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
-            geo.computeVertexNormals();
-
-            const mat = new THREE.MeshStandardMaterial({
-                vertexColors: true,
-                roughness: 0.8,
-                metalness: 0.01,
-                flatShading: false
-            });
-
-            earthMesh = new THREE.Mesh(geo, mat);
-            earthGroup.add(earthMesh);
-        }
-
-        function createLiveDynamicClouds() {
-            if (cloudsGroup) earthGroup.remove(cloudsGroup);
-            cloudsGroup = new THREE.Group();
-            cloudClusters = [];
-
-            for (let i = 0; i < cloudSettings.count; i++) {
-                spawnCloudCluster();
-            }
-            earthGroup.add(cloudsGroup);
-        }
-
-        function spawnCloudCluster() {
-            const lat = (Math.random() - 0.5) * 140;
-            const lon = (Math.random() - 0.5) * 360;
-            const phi = (90 - lat) * (Math.PI / 180);
-            const theta = (lon + 180) * (Math.PI / 180);
-
-            const centerR = earthRadius * (1.045 + Math.random() * 0.015);
-            const centerPos = new THREE.Vector3(
-                -(centerR * Math.sin(phi) * Math.cos(theta)),
-                (centerR * Math.cos(phi)),
-                (centerR * Math.sin(phi) * Math.sin(theta))
-            );
-
-            const dir = centerPos.clone().normalize();
-            const elevation = getUltraElevation(dir.x, dir.y, dir.z);
-            const isLand = elevation > 0.02;
-
-            const clusterGroup = new THREE.Group();
-            clusterGroup.position.copy(centerPos);
-            
-            const normal = centerPos.clone().normalize();
-            clusterGroup.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), normal);
-
-            const cloudMat = new THREE.MeshStandardMaterial({
-                color: 0xffffff,
-                roughness: 0.85,
-                metalness: 0.0,
-                transparent: true,
-                opacity: 0.0,
-                flatShading: false
-            });
-
-            const animatedBlobs = [];
-            const blobCount = 10 + Math.floor(Math.random() * 10);
-
-            for (let j = 0; j < blobCount; j++) {
-                const radius = 0.12 + Math.random() * 0.22;
-                const blobGeo = new THREE.SphereGeometry(radius, 16, 16);
-                const origPositions = blobGeo.attributes.position.clone();
-                const blobMesh = new THREE.Mesh(blobGeo, cloudMat);
-                
-                const offsetX = (Math.random() - 0.5) * 0.85;
-                const offsetY = (Math.random() - 0.5) * 0.08;
-                const offsetZ = (Math.random() - 0.5) * 0.85;
-
-                blobMesh.position.set(offsetX, offsetY, offsetZ);
-                const baseScale = new THREE.Vector3(
-                    1.2 + Math.random() * 0.6,
-                    0.4 + Math.random() * 0.3,
-                    1.2 + Math.random() * 0.6
-                );
-                blobMesh.scale.copy(baseScale);
-                clusterGroup.add(blobMesh);
-
-                animatedBlobs.push({
-                    mesh: blobMesh,
-                    origPositions: origPositions,
-                    radius: radius,
-                    baseScale: baseScale,
-                    phaseOffset: Math.random() * 1000
-                });
-            }
-
-            const currentSnowBoundary = seasons[currentSeasonIndex].snowLat;
-            const isColdZone = Math.abs(lat) >= currentSnowBoundary || elevation > 0.40;
-            const isSnow = isColdZone && isLand;
-
-            const precipGeo = new THREE.BufferGeometry();
-            const precipCount = isSnow ? 260 : 150;
-            const precipPos = [];
-            
-            for (let p = 0; p < precipCount; p++) {
-                precipPos.push(
-                    (Math.random() - 0.5) * 0.9,
-                    -Math.random() * 0.35,
-                    (Math.random() - 0.5) * 0.9
-                );
-            }
-            precipGeo.setAttribute('position', new THREE.Float32BufferAttribute(precipPos, 3));
-
-            const precipMat = new THREE.PointsMaterial({
-                color: isSnow ? 0xffffff : 0x60a5fa,
-                size: isSnow ? 0.035 : 0.015,
-                transparent: true,
-                opacity: 0,
-                blending: THREE.AdditiveBlending
-            });
-
-            const precipParticles = new THREE.Points(precipGeo, precipMat);
-            clusterGroup.add(precipParticles);
-
-            cloudsGroup.add(clusterGroup);
-
-            cloudClusters.push({
-                group: clusterGroup,
-                material: cloudMat,
-                precipMat: precipMat,
-                precipParticles: precipParticles,
-                blobs: animatedBlobs,
-                isSnow: isSnow,
-                isLand: isLand,
-                centerDir: dir,
-                lat: lat,
-                life: Math.random() * 0.3,
-                lifeSpeed: 0.0005 + Math.random() * 0.0008,
-                maxOpacity: 0.85 + Math.random() * 0.1
-            });
-        }
-
-        // ==================== بخش ساخت مدل و هوش حیات‌وحش ====================
-        
-        function createAnimalMesh(type) {
-            const group = new THREE.Group();
-            
-            if (type === 'deer') {
-                const bodyMat = new THREE.MeshStandardMaterial({ color: 0x8b5a2b, roughness: 0.6 });
-                const body = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.05, 0.12), bodyMat);
-                body.position.y = 0.05;
-                group.add(body);
-
-                const head = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.03, 0.05), bodyMat);
-                head.position.set(0, 0.08, 0.05);
-                group.add(head);
-
-                // شاخ گوزن
-                const hornMat = new THREE.MeshStandardMaterial({ color: 0x3d2612 });
-                const horn1 = new THREE.Mesh(new THREE.CylinderGeometry(0.002, 0.002, 0.04), hornMat);
-                horn1.position.set(-0.015, 0.11, 0.04);
-                horn1.rotation.z = -0.3;
-                const horn2 = horn1.clone();
-                horn2.position.x = 0.015;
-                horn2.rotation.z = 0.3;
-                group.add(horn1, horn2);
-
-            } else if (type === 'wolf') {
-                const bodyMat = new THREE.MeshStandardMaterial({ color: 0x5a6577, roughness: 0.5 });
-                const body = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.04, 0.10), bodyMat);
-                body.position.y = 0.04;
-                group.add(body);
-
-                const head = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.03, 0.04), bodyMat);
-                head.position.set(0, 0.06, 0.04);
-                group.add(head);
-
-            } else if (type === 'bear') {
-                const bodyMat = new THREE.MeshStandardMaterial({ color: 0xf0f4f8, roughness: 0.7 });
-                const body = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.08, 0.15), bodyMat);
-                body.position.y = 0.07;
-                group.add(body);
-
-                const head = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.05, 0.06), bodyMat);
-                head.position.set(0, 0.10, 0.07);
-                group.add(head);
-            }
-
-            group.scale.setScalar(0.25);
-            return group;
-        }
-
-        function spawnSingleAnimal(type, lat, lon) {
-            const phi = (90 - lat) * (Math.PI / 180);
-            const theta = (lon + 180) * (Math.PI / 180);
-
-            const dir = new THREE.Vector3(
-                -(Math.sin(phi) * Math.cos(theta)),
-                Math.cos(phi),
-                Math.sin(phi) * Math.sin(theta)
-            ).normalize();
-
-            const elevation = getUltraElevation(dir.x, dir.y, dir.z);
-            if (elevation <= 0.02) return false; // روی آب نسازد
-
-            const r = earthRadius + (elevation - 0.02) * 0.45;
-            const mesh = createAnimalMesh(type);
-            mesh.position.copy(dir.clone().multiplyScalar(r));
-            mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir);
-
-            earthGroup.add(mesh);
-
-            animals.push({
-                mesh: mesh,
-                type: type,
-                lat: lat,
-                lon: lon,
-                targetLat: lat + (Math.random() - 0.5) * 5,
-                targetLon: lon + (Math.random() - 0.5) * 5,
-                speed: type === 'wolf' ? 0.08 : (type === 'deer' ? 0.06 : 0.03)
-            });
-
-            updateWildlifeUI();
-            return true;
-        }
-
-        function spawnAnimalGroup(type, count) {
-            let added = 0;
-            for (let i = 0; i < count * 5 && added < count; i++) {
-                let lat = (Math.random() - 0.5) * 120;
-                let lon = (Math.random() - 0.5) * 360;
-
-                if (type === 'bear') lat = 65 + Math.random() * 20; // خرس فقط در قطب شمال
-                if (type === 'deer') lat = (Math.random() - 0.5) * 80;
-
-                if (spawnSingleAnimal(type, lat, lon)) added++;
-            }
-        }
-
-        function spawnInitialWildlife() {
-            spawnAnimalGroup('deer', 35);
-            spawnAnimalGroup('wolf', 15);
-            spawnAnimalGroup('bear', 10);
-        }
-
-        function updateWildlifeIntelligence() {
-            for (let i = 0; i < animals.length; i++) {
-                let a = animals[i];
-
-                // هوش رفتار و کوچ حیوانات
-                if (Math.random() < 0.01) {
-                    if (a.type === 'deer' && currentSeasonIndex === 3 && a.lat > 35) {
-                        // کوچ گوزن‌ها به جنوب در زمستان
-                        a.targetLat = a.lat - 8;
-                    } else {
-                        a.targetLat = a.lat + (Math.random() - 0.5) * 6;
-                    }
-                    a.targetLon = a.lon + (Math.random() - 0.5) * 6;
-                }
-
-                // تعقیب گوزن توسط گرگ‌ها
-                if (a.type === 'wolf' && Math.random() < 0.05) {
-                    for (let j = 0; j < animals.length; j++) {
-                        let target = animals[j];
-                        if (target.type === 'deer') {
-                            let dist = Math.hypot(a.lat - target.lat, a.lon - target.lon);
-                            if (dist < 10) { // اگر گوزن نزدیک بود
-                                a.targetLat = target.lat;
-                                a.targetLon = target.lon;
-                                break;
-                            }
-                        }
-                    }
-                }
-
-                // حرکت موقعیت جغرافیایی
-                let latDiff = a.targetLat - a.lat;
-                let lonDiff = a.targetLon - a.lon;
-
-                if (Math.abs(latDiff) > 0.05 || Math.abs(lonDiff) > 0.05) {
-                    a.lat += latDiff * 0.01 * a.speed;
-                    a.lon += lonDiff * 0.01 * a.speed;
-
-                    const phi = (90 - a.lat) * (Math.PI / 180);
-                    const theta = (a.lon + 180) * (Math.PI / 180);
-
-                    const dir = new THREE.Vector3(
-                        -(Math.sin(phi) * Math.cos(theta)),
-                        Math.cos(phi),
-                        Math.sin(phi) * Math.sin(theta)
-                    ).normalize();
-
-                    const elevation = getUltraElevation(dir.x, dir.y, dir.z);
-                    if (elevation > 0.02) {
-                        const r = earthRadius + (elevation - 0.02) * 0.45;
-                        a.mesh.position.copy(dir.multiplyScalar(r));
-                        a.mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir);
-                    }
-                }
-            }
-        }
-
-        function updateWildlifeUI() {
-            let deer = 0, wolf = 0, bear = 0;
-            animals.forEach(a => {
-                if (a.type === 'deer') deer++;
-                if (a.type === 'wolf') wolf++;
-                if (a.type === 'bear') bear++;
-            });
-            if (document.getElementById('deer-count')) document.getElementById('deer-count').innerText = deer;
-            if (document.getElementById('wolf-count')) document.getElementById('wolf-count').innerText = wolf;
-            if (document.getElementById('bear-count')) document.getElementById('bear-count').innerText = bear;
-        }
-
-        function updateSeasonCycle() {
-            seasonTimer++;
-            if (seasonTimer >= SEASON_DURATION) {
-                seasonTimer = 0;
-                currentSeasonIndex = (currentSeasonIndex + 1) % seasons.length;
-                updateSeasonUI();
-            }
-        }
-
-        function updateSeasonUI() {
-            const s = seasons[currentSeasonIndex];
-            document.getElementById('season-name').innerText = s.name + " " + s.icon;
-            document.getElementById('season-selector').value = currentSeasonIndex;
-        }
-
-        function changeSeasonManual(idx) {
-            currentSeasonIndex = parseInt(idx);
-            seasonTimer = 0;
-            updateSeasonUI();
-        }
-
-        function initEcosystemMaterials() {
-            trunkMaterial = new THREE.MeshLambertMaterial({ color: 0x3d2612 });
-            pineMaterial = new THREE.MeshLambertMaterial({ color: 0x13401b });
-            broadMaterial = new THREE.MeshLambertMaterial({ color: 0x2e6f21 });
-            bushMaterial = new THREE.MeshLambertMaterial({ color: 0x4a8505 });
-        }
-
-        function createPlantMesh(type) {
-            const plantGroup = new THREE.Group();
-            
-            if (type === 'pine') {
-                const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.003, 0.006, 0.05, 5), trunkMaterial);
-                trunk.position.y = 0.025;
-                const leaves = new THREE.Mesh(new THREE.ConeGeometry(0.022, 0.08, 5), pineMaterial);
-                leaves.position.y = 0.065;
-                plantGroup.add(trunk, leaves);
-            } else if (type === 'broadleaf') {
-                const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.004, 0.007, 0.06, 5), trunkMaterial);
-                trunk.position.y = 0.03;
-                const leaves = new THREE.Mesh(new THREE.SphereGeometry(0.028, 7, 7), broadMaterial);
-                leaves.position.y = 0.07;
-                leaves.scale.set(1, 1.2, 1);
-                plantGroup.add(trunk, leaves);
-            } else {
-                const bush = new THREE.Mesh(new THREE.SphereGeometry(0.02, 6, 6), bushMaterial);
-                bush.position.y = 0.015;
-                bush.scale.set(1.2, 0.8, 1.2);
-                plantGroup.add(bush);
-            }
-
-            return plantGroup;
-        }
-
-        function buildInitialTreesOnLand() {
-            const initialCount = 3000;
-            let added = 0, attempts = 0;
-
-            while (added < initialCount && attempts < 35000) {
-                attempts++;
-                const lat = (Math.random() - 0.5) * 150;
-                const lon = (Math.random() - 0.5) * 360;
-
-                if (spawnSinglePlant(lat, lon, true)) {
-                    added++;
-                }
-            }
-            updatePlantCountUI();
-        }
-
-        function spawnSinglePlant(lat, lon, instantFullSize = false) {
-            const phi = (90 - lat) * (Math.PI / 180);
-            const theta = (lon + 180) * (Math.PI / 180);
-
-            const dir = new THREE.Vector3(
-                -(Math.sin(phi) * Math.cos(theta)),
-                Math.cos(phi),
-                Math.sin(phi) * Math.sin(theta)
-            ).normalize();
-
-            const elevation = getUltraElevation(dir.x, dir.y, dir.z);
-
-            if (elevation > 0.07 && elevation < 0.38) {
-                let type = 'broadleaf';
-                if (elevation > 0.22 || Math.abs(lat) > 40) {
-                    type = 'pine';
-                } else if (Math.random() < 0.3) {
-                    type = 'bush';
-                }
-
-                const r = earthRadius + (elevation - 0.02) * 0.45;
-                const pos = dir.clone().multiplyScalar(r);
-
-                const plantMesh = createPlantMesh(type);
-                plantMesh.position.copy(pos);
-                plantMesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir);
-
-                const targetScale = 0.8 + Math.random() * 0.5;
-                const currentScale = instantFullSize ? targetScale : 0.01;
-
-                plantMesh.scale.setScalar(currentScale);
-                earthGroup.add(plantMesh);
-
-                dynamicPlants.push({
-                    mesh: plantMesh,
-                    currentScale: currentScale,
-                    targetScale: targetScale,
-                    growthSpeed: (0.002 + Math.random() * 0.004),
-                    lat: lat,
-                    lon: lon
-                });
-                return true;
-            }
-            return false;
-        }
-
-        function updateEcosystemCycle() {
-            for (let i = 0; i < dynamicPlants.length; i++) {
-                let p = dynamicPlants[i];
-                if (p.currentScale < p.targetScale) {
-                    p.currentScale += p.growthSpeed * growthSpeedMultiplier;
-                    if (p.currentScale > p.targetScale) p.currentScale = p.targetScale;
-                    p.mesh.scale.setScalar(p.currentScale);
-                }
-            }
-
-            if (Math.random() < 0.25 * growthSpeedMultiplier && dynamicPlants.length < 6000) {
-                let parent = dynamicPlants[Math.floor(Math.random() * dynamicPlants.length)];
-                if (parent && parent.currentScale >= parent.targetScale * 0.8) {
-                    let newLat = parent.lat + (Math.random() - 0.5) * 3.0;
-                    let newLon = parent.lon + (Math.random() - 0.5) * 3.0;
-                    if (spawnSinglePlant(newLat, newLon, false)) {
-                        updatePlantCountUI();
-                    }
-                }
-            }
-        }
-
-        function updatePlantCountUI() {
-            const ui = document.getElementById('total-plants-count');
-            if (ui) ui.innerText = dynamicPlants.length;
-        }
-
-        function spawnHuman(name, lat, lon, colorHex) {
-            const group = new THREE.Group();
-            const mat = new THREE.MeshStandardMaterial({ color: colorHex, roughness: 0.3 });
-
-            const head = new THREE.Mesh(new THREE.SphereGeometry(0.08, 12, 12), mat);
-            head.position.y = 0.28;
-            group.add(head);
-
-            const body = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.2, 10), mat);
-            body.position.y = 0.14;
-            group.add(body);
-
-            group.scale.set(HUMAN_SCALE, HUMAN_SCALE, HUMAN_SCALE);
-            group.userData = { name, lat, lon, targetLat: lat, targetLon: lon };
-            
-            updateHumanPosition(group);
-            earthGroup.add(group);
-            humans.push(group);
-
-            const opt = document.createElement('option');
-            opt.value = humans.length - 1;
-            opt.innerText = name;
-            document.getElementById('human-selector').appendChild(opt);
-        }
-
-        function updateHumanPosition(human) {
-            const d = human.userData;
-            const phi = (90 - d.lat) * (Math.PI / 180);
-            const theta = (d.lon + 180) * (Math.PI / 180);
-
-            const dir = new THREE.Vector3(
-                -(Math.sin(phi) * Math.cos(theta)),
-                Math.cos(phi),
-                Math.sin(phi) * Math.sin(theta)
-            ).normalize();
-
-            const elevation = getUltraElevation(dir.x, dir.y, dir.z);
-            const r = earthRadius + (elevation > 0.02 ? (elevation - 0.02) * 0.45 : 0);
-
-            human.position.copy(dir.multiplyScalar(r));
-            human.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir);
-        }
-
-        function animate() {
-            requestAnimationFrame(animate);
-
-            const time = Date.now() * 0.001;
-
-            if (cloudsGroup) {
-                cloudsGroup.rotation.y += cloudSettings.speed * 0.0004;
-            }
-
-            updateSeasonCycle();
-            updateEcosystemCycle();
-            updateWildlifeIntelligence();
-
-            cloudClusters.forEach((c, idx) => {
-                c.life += c.lifeSpeed;
-                
-                let currentOpacity = 0;
-                let precipOpacity = 0;
-
-                if (c.life < 0.25) {
-                    currentOpacity = (c.life / 0.25) * c.maxOpacity;
-                    precipOpacity = 0;
-                } else if (c.life < 0.7) {
-                    currentOpacity = c.maxOpacity;
-                    let precipFactor = Math.sin(((c.life - 0.25) / 0.45) * Math.PI);
-                    precipOpacity = precipFactor * 0.75 * cloudSettings.precipRate;
-
-                    let darkFactor = 1.0 - (precipFactor * 0.25);
-                    c.material.color.setRGB(darkFactor, darkFactor, darkFactor + 0.05);
-                } else if (c.life < 1.0) {
-                    currentOpacity = (1.0 - ((c.life - 0.7) / 0.3)) * c.maxOpacity;
-                    precipOpacity = 0;
-                    c.material.color.setHex(0xffffff);
-                } else {
-                    cloudsGroup.remove(c.group);
-                    cloudClusters.splice(idx, 1);
-                    spawnCloudCluster();
-                    return;
-                }
-
-                c.material.opacity = currentOpacity;
-                c.precipMat.opacity = precipOpacity;
-
-                if (precipOpacity > 0) {
-                    const pPositions = c.precipParticles.geometry.attributes.position;
-                    const fallSpeed = c.isSnow ? 0.003 : 0.012;
-                    
-                    for (let p = 0; p < pPositions.count; p++) {
-                        let y = pPositions.getY(p);
-                        y -= fallSpeed * cloudSettings.precipRate;
-                        if (y < -0.35) y = 0;
-                        
-                        if (c.isSnow) {
-                            let x = pPositions.getX(p) + Math.sin(time * 3 + p) * 0.0015;
-                            pPositions.setX(p, x);
-                        }
-                        pPositions.setY(p, y);
-                    }
-                    pPositions.needsUpdate = true;
-
-                    if (c.isSnow && precipOpacity > 0.15) {
-                        const posAttr = earthMesh.geometry.attributes.position;
-                        const colorAttr = earthMesh.geometry.attributes.color;
-                        const radiusSq = 0.65 * 0.65;
-
-                        for (let i = 0; i < posAttr.count; i++) {
-                            let vx = posAttr.getX(i);
-                            let vy = posAttr.getY(i);
-                            let vz = posAttr.getZ(i);
-
-                            let vDir = new THREE.Vector3(vx, vy, vz).normalize();
-                            let distSq = vDir.distanceToSquared(c.centerDir);
-
-                            if (distSq < radiusSq) {
-                                let elevation = getUltraElevation(vDir.x, vDir.y, vDir.z);
-                                if (elevation > 0.02) {
-                                    let currentR = colorAttr.getX(i);
-                                    let currentG = colorAttr.getY(i);
-                                    let currentB = colorAttr.getZ(i);
-
-                                    let factor = (1 - distSq / radiusSq) * 0.04 * cloudSettings.precipRate;
-                                    
-                                    colorAttr.setXYZ(
-                                        i,
-                                        Math.min(1.0, currentR + factor),
-                                        Math.min(1.0, currentG + factor),
-                                        Math.min(1.0, currentB + factor)
-                                    );
-                                }
-                            }
-                        }
-                        colorAttr.needsUpdate = true;
-                    }
-                }
-
-                c.blobs.forEach((item) => {
-                    const mesh = item.mesh;
-                    const pos = mesh.geometry.attributes.position;
-                    const orig = item.origPositions;
-                    const t = time * 0.4 + item.phaseOffset;
-
-                    for (let k = 0; k < pos.count; k++) {
-                        let ox = orig.getX(k);
-                        let oy = orig.getY(k);
-                        let oz = orig.getZ(k);
-
-                        let n = simplex.noise3D(ox * 3.5 + t * 0.2, oy * 3.5 + t * 0.2, oz * 3.5) * 0.3;
-                        let dir = new THREE.Vector3(ox, oy, oz).normalize();
-
-                        pos.setXYZ(k, ox + dir.x * n * item.radius, oy + dir.y * n * item.radius, oz + dir.z * n * item.radius);
-                    }
-                    pos.needsUpdate = true;
-
-                    const scalePulse = 1.0 + Math.sin(t * 1.5) * 0.08;
-                    mesh.scale.set(
-                        item.baseScale.x * scalePulse,
-                        item.baseScale.y * (1.0 + Math.cos(t * 2.0) * 0.05),
-                        item.baseScale.z * scalePulse
-                    );
-                });
-            });
-
-            humans.forEach(h => {
-                const d = h.userData;
-                const latDiff = d.targetLat - d.lat;
-                const lonDiff = d.targetLon - d.lon;
-                if (Math.abs(latDiff) > 0.1 || Math.abs(lonDiff) > 0.1) {
-                    d.lat += latDiff * 0.02 * moveSpeed;
-                    d.lon += lonDiff * 0.02 * moveSpeed;
-                    updateHumanPosition(h);
-                }
-            });
-
-            controls.update();
-            renderer.render(scene, camera);
-        }
-
-        function onWindowResize() {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        }
-
-        window.togglePanel = function(id) {
-            const panel = document.getElementById(id);
-            const isOpen = panel.classList.contains('open');
-            document.querySelectorAll('.ui-panel').forEach(p => p.classList.remove('open'));
-            if (!isOpen) panel.classList.add('open');
-        };
-
-        window.selectHuman = function(idxStr) {
-            if (idxStr === "") { selectedHuman = null; return; }
-            selectedHuman = humans[parseInt(idxStr)];
-        };
-
-        window.resetSelection = function() {
-            selectedHuman = null;
-            document.getElementById('human-selector').value = "";
-            camera.position.set(0, 0, 14);
-            controls.target.set(0, 0, 0);
-        };
-
-        window.updateSpeed = function(v) {
-            moveSpeed = v * 0.1;
-            document.getElementById('speed-value').innerText = moveSpeed.toFixed(1);
-        };
-
-        window.updateCloudCount = function(v) {
-            cloudSettings.count = parseInt(v);
-            document.getElementById('cloud-count-value').innerText = v;
-            createLiveDynamicClouds();
-        };
-
-        window.updateCloudSpeed = function(v) {
-            cloudSettings.speed = v * 0.1;
-            document.getElementById('cloud-speed-value').innerText = cloudSettings.speed.toFixed(1);
-        };
-
-        window.updatePrecipRate = function(v) {
-            cloudSettings.precipRate = v * 0.1;
-            document.getElementById('precip-rate-value').innerText = cloudSettings.precipRate.toFixed(1);
-        };
-
-        window.updateGrowthRate = function(v) {
-            growthSpeedMultiplier = v * 0.1;
-            document.getElementById('growth-rate-val').innerText = growthSpeedMultiplier.toFixed(1);
-        };
-
-        window.onload = init;
-    </script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Studio</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+<style>
+:root{--bg:#08090c;--p:#111317;--l:#23262d;--t:#eceef3;--m:#868c9a;--a:#e9b44c}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--t);font:14px/1.4 system-ui,Tahoma,sans-serif}
+#app{height:100dvh;max-width:640px;margin:auto;display:flex;flex-direction:column}
+button,input,select{font:inherit;color:var(--t)}
+button{background:none;border:0;cursor:pointer}
+#top{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--l);background:var(--p)}
+#top b{font-size:16px}#top .sp{flex:1}
+#pn{background:#1b1e24;border:0;border-radius:8px;padding:7px 10px;width:110px;color:var(--m)}
+.ex{background:#2a2418;color:var(--t);border-radius:9px;padding:9px 14px;font-weight:600}
+.ic{width:38px;height:38px;border-radius:50%;font-size:18px;color:var(--m)}
+#ratio{display:flex;justify-content:flex-end;padding:8px 12px}
+.seg{display:flex;border:1px solid var(--l);border-radius:9px;padding:3px;gap:2px}
+.seg button{padding:5px 12px;border-radius:6px;color:var(--m);font-size:13px}
+.seg .on{background:#2a2418;color:var(--a);font-weight:600}
+#stage{flex:1;min-height:0;display:flex;align-items:center;justify-content:center}
+#frame{position:relative;overflow:hidden;background:#000;container-type:size}
+#stage[data-r="16/9"] #frame{width:100%;aspect-ratio:16/9}
+#stage[data-r="9/16"] #frame{height:100%;aspect-ratio:9/16}
+#stage[data-r="full"] #frame{width:100%;height:100%}
+#map{position:absolute;inset:0}
+#title{position:absolute;left:0;right:0;bottom:9%;text-align:center;font-weight:700;font-size:6cqw;text-shadow:0 2px 14px #000;pointer-events:none;min-height:1.3em}
+#cmp{position:absolute;right:12px;bottom:12px;border:1px solid #6b5a2c;background:#14110a;color:var(--a);z-index:2}
+#cred{position:absolute;left:6px;bottom:3px;font-size:9px;color:#fffa;z-index:2}
+#tl{background:var(--p);border-top:1px solid var(--l);padding:6px 12px}
+.brand{display:flex;align-items:center;gap:9px;min-width:0}
+.logo{width:34px;height:34px;flex:none;filter:drop-shadow(0 4px 10px #ff7a5944)}
+.brand b{display:block;font-size:15px;font-weight:700;letter-spacing:.01em;line-height:1.1}
+.brand small{display:block;font-size:9px;letter-spacing:.3em;color:var(--m);font-weight:700}
+#pn{width:96px;height:34px;border-radius:10px;background:var(--p2);border:1px solid var(--l);color:var(--t);padding:0 10px;font-size:13px;text-align:center}
+.ic{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;color:#b6bfd0;background:transparent;border:0;transition:background .15s,color .15s,transform .1s}
+.ic:hover{background:#ffffff0d;color:#fff}.ic:active{transform:scale(.94)}
+.ex{display:flex;align-items:center;gap:7px;height:38px;padding:0 14px;border-radius:12px;background:linear-gradient(135deg,var(--a),var(--a2));color:#1b1206;font-weight:700;border:0;box-shadow:0 6px 18px #ff7a5933}
+#ratio{padding:8px 12px 2px}
+.seg{background:var(--p2);border:1px solid var(--l);border-radius:12px;padding:3px}
+.seg button{border-radius:9px;padding:5px 13px;font-weight:600}
+.seg .on{background:linear-gradient(180deg,#f5b94230,#f5b94214);color:var(--a);box-shadow:inset 0 0 0 1px #f5b94244}
+#stage{background:radial-gradient(ellipse at 50% 40%,#10151d,#07090d)}
+#frame{border-radius:12px;box-shadow:0 14px 44px #000b,0 0 0 1px #ffffff12}
+#tl{background:var(--p);border-top:1px solid var(--l);padding:8px 12px}
+.ctl{gap:8px}
+#play{width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,var(--a),var(--a2));color:#1b1206;box-shadow:0 6px 20px #ff7a5944}
+#play:hover{color:#1b1206;background:linear-gradient(135deg,var(--a),var(--a2));filter:brightness(1.08)}
+#play .ipa{display:none}#play.pl .ipa{display:block}#play.pl .ip{display:none}
+#tvh{gap:6px}
+#tvh button{display:flex;align-items:center;gap:5px;height:30px;padding:0 10px;border-radius:9px;background:var(--p2);border:1px solid var(--l);color:#cdd5e3;font-size:12px;font-weight:600}
+#tvh button .i{width:15px;height:15px}
+#tvh #addg{border:1px dashed #3a4558;color:var(--a)}
+#tvs{background:#090c11;border:1px solid var(--l);border-radius:12px;box-shadow:inset 0 2px 12px #0008}
+#rul{background:#10151c;border-bottom:1px solid var(--l)}
+.blk{border-radius:8px;box-shadow:0 3px 10px #0007;font-weight:600;letter-spacing:.01em}
+.blk::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,#ffffff26,transparent 62%);pointer-events:none;border-radius:inherit}
+.blk.sel{outline:2px solid var(--a);outline-offset:1px}
+#phl{box-shadow:0 0 12px var(--a)}
+#tools{background:var(--p);gap:2px;padding:6px 8px calc(6px + env(safe-area-inset-bottom))}
+.tool{width:58px;height:54px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:9.5px;font-weight:600;color:var(--m);border-radius:12px;font-size:9.5px;letter-spacing:.02em}
+.tool .i{width:21px;height:21px}
+.tool.on{color:var(--a);background:linear-gradient(180deg,#f5b94224,#f5b94210);box-shadow:inset 0 0 0 1px #f5b94244}
+.tool.soon{opacity:.42}
+  if(!ready||!clips.length||playing){res();return}
+  playRes=res;playing=true;paused=false;setPlayIcon();
+  await prep();
+  let f=from??ph;if(f>=total()-.05)f=0;
+  hlKey='';vidOn.clear();
+  T0=performance.now()-f*1000;
+  requestAnimationFrame(tick);
+ });
+}
+function pauseToggle(){
+ if(!playing){play();return}
+ if(!paused){paused=true;pauseVideos();vidOn.clear();setPlayIcon()}
+ else{paused=false;vidOn.clear();T0=performance.now()-ph*1000;setPlayIcon();requestAnimationFrame(tick)}
+}
+function stopPlay(){
+ playing=false;paused=false;setPlayIcon();pauseVideos();vidOn.clear();
+ ph=0;hlKey='';seek(0);updatePH();
+ const r=playRes;playRes=null;if(r)r();
+}
+const toArr=c=>Array.isArray(c)?c:[c.lng,c.lat];
+function lerpPose(a,b,t){
+ const A=toArr(a.center),B=toArr(b.center),db=((b.bearing-a.bearing+540)%360)-180;
+ return{center:[A[0]+(B[0]-A[0])*t,A[1]+(B[1]-A[1])*t],zoom:a.zoom+(b.zoom-a.zoom)*t,pitch:a.pitch+(b.pitch-a.pitch)*t,bearing:a.bearing+db*t};
+}
+function poseAt(T){
+ const i=clipAt(T),S=clipStart(i),E=S+clips[i].dur;let pose=autoCam(T);
+ const ks=keys.filter(q=>q.ts>=S&&q.ts<E&&q.ts<=T).sort((a,b)=>a.ts-b.ts);
+ for(const q of ks){
+  const kp={center:q.center,zoom:q.zoom,pitch:q.pitch,bearing:q.bearing};
+  if(T>=q.ts+q.dur)pose=kp;
+  else{const p=Math.max(0,(T-q.ts)/q.dur),e=q.mode==='linear'?p:p*p*(3-2*p);pose=lerpPose(pose,kp,e);break}
+ }
+ return pose;
+}
+ if(!ready)return;
+ const f=tmp.map(p=>({type:'Feature',properties:{},geometry:{type:'Point',coordinates:p}}));
+ if(tmp.length>1)f.push({type:'Feature',properties:{},geometry:{type:'LineString',coordinates:tmp}});
+ map.getSource('draft').setData({type:'FeatureCollection',features:f});
+}
+function setTool(t){
+ tool=t;tmp=[];warA=null;showDraft();showHandles();
+ document.querySelectorAll('.tool').forEach(b=>b.classList.toggle('on',b.dataset.s===t));
+ $('#ed').hidden=!(t==='pen'||t==='path');
+ say({txt:'Tap where the text should go.',arr:'Tap the start, then the end of the arrow.',pen:'Tap points on the map, then ✓ Done.',war:'Tap the attacking country.',path:'Tap the points of the path (2 or more), then ✓ Done.'}[t]||'');
+}
+$('#fin').onclick=()=>{
+ if(tool==='path'){
+  const l=layers.find(x=>x.id===pathFor);
+  if(!l||tmp.length<2){say('Tap at least 2 points for the path.');return}
+  l.mo=Object.assign(moNew(),l.mo||{},{on:true,pts:tmp.slice()});
+  setTool('sel');commit();openFxEd(l);return;
+ }
+ if(tmp.length<3){say('Add at least 3 points.');return}
+ addLayer({type:'shape',pts:tmp.slice()});setTool('sel');
+};
+$('#can').onclick=()=>setTool('sel');
+$('#fi').onchange=async e=>{
+ const f=e.target.files[0];e.target.value='';if(!f)return;
+ const b=await createImageBitmap(f),k=Math.min(1,320/Math.max(b.width,b.height)),c=document.createElement('canvas');
+ c.width=Math.round(b.width*k);c.height=Math.round(b.height*k);c.getContext('2d').drawImage(b,0,0,c.width,c.height);
+ pendImg=c.toDataURL('image/png');setTool('img');say('Tap the map to place the image.');
+};
+
+/* effects: built-in animated sprites, uploaded images and videos */
+const FXN={jet:2,missile:2,ship:2,uimgp:2,pulse:1,boom:1,radar:1,uimgb:1,vid:1};
+const fxLive=new Map();
+function spr(draw){
+ const c=document.createElement('canvas');c.width=c.height=96;const x=c.getContext('2d');
+ else $('#fi').onchange(fake);
+}
+$('#ups').onclick=e=>{
+ if(e.target.id==='ups'||e.target.id==='upx'){$('#ups').classList.remove('open');return}
+ const b=e.target.closest('button[data-u]');if(!b)return;
+ const f=$('#upf'),u=b.dataset.u,imgOnly=upKind==='uimgp'||upKind==='uimgb';
+ f.removeAttribute('capture');
+ if(u==='gal')f.accept=imgOnly?'image/*':'image/*,video/*';
+ else if(u==='file')f.accept=imgOnly?'image/*,.png,.jpg,.jpeg,.webp,.gif,.bmp':'image/*,video/*,.png,.jpg,.jpeg,.webp,.gif,.bmp,.mp4,.webm,.mov,.m4v';
+ else if(u==='cam'){f.accept='image/*';f.setAttribute('capture','environment')}
+ else{f.accept='video/*';f.setAttribute('capture','environment')}
+ $('#ups').classList.remove('open');f.click();
+};
+$('#upf').onchange=e=>{const f=e.target.files[0];e.target.value='';if(f)onUpload(f)};
+
+/* motion paths for uploaded images and videos */
+const EASE={lin:t=>t,inout:t=>t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2,in:t=>t*t,out:t=>1-(1-t)*(1-t),bounce:t=>{const n=7.5625,d=2.75;if(t<1/d)return n*t*t;if(t<2/d){t-=1.5/d;return n*t*t+.75}if(t<2.5/d){t-=2.25/d;return n*t*t+.9375}t-=2.625/d;return n*t*t+.984375}};
+const psC=new Map();
+function pathSampler(pts,smooth){
+ const key=JSON.stringify([pts,smooth]);if(psC.has(key))return psC.get(key);
+ const P=pts.map(q=>{const m=M(q);return[m.x,m.y]}),S=[];
+ if(P.length===1)S.push(P[0]);
+ else for(let i=0;i<P.length-1;i++){
+  const p0=P[Math.max(0,i-1)],p1=P[i],p2=P[i+1],p3=P[Math.min(P.length-1,i+2)],sm=smooth&&P.length>2,n=sm?16:1;
+  for(let k=0;k<n;k++){
+   const t=k/n;
+   if(!sm)S.push([p1[0]+(p2[0]-p1[0])*t,p1[1]+(p2[1]-p1[1])*t]);
+   else{const t2=t*t,t3=t2*t,f=(a,b,c,d)=>.5*((2*b)+(-a+c)*t+(2*a-5*b+4*c-d)*t2+(-a+3*b-3*c+d)*t3);S.push([f(p0[0],p1[0],p2[0],p3[0]),f(p0[1],p1[1],p2[1],p3[1])])}
+  }
+ }
+ S.push(P[P.length-1]);
+ const cum=[0];for(let i=1;i<S.length;i++)cum.push(cum[i-1]+Math.hypot(S[i][0]-S[i-1][0],S[i][1]-S[i-1][1]));
+ const L=cum[cum.length-1]||1e-9;
+ const fn=u=>{
+}
+['mousedown','touchstart'].forEach(ev=>map.on(ev,hDown));
+['mousemove','touchmove'].forEach(ev=>map.on(ev,hMove));
+['mouseup','touchend','touchcancel'].forEach(ev=>map.on(ev,hUp));
+
+/* camera presets and free angle */
+const PRESETS={
+ fly:{pitch:55,pitch2:55,bearing:-25,spin:0,zoomD:0,move:'fly'},
+ top:{pitch:0,pitch2:0,bearing:0,spin:0,zoomD:0,move:'ease'},
+ orbit:{pitch:55,pitch2:55,bearing:-30,spin:90,zoomD:0,move:'fly'},
+ orbitL:{pitch:55,pitch2:55,bearing:30,spin:-90,zoomD:0,move:'fly'},
+ low:{pitch:78,pitch2:70,bearing:-15,spin:25,zoomD:-.3,move:'fly'},
+ sweep:{pitch:60,pitch2:60,bearing:-50,spin:70,zoomD:.3,move:'ease'},
+ spiral:{pitch:50,pitch2:60,bearing:-140,spin:140,zoomD:.6,move:'fly'},
+ reveal:{pitch:0,pitch2:68,bearing:0,spin:40,zoomD:0,move:'ease'}
+};
+const camOf=c=>c.cv||PRESETS[c.cam]||PRESETS.fly;
+const KS=['kp','kp2','kb','ks','kz'];
+const outs=()=>KS.forEach(id=>$('#'+id+'o').textContent=$('#'+id).value);
+function fillCam(k){
+ $('#kp').value=k.pitch;$('#kp2').value=k.pitch2??k.pitch;$('#kb').value=k.bearing;
+ $('#ks').value=k.spin;$('#kz').value=k.zoomD;$('#kmv').value=k.move;outs();
+}
+const readCam=()=>({pitch:+$('#kp').value,pitch2:+$('#kp2').value,bearing:+$('#kb').value,spin:+$('#ks').value,zoomD:+$('#kz').value,move:$('#kmv').value});
+$('#cam').onchange=e=>{if(PRESETS[e.target.value])fillCam(PRESETS[e.target.value])};
+KS.forEach(id=>$('#'+id).oninput=()=>{outs();$('#cam').value='custom'});
+$('#kmv').onchange=()=>{$('#cam').value='custom'};
+$('#dirs').onclick=e=>{const b=e.target.dataset.b;if(b===undefined)return;$('#kb').value=b;outs();$('#cam').value='custom'};
+$('#pick').onclick=()=>{
+ if(!draft.length){say('Add at least one country first.');return}
+ const k=readCam(),pad=map.getContainer().clientHeight*.18;
+ const cam=map.cameraForBounds(LB(union(draft)),{padding:{top:pad,bottom:pad*1.6,left:pad,right:pad},bearing:k.bearing});
+ pickBase=Math.max(1,Math.min(cam.zoom,6));
+ closeSheet();picking=true;$('#ed2').hidden=false;
+ map.easeTo({center:cam.center,zoom:Math.max(1,pickBase+k.zoomD),pitch:k.pitch,bearing:k.bearing,duration:900});
+}
+function closeCs(){selC=null;if(ready)map.setFilter('selc',NONE);$('#cp').hidden=true}
+const cs=()=>cstyle[selC]=cstyle[selC]||{};
+$('#cf').oninput=e=>{if(!selC)return;cs().fill=e.target.value;show(clips,null)};
+$('#cb').oninput=e=>{if(!selC)return;cs().border=e.target.value;show(clips,null)};
+$('#cf').onchange=$('#cb').onchange=()=>{if(selC)commit()};
+$('#cfl').onchange=e=>{if(!selC)return;cs().flag=e.target.checked;commit()};
+$('#crs').onclick=()=>{if(!selC)return;const n=selC;delete cstyle[n];commit();selectCountry(n)};
+$('#cx').onclick=closeCs;
+$('#cadd').onclick=()=>{
+ if(!selC)return;const n=selC;
+ clips.push({names:[n],color:stl(n,'fill','#e9b44c'),text:n,cam:'fly',dur:5,flag:true,arrow:true});
+ sel=clips.length-1;commit();selectCountry(n);
+};
+$('#mvl').onclick=()=>{if(editing>0){[clips[editing-1],clips[editing]]=[clips[editing],clips[editing-1]];sel=editing-1;closeSheet();commit()}};
+$('#mvr').onclick=()=>{if(editing>=0&&editing<clips.length-1){[clips[editing+1],clips[editing]]=[clips[editing],clips[editing+1]];sel=editing+1;closeSheet();commit()}};
+
+/* unlimited colours: native picker + any CSS colour (#hex, #hex8, rgb(), hsl(), names) with alpha */
+function parseCss(v){const x=document.createElement('canvas').getContext('2d');x.fillStyle='#010203';x.fillStyle=v;const a=x.fillStyle;x.fillStyle='#040506';x.fillStyle=v;return a===x.fillStyle?a:null}
+function toHex(n){if(n[0]==='#')return n.slice(0,7);const m=n.match(/[\d.]+/g);return'#'+[0,1,2].map(i=>(Math.round(+m[i])).toString(16).padStart(2,'0')).join('')}
+let recent=[];try{recent=JSON.parse(localStorage.getItem('recentColors')||'[]')}catch(_){}
+function drawRecent(){$('#recent').innerHTML=recent.map(c=>`<option value="${c}">`).join('')}
+function remember(c){recent=[c,...recent.filter(x=>x!==c)].slice(0,16);drawRecent();try{localStorage.setItem('recentColors',JSON.stringify(recent))}catch(_){}}
+function enhanceColor(el){
+ const t=document.createElement('input');t.type='text';t.className='hx';t.spellcheck=false;t.placeholder='#hex or rgba()';t.setAttribute('list','recent');
+ el.after(t);
+ const d=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value');let full=d.get.call(el),own=false;
+ Object.defineProperty(el,'value',{configurable:true,get(){return full},set(v){full=v;t.value=v;const n=parseCss(v);if(n)d.set.call(el,toHex(n))}});
+ el.addEventListener('input',()=>{if(own){own=false;return}full=d.get.call(el);t.value=full});
+ el.addEventListener('change',()=>remember(full));
+ t.addEventListener('input',()=>{const n=parseCss(t.value);if(!n)return;full=n;d.set.call(el,toHex(n));own=true;el.dispatchEvent(new Event('input',{bubbles:true}));own=false});
+ t.addEventListener('change',()=>{const n=parseCss(t.value);if(!n)return;el.dispatchEvent(new Event('change',{bubbles:true}))});
+ t.value=full;
+}
+drawRecent();
+['col','cf','cb','fe-col','fe-body','fe-bc','fe-ckc'].forEach(id=>enhanceColor($('#'+id)));
+try{const a=JSON.parse(localStorage.getItem('mapstudio_auto')||'null');if(a&&a.v===2&&a.clips&&a.clips.length){applyProject(a);restoredMsg='Restored your last session (use ☰ → New for a blank project).'}}catch(_){}
+draw();
+</script>
 </body>
 </html>

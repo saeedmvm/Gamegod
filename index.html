@@ -211,6 +211,19 @@ progress{width:100%;height:8px;accent-color:var(--a);border-radius:6px}
 .blk.aud svg.wf{position:absolute;left:0;top:0;width:100%;height:100%;opacity:.55;pointer-events:none}
 .blk.aud span.t{position:relative;z-index:1}
 #pathln{}
+.th i.d{width:22px;height:22px;border-radius:7px;display:grid;place-items:center;flex:none}
+.th i.d .i{width:14px;height:14px}
+.th span{font-size:9px}
+#trh{width:116px}
+.blk .bi{width:12px;height:12px;display:inline-block;vertical-align:-2px;margin-right:3px}
+#fxg button .i{width:26px;height:26px;color:var(--a)}
+/* stacking: main image < floating controls < docked editors < sheets < pickers */
+#frame{isolation:isolate}
+#title{z-index:5}#tov{z-index:6}#cmp,#cred,#ed,#ed2{z-index:9}
+#title,#tov,#cred,#ed,#ed2{transform:translateZ(0)}
+#cs,#kfe,#fxe{z-index:40}
+#sheet,#pm,#fxs{z-index:60}
+#ups,#st,#ms{z-index:70}
 </style>
 </head>
 <body>
@@ -250,6 +263,14 @@ progress{width:100%;height:8px;accent-color:var(--a);border-radius:6px}
 <symbol id="i-mute" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9zM17 9l5 6M22 9l-5 6"/></symbol>
 <symbol id="i-vol" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9zM16.500 8.500a5 5 0 0 1 0 7M19 6a8.500 8.500 0 0 1 0 12"/></symbol>
 <symbol id="i-music" viewBox="0 0 24 24"><path d="M9 18V5l11-2v13"/><circle cx="6.500" cy="18" r="2.500"/><circle cx="17.500" cy="16" r="2.500"/></symbol>
+<symbol id="i-plane" viewBox="0 0 24 24"><path d="M17.8 19.2L16 11l3.5-3.5C21 6 21.5 4 21.5 4s-2 .5-3.5 2L14.5 9.5 6.3 7.7c-.5-.1-1 .1-1.3.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.5c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/></symbol>
+<symbol id="i-rocket" viewBox="0 0 24 24"><path d="M12 3c3 2 5 5 5 9l-2 3H9l-2-3c0-4 2-7 5-9z"/><circle cx="12" cy="10" r="1.6"/><path d="M9 15l-3 3v3l3-2M15 15l3 3v3l-3-2M12 17v4"/></symbol>
+<symbol id="i-ship" viewBox="0 0 24 24"><path d="M3 17l2 3h14l2-3z"/><path d="M5 17v-6h14v6M9 11V7h6v4M12 7V4"/></symbol>
+<symbol id="i-pulse" viewBox="0 0 24 24"><circle cx="12" cy="12" r="2"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="10" stroke-dasharray="2 3"/></symbol>
+<symbol id="i-boom" viewBox="0 0 24 24"><path d="M12 2l1.8 5.2L19 5l-2.2 5L22 12l-5.2 2L19 19l-5.2-2.2L12 22l-1.8-5.2L5 19l2.2-5L2 12l5.2-2L5 5l5.2 2.2z"/></symbol>
+<symbol id="i-radar" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><path d="M12 12L19 5"/></symbol>
+<symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></symbol>
+<symbol id="i-focus" viewBox="0 0 24 24"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3"/><circle cx="12" cy="12" r="3"/></symbol>
 </defs></svg>
 <div id="app">
  <header id="top"><button class="ic" id="back" aria-label="Menu"><svg class="i"><use href="#i-menu"/></svg></button><div class="brand"><svg class="logo" viewBox="0 0 40 40" aria-hidden="true"><defs><linearGradient id="lgg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffd166"/><stop offset="1" stop-color="#ff6b4a"/></linearGradient></defs><rect width="40" height="40" rx="11" fill="url(#lgg)"/><path d="M20 7.5c-4.6 0-8.3 3.5-8.3 8 0 5.9 8.3 15 8.3 15s8.3-9.100 8.300-15c0-4.500-3.700-8-8.300-8z" fill="#10131a" opacity=".92"/><path d="M17.800 12.400l6.400 3.700-6.400 3.700z" fill="#ffd166"/></svg><div><b>MapReel</b><small>STUDIO</small></div></div><span class="sp"></span><input id="pn" value="My map" aria-label="Project name"><button class="ic" id="gear" aria-label="Settings"><svg class="i"><use href="#i-sliders"/></svg></button><button class="ex" id="exp"><svg class="i"><use href="#i-export"/></svg>Export</button></header>
@@ -439,9 +460,9 @@ progress{width:100%;height:8px;accent-color:var(--a);border-radius:6px}
 </div></div>
 <div id="fxs"><div class="card"><h2>Effects</h2>
  <div id="fxg">
-  <button data-k="jet"><span>✈</span>Fighter jet</button><button data-k="missile"><span>🚀</span>Missile</button><button data-k="ship"><span>⛴</span>Ship</button>
-  <button data-k="pulse"><span>◎</span>Pulse</button><button data-k="boom"><span>💥</span>Explosion</button><button data-k="radar"><span>📡</span>Radar</button>
-  <button data-k="uimgp"><span>▣</span>My image → path</button><button data-k="uimgb"><span>▣</span>My image → badge</button><button data-k="vid"><span>▶</span>My video</button>
+  <button data-k="jet"><svg class="i"><use href="#i-plane"/></svg>Fighter jet</button><button data-k="missile"><svg class="i"><use href="#i-rocket"/></svg>Missile</button><button data-k="ship"><svg class="i"><use href="#i-ship"/></svg>Ship</button>
+  <button data-k="pulse"><svg class="i"><use href="#i-pulse"/></svg>Pulse</button><button data-k="boom"><svg class="i"><use href="#i-boom"/></svg>Explosion</button><button data-k="radar"><svg class="i"><use href="#i-radar"/></svg>Radar</button>
+  <button data-k="uimgp"><svg class="i"><use href="#i-image"/></svg>My image → path</button><button data-k="uimgb"><svg class="i"><use href="#i-image"/></svg>My image → badge</button><button data-k="vid"><svg class="i"><use href="#i-video"/></svg>My video</button>
  </div>
  <div class="cap">Uploaded images and videos live only in this session (not kept after reload).</div>
  <button id="fxx">Close</button></div></div>
@@ -724,6 +745,9 @@ function commit(){hist=hist.slice(0,hp+1);hist.push(JSON.stringify({clips,layers
 function restore(s){const o=JSON.parse(s);clips=o.clips;layers=o.layers;cstyle=o.cstyle||{};keys=o.keys||[];closeCs();sel=Math.max(0,Math.min(sel,clips.length-1));draw()}
 const TCOL={text:'#7aa2ff',img:'#b58cff',shape:'#5fd3a1',arrow:'#ffb04a',war:'#ff6b5e',fx:'#f5b942',vid:'#4fc3f7'};
 const ICON={aud:'♪',text:'T',img:'▣',arrow:'➜',shape:'✎',war:'⚔',fx:'✺',vid:'▶'};
+const KIC={jet:'plane',missile:'rocket',ship:'ship',pulse:'pulse',boom:'boom',radar:'radar',uimgp:'image',uimgb:'image'};
+const TIC={aud:'music',text:'text',img:'image',arrow:'arrow',shape:'shape',war:'swords',vid:'video',fx:'spark'};
+const lic=l=>'<svg class="i bi"><use href="#i-'+((l.type==='fx'&&KIC[l.kind])||TIC[l.type]||'spark')+'"/></svg>';
 const lenKey=l=>(!(l.type==='fx'&&hasMo(l))&&(l.type==='war'||(l.type==='fx'&&(FXM.includes(l.kind)||l.kind==='boom'))))?'dur':'len';
 function dispLen(l){
  const rest=Math.max(.4,total()-l.ts),v=l[lenKey(l)];
@@ -745,12 +769,13 @@ function updatePH(){
  if(playing){const s=$('#tvx');if(x>s.scrollLeft+s.clientWidth-40||x<s.scrollLeft)s.scrollLeft=Math.max(0,x-40)}
 }
 const TRK=[
- {id:'cam',n:'Camera',c:'#c792ea',i:'key'},
- {id:'map',n:'Map',c:'#f5b942',i:'layers'},
+ {id:'cam',n:'Camera',c:'#c792ea',i:'focus'},
+ {id:'map',n:'Map',c:'#f5b942',i:'globe'},
  {id:'vid',n:'Video',c:'#4fc3f7',i:'video',add:1},
  {id:'img',n:'Image',c:'#b58cff',i:'image',add:1},
  {id:'txt',n:'Text',c:'#7aa2ff',i:'text',add:1},
  {id:'gfx',n:'Shapes',c:'#5fd3a1',i:'shape'},
+ {id:'war',n:'Attack',c:'#ff6b5e',i:'swords',add:1},
  {id:'fx',n:'Effects',c:'#f5b942',i:'spark',add:1},
  {id:'aud',n:'Audio',c:'#ff7a9a',i:'music',add:1}];
 const RH=28;
@@ -773,7 +798,7 @@ function buildTL(){
    list.forEach(l=>{
     const len=dispLen(l);let r=ends.findIndex(e=>e<=l.ts+.001);if(r<0){r=ends.length;ends.push(0)}ends[r]=l.ts+len;
     const wf=l.type==='aud'&&audPk[l.id]?`<svg class="wf" viewBox="0 0 ${audPk[l.id].length} 20" preserveAspectRatio="none"><path d="${wfPath(audPk[l.id])}" fill="${T.c}"/></svg>`:'';
-    items.push(`<div class="blk${l.type==='aud'?' aud':''}" data-k="l" data-i="${l.id}" style="left:${PAD+l.ts*pps}px;top:${y+3+r*RH}px;width:${Math.max(26,len*pps)}px;background:${T.c}33;border:1px solid ${T.c}">${wf}<span class="t">${ICON[l.type]||'✺'} ${lname(l)}</span><span class="rh"></span></div>`);
+    items.push(`<div class="blk${l.type==='aud'?' aud':''}" data-k="l" data-i="${l.id}" style="left:${PAD+l.ts*pps}px;top:${y+3+r*RH}px;width:${Math.max(26,len*pps)}px;background:${T.c}33;border:1px solid ${T.c}">${wf}<span class="t">${lic(l)}${lname(l)}</span><span class="rh"></span></div>`);
    });
    lanes=Math.max(1,ends.length);th=lanes*RH+6;
   }
@@ -784,7 +809,7 @@ function buildTL(){
    tools+=btn('hide',T.id==='aud'?(off.hide?'mute':'vol'):(off.hide?'eyeoff':'eye'),off.hide,T.id==='aud'?'Mute':'Show / hide');
    tools+=btn('lock','lock',off.lock,'Lock');
   }
-  hd+=`<div class="th" style="height:${th}px;color:${T.c}"><i class="d" style="background:${T.c}"></i><span>${T.n}</span>${tools}</div>`;
+  hd+=`<div class="th" style="height:${th}px;color:${T.c}"><i class="d" style="background:${T.c}2b;color:${T.c}"><svg class="i"><use href="#i-${T.i}"/></svg></i><span>${T.n}</span>${tools}</div>`;
   h=`<div class="tlane${idx%2?' alt':''}${off.hide?' off':''}" style="top:${y}px;height:${th}px"></div>`+h+items.join('');
   y+=th;idx++;
  });
@@ -840,6 +865,7 @@ $('#trh').onclick=e=>{
   else if(id==='img'){askUpload('img')}
   else if(id==='txt'){setTool('txt')}
   else if(id==='fx'){$('#fxs').classList.add('open')}
+  else if(id==='war'){setTool('war')}
   return;
  }
  st[a]=!st[a];hlKey='';sigS='';sigA='';sigW='';buildTL();idle();
@@ -1016,7 +1042,7 @@ function warPart(l,p){
 let hlKey='',sigS='',sigW='',sigA='',fxWas=false,warT=0,warLast=[],warWas=false;const vidOn=new Set(),audOn=new Set();
 const auds={},audFiles={},audPk={},audEl={};
 const trkOff={};
-const trackOf=l=>l.type==='vid'?'vid':(l.type==='img'||(l.type==='fx'&&(l.kind==='uimgp'||l.kind==='uimgb')))?'img':l.type==='text'?'txt':(l.type==='shape'||l.type==='arrow')?'gfx':l.type==='aud'?'aud':'fx';
+const trackOf=l=>l.type==='vid'?'vid':(l.type==='img'||(l.type==='fx'&&(l.kind==='uimgp'||l.kind==='uimgb')))?'img':l.type==='text'?'txt':(l.type==='shape'||l.type==='arrow')?'gfx':l.type==='aud'?'aud':l.type==='war'?'war':'fx';
 const trkHidden=l=>!!(trkOff[trackOf(l)]&&trkOff[trackOf(l)].hide);
 function transAt(T){
  for(let j=0;j<clips.length;j++){
@@ -1924,6 +1950,23 @@ $('#fe-msm').onchange=e=>moSet('smooth',e.target.checked,true);
 $('#fe-fi').oninput=e=>{const l=curEd();if(!l)return;l.fi=+e.target.value;moOut();applyEd(false)};
 $('#fe-fo').oninput=e=>{const l=curEd();if(!l)return;l.fo=+e.target.value;moOut();applyEd(false)};
 $('#fe-fi').onchange=$('#fe-fo').onchange=()=>{if(curEd())commit()};
+
+/* stacking: whatever opens last is on top; only one docked editor (layer / keyframe / country) at a time */
+let zTop=200;const wasOpen=new Set(),DOCK=['cs','kfe','fxe'],ALLP=['cs','kfe','fxe','sheet','pm','fxs','ups','st','ms'];
+function stackSync(){
+ ALLP.forEach(id=>{
+  const el=$('#'+id);if(!el)return;
+  const on=el.classList.contains('open');
+  if(on&&!wasOpen.has(id)){
+   wasOpen.add(id);el.style.zIndex=++zTop;
+   if(DOCK.includes(id))DOCK.forEach(o=>{
+    if(o===id)return;const e2=$('#'+o);
+    if(e2&&e2.classList.contains('open')){e2.classList.remove('open');wasOpen.delete(o);if(o==='cs'&&typeof closeCs==='function')closeCs()}
+   });
+  }else if(!on)wasOpen.delete(id);
+ });
+}
+if(typeof MutationObserver!=='undefined')ALLP.forEach(id=>{const el=$('#'+id);if(el)new MutationObserver(stackSync).observe(el,{attributes:true,attributeFilter:['class']})});
 
 /* settings */
 function setAccent(c){document.documentElement.style.setProperty('--a',c);$('#st-acc').value=c;try{localStorage.setItem('ms_accent',c)}catch(_){}}

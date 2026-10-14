@@ -307,10 +307,12 @@ progress{width:100%;height:8px;accent-color:var(--a);border-radius:6px}
 <button class="tool" data-s="hlp" aria-label="Help"><svg class="i"><use href="#i-help"/></svg><span>Help</span></button>
  </nav>
 </div>
-<div id="cs"><div class="card">
+<div id="cs"><div class="card"><div class="grab"></div>
  <div class="row"><b id="csn" style="flex:3"></b><button class="ic" id="csx" aria-label="Close" style="flex:none">✕</button></div>
- <div class="row"><label class="c">Highlight <input id="csf" type="color"></label><label class="c">Border <input id="csb" type="color"></label></div>
- <div class="row"><label class="c"><input id="csg" type="checkbox">Flag</label><button id="csr">Reset</button><button class="main" id="csa">Add as clip</button></div>
+ <label class="sl"><span>Highlight</span><input id="csf" type="color" value="#e9b44c"></label>
+ <label class="sl"><span>Border</span><input id="csb" type="color" value="#ffffff"></label>
+ <div class="row"><label class="c"><input id="csg" type="checkbox">Flag</label><button id="csr">Reset</button><button id="csa">Add as clip</button></div>
+ <button class="main" id="csv">Save</button>
 </div></div>
 <div id="sheet"><div class="card">
  <h2 id="sh">Country group</h2>
@@ -377,6 +379,13 @@ progress{width:100%;height:8px;accent-color:var(--a);border-radius:6px}
  <label class="c"><input id="st-hdl" type="checkbox" checked>Show move handles on the map</label>
  <div class="sec">Map</div>
  <label class="sl"><span>Basemap</span><select id="st-base"><option value="sat">Satellite</option><option value="dark">Dark</option></select></label>
+ <div class="sec">Country colors</div>
+ <label class="c"><input id="gc-on" type="checkbox">Use the same colors for every highlighted country</label>
+ <label class="sl"><span>Highlight</span><input id="gc-f" type="color" value="#f5b942"></label>
+ <label class="sl"><span>Border</span><input id="gc-b" type="color" value="#ffffff"></label>
+ <label class="sl"><span>Opacity</span><input id="gc-o" type="range" min="0.1" max="1" step="0.05"><output id="gc-oo"></output></label>
+ <label class="sl"><span>Border width</span><input id="gc-w" type="range" min="0.5" max="8" step="0.1"><output id="gc-wo"></output></label>
+ <div class="row"><button id="gc-r" style="background:var(--p2);border:1px solid var(--l);border-radius:12px;padding:11px;color:var(--t)">Reset</button><button class="main" id="gc-s">Save</button></div>
  <div class="sec">About</div>
  <div class="about"><svg class="logo" viewBox="0 0 40 40" aria-hidden="true"><defs><linearGradient id="lgg2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffd166"/><stop offset="1" stop-color="#ff6b4a"/></linearGradient></defs><rect width="40" height="40" rx="11" fill="url(#lgg2)"/><path d="M20 7.5c-4.6 0-8.3 3.5-8.3 8 0 5.9 8.3 15 8.3 15s8.3-9.100 8.300-15c0-4.500-3.700-8-8.300-8z" fill="#10131a" opacity=".92"/><path d="M17.800 12.400l6.400 3.700-6.400 3.700z" fill="#ffd166"/></svg><div><b style="color:var(--t)">MapReel Studio</b><br>Everything runs in your browser. Your files are never uploaded.</div></div>
  <button class="main" id="st-ok">Done</button>
@@ -510,7 +519,7 @@ function setBase(m){
  map.setPaintProperty('bd','line-color',mlook.bdc||S.bd);
  map.setPaintProperty('bd','line-width',mlook.bdw);
  map.setLayoutProperty('bd','visibility',mlook.bd?'visible':'none');
- map.setPaintProperty('hl','fill-opacity',S.hl);
+ map.setPaintProperty('hl','fill-opacity',gcs.on?gcs.op:S.hl);
  $('#cred').textContent=S.cr;
  const sel=$('#st-base');if(sel)sel.value=m;
  drawMsGrid();
@@ -644,13 +653,16 @@ const lineF=(c,col,w=3.5,op=1)=>({type:'Feature',properties:{color:col,w,op},geo
 const arrowFeatures=(pts,d,color,w=3.5,hs=1,op=1)=>[lineF(pts.map(LL),color,w,op),{type:'Feature',properties:{color,w,op},geometry:{type:'Polygon',coordinates:[headRing(pts,d,hs)]}}];
 /* playback */
 function show(done,active){
- if(!done.length){map.setFilter('hl',NONE);map.setFilter('bd-hl',NONE);map.setFilter('glow',NONE);map.getSource('flags').setData(EMPTY);return}
- const col=new Map(),bc=new Map();
- done.forEach(c=>c.names.forEach(n=>{col.set(n,stl(n,'fill',c.color));bc.set(n,stl(n,'border',c.color))}));
+ const col=new Map(),bc=new Map(),gf=gcs.on?gcs.fill:null,gb=gcs.on?gcs.border:null;
+ Object.keys(cstyle).forEach(n=>{const st=cstyle[n];if(feats[n]&&(st.fill||st.border)){col.set(n,st.fill||gf||'#e9b44c');bc.set(n,st.border||gb||st.fill||'#ffffff')}});
+ done.forEach(c=>c.names.forEach(n=>{col.set(n,stl(n,'fill',gf||c.color));bc.set(n,stl(n,'border',gb||c.color))}));
+ if(!col.size){map.setFilter('hl',NONE);map.setFilter('bd-hl',NONE);map.setFilter('glow',NONE);map.getSource('flags').setData(EMPTY);return}
  map.setPaintProperty('hl','fill-color',mx(col));
+ map.setPaintProperty('hl','fill-opacity',gcs.on?gcs.op:((STY[base]||{}).hl??.6));
  map.setFilter('hl',['in',['get','ADMIN'],['literal',[...col.keys()]]]);
  map.setFilter('bd-hl',['in',['get','ADMIN'],['literal',[...bc.keys()]]]);
  map.setPaintProperty('bd-hl','line-color',mx(bc));
+ map.setPaintProperty('bd-hl','line-width',gcs.on?gcs.bw:2.2);
  map.setFilter('glow',active?['in',['get','ADMIN'],['literal',active.names]]:NONE);
  map.setPaintProperty('glow','line-color',mx(bc));
  const fs=[];done.forEach(c=>c.names.forEach(n=>{const i=stl(n,'flag',c.flag)&&c.icons&&c.icons[n];if(i)fs.push({type:'Feature',properties:{icon:i},geometry:{type:'Point',coordinates:ctr([n])}})}));
@@ -1077,7 +1089,7 @@ function renderAt(T){
  }
  curTr=transAt(T);drawTransPreview();
  const i=clipAt(T),S=clipStart(i),act=S+actOf(i),activated=T>=act,done=clips.slice(0,activated?i+1:i);
- const hk=JSON.stringify([i,activated,clips.map(c=>[c.names,c.color,c.flag]),cstyle]);
+ const hk=JSON.stringify([i,activated,clips.map(c=>[c.names,c.color,c.flag]),cstyle,gcs]);
  if(hk!==hlKey){hlKey=hk;show(done,activated?clips[i]:null)}
  {const c0=clips[i];let txt='';if(T>=act&&T-S<c0.dur*.93){const f=Math.min(1,(T-act)/(c0.dur*.25));txt=c0.text.slice(0,Math.max(1,Math.ceil(c0.text.length*f)))}overlay=txt;$('#title').textContent=txt}
  const af=[],wf=[],anim=[];
@@ -1289,6 +1301,7 @@ function ensureVid(l){
 }
 function addFx(){
  if(!clips.length){say('Add a country group first.');setTool('sel');return}
+ sel=Math.max(0,Math.min(sel,clips.length-1));
  const b=union(clips[sel].names),A=M([b[0],b[1]]),B=M([b[2],b[3]]),span=Math.max(Math.abs(B.x-A.x),Math.abs(B.y-A.y));
  if(fxKind==='vid'){vids[lid]=fxSrc;vidFiles[lid]=fxFile;addLayer({type:'vid',at:tmp[0],w:span*.6,asp:fxAsp,size:1,delay:0})}
  else addLayer({type:'fx',kind:fxKind,pts:tmp.slice(),src:fxSrc,R:span*.3,size:1,arc:25,alt:0,trail:false,rt:false,dur:0,delay:0,body:'#f1f3f8'});
@@ -1951,6 +1964,23 @@ $('#fe-fi').oninput=e=>{const l=curEd();if(!l)return;l.fi=+e.target.value;moOut(
 $('#fe-fo').oninput=e=>{const l=curEd();if(!l)return;l.fo=+e.target.value;moOut();applyEd(false)};
 $('#fe-fi').onchange=$('#fe-fo').onchange=()=>{if(curEd())commit()};
 
+/* country colours: global defaults (Settings) */
+const gcs={on:false,fill:'#f5b942',border:'#ffffff',op:.6,bw:2.2};
+try{Object.assign(gcs,JSON.parse(localStorage.getItem('ms_gcs')||'{}'));Object.assign(cstyle,JSON.parse(localStorage.getItem('ms_cstyle')||'{}'))}catch(_){}
+function gcFill(){
+ $('#gc-on').checked=gcs.on;$('#gc-f').value=gcs.fill;$('#gc-b').value=gcs.border;
+ $('#gc-o').value=gcs.op;$('#gc-w').value=gcs.bw;$('#gc-oo').textContent=gcs.op;$('#gc-wo').textContent=gcs.bw;
+}
+const gcOn=()=>{gcs.on=true;$('#gc-on').checked=true;refreshHL()};
+$('#gc-on').onchange=e=>{gcs.on=e.target.checked;refreshHL()};
+$('#gc-f').oninput=e=>{gcs.fill=e.target.value;gcOn()};
+$('#gc-b').oninput=e=>{gcs.border=e.target.value;gcOn()};
+$('#gc-o').oninput=e=>{gcs.op=+e.target.value;$('#gc-oo').textContent=e.target.value;gcOn()};
+$('#gc-w').oninput=e=>{gcs.bw=+e.target.value;$('#gc-wo').textContent=e.target.value;gcOn()};
+$('#gc-s').onclick=()=>{try{localStorage.setItem('ms_gcs',JSON.stringify(gcs))}catch(_){}say('Saved. These colors now apply to every highlighted country.')};
+$('#gc-r').onclick=()=>{Object.assign(gcs,{on:false,fill:'#f5b942',border:'#ffffff',op:.6,bw:2.2});try{localStorage.setItem('ms_gcs',JSON.stringify(gcs))}catch(_){}gcFill();refreshHL()};
+gcFill();
+
 /* stacking: whatever opens last is on top; only one docked editor (layer / keyframe / country) at a time */
 let zTop=200;const wasOpen=new Set(),DOCK=['cs','kfe','fxe'],ALLP=['cs','kfe','fxe','sheet','pm','fxs','ups','st','ms'];
 function stackSync(){
@@ -2132,30 +2162,32 @@ function warOrigin(A,T){
 const stl=(n,k,d)=>cstyle[n]&&cstyle[n][k]!==undefined?cstyle[n][k]:d;
 const mx=mp=>{const m=['match',['get','ADMIN']];mp.forEach((v,k)=>m.push(k,v));m.push('#fff');return m};
 const clipOf=n=>{for(let i=clips.length-1;i>=0;i--)if(clips[i].names.includes(n))return clips[i];return null};
+function refreshHL(){hlKey='';if(clips.length)renderAt(ph);else show([],null)}
 function selectCountry(n){
  selC=n;map.setFilter('selc',['==',['get','ADMIN'],n]);
  const c=clipOf(n);
- $('#cpn').textContent=n;
- $('#cf').value=stl(n,'fill',c?c.color:'#e9b44c');
- $('#cb').value=stl(n,'border',c?c.color:'#ffffff');
- $('#cfl').checked=stl(n,'flag',c?c.flag:true);
- $('#cadd').style.display=c?'none':'';
- $('#cp').hidden=false;
- if(!c)say('Not in the timeline yet. Tap "＋ Clip" to add it.');
+ $('#csn').textContent=n;
+ $('#csf').value=stl(n,'fill',(gcs.on&&gcs.fill)||(c?c.color:'#e9b44c'));
+ $('#csb').value=stl(n,'border',(gcs.on&&gcs.border)||(c?c.color:'#ffffff'));
+ $('#csg').checked=stl(n,'flag',c?c.flag:false);
+ $('#csa').style.display=c?'none':'';
+ $('#cs').classList.add('open');
 }
-function closeCs(){selC=null;if(ready)map.setFilter('selc',NONE);$('#cp').hidden=true}
+function closeCs(){selC=null;if(ready)map.setFilter('selc',NONE);$('#cs').classList.remove('open')}
 const cs=()=>cstyle[selC]=cstyle[selC]||{};
-$('#cf').oninput=e=>{if(!selC)return;cs().fill=e.target.value;show(clips,null)};
-$('#cb').oninput=e=>{if(!selC)return;cs().border=e.target.value;show(clips,null)};
-$('#cf').onchange=$('#cb').onchange=()=>{if(selC)commit()};
-$('#cfl').onchange=e=>{if(!selC)return;cs().flag=e.target.checked;commit()};
-$('#crs').onclick=()=>{if(!selC)return;const n=selC;delete cstyle[n];commit();selectCountry(n)};
-$('#cx').onclick=closeCs;
-$('#cadd').onclick=()=>{
+const saveCS=()=>{commit();try{localStorage.setItem('ms_cstyle',JSON.stringify(cstyle))}catch(_){}};
+$('#csf').oninput=e=>{if(!selC)return;cs().fill=e.target.value;refreshHL()};
+$('#csb').oninput=e=>{if(!selC)return;cs().border=e.target.value;refreshHL()};
+$('#csf').onchange=$('#csb').onchange=()=>{if(selC)commit()};
+$('#csg').onchange=e=>{if(!selC)return;cs().flag=e.target.checked;commit()};
+$('#csr').onclick=()=>{if(!selC)return;const n=selC;delete cstyle[n];commit();refreshHL();selectCountry(n)};
+$('#csx').onclick=closeCs;
+$('#csa').onclick=()=>{
  if(!selC)return;const n=selC;
  clips.push({names:[n],color:stl(n,'fill','#e9b44c'),text:n,cam:'fly',dur:5,flag:true,arrow:true});
  sel=clips.length-1;commit();selectCountry(n);
 };
+$('#csv').onclick=()=>{if(!selC)return;saveCS();say('Saved the colors for '+selC+'.')};
 $('#mvl').onclick=()=>{if(editing>0){[clips[editing-1],clips[editing]]=[clips[editing],clips[editing-1]];sel=editing-1;closeSheet();commit()}};
 $('#mvr').onclick=()=>{if(editing>=0&&editing<clips.length-1){[clips[editing+1],clips[editing]]=[clips[editing],clips[editing+1]];sel=editing+1;closeSheet();commit()}};
 
@@ -2168,16 +2200,18 @@ function remember(c){recent=[c,...recent.filter(x=>x!==c)].slice(0,16);drawRecen
 function enhanceColor(el){
  const t=document.createElement('input');t.type='text';t.className='hx';t.spellcheck=false;t.placeholder='#hex or rgba()';t.setAttribute('list','recent');
  el.after(t);
- const d=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value');let full=d.get.call(el),own=false;
- Object.defineProperty(el,'value',{configurable:true,get(){return full},set(v){full=v;t.value=v;const n=parseCss(v);if(n)d.set.call(el,toHex(n))}});
- el.addEventListener('input',()=>{if(own){own=false;return}full=d.get.call(el);t.value=full});
- el.addEventListener('change',()=>remember(full));
- t.addEventListener('input',()=>{const n=parseCss(t.value);if(!n)return;full=n;d.set.call(el,toHex(n));own=true;el.dispatchEvent(new Event('input',{bubbles:true}));own=false});
+ const d=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value');
+ let full=d.get.call(el),last=full,own=false;
+ const sync=()=>{const nv=d.get.call(el);if(nv!==last){full=nv;last=nv;t.value=nv}};
+ Object.defineProperty(el,'value',{configurable:true,get(){sync();return full},set(v){full=v;t.value=v;const n=parseCss(v);if(n){d.set.call(el,toHex(n));last=d.get.call(el)}}});
+ el.addEventListener('input',()=>{if(own){own=false;return}sync()});
+ el.addEventListener('change',()=>{sync();remember(full)});
+ t.addEventListener('input',()=>{const n=parseCss(t.value);if(!n)return;full=n;d.set.call(el,toHex(n));last=d.get.call(el);own=true;el.dispatchEvent(new Event('input',{bubbles:true}));own=false});
  t.addEventListener('change',()=>{const n=parseCss(t.value);if(!n)return;el.dispatchEvent(new Event('change',{bubbles:true}))});
  t.value=full;
 }
 drawRecent();
-['col','cf','cb','fe-col','fe-body','fe-bc','fe-ckc','ms-bdc','ms-oc','ms-ld'].forEach(id=>enhanceColor($('#'+id)));
+['col','cf','cb','csf','csb','gc-f','gc-b','fe-col','fe-body','fe-bc','fe-ckc','ms-bdc','ms-oc','ms-ld'].forEach(id=>enhanceColor($('#'+id)));
 try{const a=JSON.parse(localStorage.getItem('mapstudio_auto')||'null');if(a&&a.v===2&&a.clips&&a.clips.length){applyProject(a);restoredMsg='Restored your last session (use ☰ → New for a blank project).'}}catch(_){}
 draw();
 </script>
